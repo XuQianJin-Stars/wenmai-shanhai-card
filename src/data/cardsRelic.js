@@ -93,7 +93,7 @@ export const RELIC_ARTIFACTS = [
     lore: '1972 年湖南长沙马王堆一号汉墓出土，衣长 128 厘米、通袖长 190 厘米，重仅 49 克。现代人多次复制都做不到这个重量，问题出在蚕——汉代的三眠蚕吐的丝比今天的四眠蚕细得多。技艺可以复原，蚕不行。',
     art: { motif: 'relic-silk', tint: '#c9bfa6' } },
 
-  { id: 'QW-027', name: '银香囊', short: '香囊', type: 'artifact', faction: '唐宋风华', cost: 2, el: 'metal',
+  { id: 'QW-027', name: '银香囊', short: '香囊', type: 'artifact', faction: '大唐气象', cost: 2, el: 'metal',
     relic: 'hejiacun', target: 'friendlyGeneral', gear: { atk: 1, def: 1 },
     text: '【器物·文物】佩戴者 ATK +1、DEF +1。佩戴时解除其身上的全部负面状态；此后佩戴者每次受击都再解除一次。',
     up: '珍品：佩戴者额外 HP +3。',

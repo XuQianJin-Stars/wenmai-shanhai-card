@@ -47,8 +47,8 @@ export function gearOf(u) {
 function boonOf(raw) {
   const n = (v, hi) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(hi, Math.floor(v))) : 0);
   // 上界是防篡改存档的，不是平衡阀门——要跟着 guardian.js 的「点满值」走，
-  // 压低了会把正常点满的守护者也削掉（固本满 7 重 = +70）。
-  return { hp: n(raw?.hp, 70), armor: n(raw?.armor, 5), regen: n(raw?.regen, 6),
+  // 压低了会把正常点满的守护者也削掉（固本满 8 重 = +80，主将 20 → 100）。
+  return { hp: n(raw?.hp, 80), armor: n(raw?.armor, 5), regen: n(raw?.regen, 6),
     mana: n(raw?.mana, 6), hand: n(raw?.hand, 4), handCap: n(raw?.handCap, 5) };
 }
 
@@ -155,6 +155,7 @@ function auraDef(s, u) {
   for (const w of P.wenmai) {
     if (w.id === 'WM-001' && d.el === 'earth' && w.grade >= 1) a += 1;
     if (w.id === 'WM-003' && d.bonds.includes('baxian')) a += Math.min(4, baxianCount(P));
+    if (w.id === 'WM-022') a += w.grade >= 1 ? 2 : 1;               // 千里江山图：青绿厚涂，护的是整幅
   }
   if (d.bonds.includes('baxian') && baxianCount(P) >= 2) a += 1;
   a += Math.max(bondOn(s, u, 'shisheng') ? 1 : 0, autoBondAura(s, u));

@@ -243,6 +243,27 @@ export const SIGNATURE = {
   'QW-016': { equip: sig([L('petals', { color: '#ffc070', n: 14 }), L('sparks', { color: '#ffd8a0', n: 18 }), L('dome', { color: '#e87a52', r: 2.2 })], { sfx: 'heal', flash: ['#ffd8a0', 0.14] }) },
   'QW-017': { equip: sig([L('ribbon', { color: '#e8dcb0', n: 7, len: 2.2 }), L('rings', { color: '#bfe0a8', n: 3, r: 2 })], { sfx: 'upgrade' }) },
 
+  // ───────── 第八章 · 两宋风雅 ─────────
+  // 唐那一章用金红，宋这一章一律走石青石绿——同一卷画里的两种颜色，摆在一起才看得出是两个朝代。
+  'LJ-059': {
+    summon: sig([L('rain', { color: '#8aa0b8', n: 24, speed: 5 }), L('orbit', { color: '#b8cbd8', n: 10, r: 1.1 }), L('glyphs', { glyphs: '金石录', color: '#cfe0ea' })], { sfx: 'playGeneral' }),
+    skill: sig([L('rain', { color: '#7f95ad', n: 30, speed: 6, at: 'foe' }), L('rings', { color: '#a8bece', n: 3, at: 'foe' }), L('text', { text: '声声慢', color: '#dce8f0', at: 'foe' })], { sfx: 'poem' }),
+  },
+  'LJ-060': {
+    summon: sig([L('blades', { color: '#f2f6ff', n: 7, at: 'foe' }), L('sparks', { color: '#ffb060', n: 20 }), L('glyphs', { glyphs: '挑灯看剑', color: '#ffd8a0' })], { sfx: 'attack', shake: 0.24 }),
+    skill: sig([L('fire', { color: '#ff9a40', n: 22, at: 'mine' }), L('ribbon', { color: '#ffcf90' }), L('text', { text: '八百里分麾下炙', color: '#ffe0b0' })], { sfx: 'buff', flash: ['#ffcf90', 0.2] }),
+  },
+  'LJ-061': {
+    summon: sig([L('dome', { color: '#7f9c8e', r: 1.2 }), L('rings', { color: '#a89070', n: 2 }), L('glyphs', { glyphs: '虹桥市声', color: '#e0d4b0' })], { sfx: 'guard' }),
+    skill: sig([L('waterColumn', { color: '#5f87a0' }), L('splash', { color: '#a8c4d0', n: 18 }), L('text', { text: '汴河', color: '#cfe0ea' })], { sfx: 'draw' }),
+  },
+  'LJ-062': {
+    summon: sig([L('vines', { color: '#2e8a60', n: 8 }), L('petals', { color: '#4aa878', n: 14 }), L('glyphs', { glyphs: '青绿', color: '#9fe0bc' })], { sfx: 'playGeneral' }),
+    skill: sig([L('dome', { color: '#2a7254', r: 1.3, at: 'mine' }), L('sparks', { color: '#8fd8b0', n: 20, at: 'mine' }), L('text', { text: '千里青绿', color: '#b8ecd0' })], { sfx: 'heal', flash: ['#8fd8b0', 0.16] }),
+  },
+  'WM-022': { play: sig([L('vines', { color: '#2a7254', n: 10 }), L('rings', { color: '#1C6070', n: 3 }), L('glyphs', { glyphs: '千里江山', color: '#a8e0d0' })], { sfx: 'playWenmai' }) },
+  'WM-023': { play: sig([L('ribbon', { color: '#b89060' }), L('sparks', { color: '#e8d0a0', n: 22 }), L('glyphs', { glyphs: '清明上河', color: '#e8dcc0' })], { sfx: 'playWenmai' }) },
+
   // 文物器物：底色统一偏青铜绿／银灰，和神器那批的金红分得开
   'QW-018': { equip: sig([L('petals', { color: '#8fa890', n: 12 }), L('pillar', { color: '#a8c4a0', h: 6, r: 1.1, life: 1.8 }), L('sparks', { color: '#d8e8c0', n: 14 })], { sfx: 'buff' }) },
   'QW-019': { equip: sig([L('ring', { color: '#7fae8c', r: 2.4 }), L('dome', { color: '#4e6b52', r: 2 })], { sfx: 'heal', flash: ['#bfe0a8', 0.12] }) },

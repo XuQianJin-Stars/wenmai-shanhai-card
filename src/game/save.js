@@ -7,7 +7,7 @@ const KEY = 'wenmai_save_v1';
 
 export function defaultSave() {
   return {
-    v: 2,                              // 2 = 关卡 id 改成朝代拼音之后（见 migrateLevelId）
+    v: 3,                              // 3 = 唐宋拆成两章之后（见 migrateLevelId / migrateChapterNo）
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
@@ -22,14 +22,24 @@ export function defaultSave() {
   };
 }
 
-// v1 的关卡 id 是 chN-M，章号一按朝代重排就全对不上了，所以改成了朝代拼音。
-// 这两张表只在读到 v1 存档时用一次——新存档已经是新编号，再翻一遍就翻错了。
+// 存档里存的是关卡 id 和章号，两样都被改过，所以有两道迁移，按存档版本依次补上。
+//
+// v1 → v2：关卡 id 原本是 chN-M，章号一按朝代重排就全对不上，于是改成朝代拼音前缀。
+// v2 → v3：「唐宋古风」拆成「大唐气象」和「两宋风雅」，唐那三关的 id 由 tangsong-* 改为
+//          datang-*，新的两宋插在第八章，原第八章往后的章号统统 +1。
+// 每张表只在读到对应旧版本时走一次——新存档已经是新编号，再翻一遍就翻错了。
 const OLD_CH = { 1: 'shenhua', 2: 'tangsong', 3: 'feiyi', 4: 'xianqin', 5: 'chuci', 6: 'qinhan',
   7: 'weijin', 8: 'dunhuang', 9: 'shijing', 10: 'tiangong', 11: 'haisi', 12: 'guizang' };
 const OLD_N = { 1: 1, 2: 7, 3: 11, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 9, 10: 10, 11: 8, 12: 12 };
 const migrateLevelId = (id) => (typeof id === 'string' ? id.replace(/^ch(\d+)-(\d+)$/, (m, c, k) => (OLD_CH[c] ? `${OLD_CH[c]}-${k}` : m)) : id);
+const splitTangSong = (id) => (typeof id === 'string' ? id.replace(/^tangsong-(\d+)$/, 'datang-$1') : id);
+const shiftChapterNo = (n) => (n >= 8 ? n + 1 : n);
 
-function validate(raw) {
+/**
+ * 把任意一坨 JSON 洗成一份合法存档：非法字段丢掉，旧版本按 v 号依次迁移。
+ * 导出是为了能在 Node 里直接测迁移——关卡 id 和章号都被改过不止一次，这条路得有回归测试。
+ */
+export function migrateSave(raw) {
   const d = defaultSave();
   if (!raw || typeof raw !== 'object') return d;
   const num = (v, lo, hi, def) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : def);
@@ -41,10 +51,15 @@ function validate(raw) {
     const deck = raw.deck.filter((id) => d.owned.includes(id));
     if (deckProblem(deck) === null) d.deck = deck;
   }
-  const old = !(raw.v >= 2);
-  if (Array.isArray(raw.done)) d.done = raw.done.map((id) => (old ? migrateLevelId(id) : id)).filter((id) => LEVELS.some((l) => l.id === id));
+  const old = !(raw.v >= 2), preSplit = !(raw.v >= 3);
+  if (Array.isArray(raw.done)) {
+    d.done = raw.done
+      .map((id) => (old ? migrateLevelId(id) : id))
+      .map((id) => (preSplit ? splitTangSong(id) : id))
+      .filter((id) => LEVELS.some((l) => l.id === id));
+  }
   d.seenPrologue = !!raw.seenPrologue;
-  const chNo = (n) => (old ? OLD_N[n] ?? n : n);
+  const chNo = (n) => (preSplit ? shiftChapterNo(old ? OLD_N[n] ?? n : n) : n);
   const pro = new Set(Array.isArray(raw.seenPro)
     ? raw.seenPro.filter((n) => Number.isInteger(n) && n >= 2 && n <= 99).map(chNo) : []);
   if (raw.seenPrologue2) pro.add(chNo(2));   // saves written before the prologue flags were generalised
@@ -98,7 +113,7 @@ export function insertCard(deck, id) {
 
 export function createSave() {
   let data;
-  try { data = validate(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch { data = defaultSave(); }
+  try { data = migrateSave(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch { data = defaultSave(); }
   const api = {
     get data() { return data; },
     write() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* private mode: progress lives for the session */ } },

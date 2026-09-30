@@ -338,6 +338,37 @@ export const FX = {
     equip: (c) => c.draw(c.up ? 3 : 2),
     afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('QW-017')) c.mana(1); } },
 
+  // ───────── 第八章 · 两宋风雅（src/data/cardsSong.js） ─────────
+  'LJ-059': {   // 李清照：《金石录》两千卷聚了又散，所以她做的事是「把丢掉的捡回来」
+    summon: (c) => { c.recover(() => true); c.draw(1); },
+    skill: (c) => { for (const u of c.foe()) c.neg(u, 'atkDown', 2, 2); c.healHero(3); },
+  },
+  'LJ-060': {   // 辛弃疾：越打越凶，但上限压在 +3——他一辈子也只带过五十骑
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.dmg(t, 3); },
+    afterAttack: (c) => { if (c.u.hp > 0 && (c.u.tiaodeng ?? 0) < 3) { c.u.tiaodeng = (c.u.tiaodeng ?? 0) + 1; c.u.atk += 1; c.mark(c.u, 'atk', 1); } },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'atkUp', 2, 2); c.wake(u); } },
+  },
+  'LJ-061': {   // 张择端：画的是满城的人，所以文脉区越热闹他越站得住
+    summon: (c) => { const n = Math.min(c.wenmaiCount(), 3); if (n > 0) { c.u.def += n; c.mark(c.u, 'def', n); } },
+    skill: (c) => { c.draw(2); c.costDown('any'); },
+  },
+  'LJ-062': {   // 王希孟：十八岁画完就走了，所以他给的是一阵子的锐气和一份身后的余荫
+    summon: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 2, 1); },
+    onDeath: (c) => c.draw(2),
+    skill: (c) => { for (const u of c.mine()) { c.heal(u, 3); u.def += 1; c.mark(u, 'def', 1); } },
+  },
+  // 全场 DEF 那一半是光环，写在 engine.js 的 auraDef 里（和盘古创世图同一个位置）——
+  // 光环得随文脉卡在不在场实时变，不能在这儿一次性加死。
+  'WM-022': {   // 千里江山图：青绿是厚涂上去的，护得住
+    turn: (c) => { for (const u of c.mine()) c.heal(u, c.up ? 2 : 1); },
+  },
+  'WM-023': {   // 清明上河图：一整座城在做生意，所以出的是灵力
+    turn: (c) => { c.mana(1); if (c.up) c.draw(1); },
+  },
+  'ZL-057': { onHit: (c) => { if (c.T.hp > 0 && c.T.def > 0) { c.T.def -= 1; c.mark(c.T, 'def', -1); } } },
+  'ZL-058': { summon: (c) => { const t = c.rnd(c.foe()); if (t) c.neg(t, 'seal', 2, 0); } },
+  'ZL-059': { turn: (c) => c.healHero(2) },
+
   // ── 文物器物（cardsRelic.js）。效果都从实物本身的特点长出来，不硬安。 ──
   'QW-018': {   // 青铜神树：九枝九鸟，树在鸟就回得来
     equip: (c) => c.draw(c.up ? 2 : 1),
@@ -386,4 +417,7 @@ export const PASSIVES = {
   wangchuan: { every: 2, run: (c) => { c.fx('wangchuan'); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 1); c.healHero(2); c.draw(1); } },
   chenzhou: { every: 3, run: (c) => { c.fx('chenzhou'); for (const u of c.foe()) { c.dmg(u, 1); c.neg(u, 'atkDown', 1, 1); } c.draw(1); c.healHero(2); } },
   wuren: { every: 3, run: (c) => { c.fx('wuren'); c.burnHand(1); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 1); c.healHero(1); } },
+  // 散佚：丢东西的那种打法——烧一张手牌，再从场上永久刮掉 1 点防御。
+  // 和「合卷」的区别在"永久"两个字：南渡路上扔下去的箱子，是捡不回来的。
+  sanyi: { every: 3, run: (c) => { c.fx('sanyi'); c.burnHand(1); for (const u of c.foe()) if (u.def > 0) { u.def -= 1; c.mark(u, 'def', -1); } c.healHero(2); } },
 };

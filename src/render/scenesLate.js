@@ -502,6 +502,104 @@ export function lateScenes(H) {
       };
     },
 
+    // ── 汴京 / 临安 ────────────────────────────────────────────────────────
+    // 三个 variant 对应第八章三关：虹桥的白天集市、西湖的青绿远山、南渡之后的临安夜雨。
+    // 唐那一章是金红的灯火，这一章一律压在石青石绿和水汽上，站在场里就该知道换朝代了。
+    bianjing: (variant) => {
+      const lake = variant === 'lake', night = variant === 'night';
+      return {
+        sky: night ? ['#0c1420', '#1e2a38', '#080c12'] : lake ? ['#7aa0aa', '#dfe8e0', '#9ab4a8'] : ['#9aa8a4', '#e8e4d2', '#b0b4a0'],
+        paint: (ctx, w, h) => {
+          const b = brush(ctx, 167);
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          if (night) { g.addColorStop(0, '#0c1420'); g.addColorStop(1, '#2a3440'); }
+          else if (lake) { g.addColorStop(0, '#8ab0b8'); g.addColorStop(1, '#e4ece2'); }
+          else { g.addColorStop(0, '#a8b4ac'); g.addColorStop(1, '#efe8d6'); }
+          ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+          if (!night) sunGlow(ctx, w, h, lake ? 0.72 : 0.28, 0.24, 0.6, 'rgba(255,246,216,0.45)', 'rgba(255,246,216,0)');
+          // 青绿远山：赭石打底，上面压石绿石青。这三层是这一章的底色。
+          for (const [base, color, alpha] of night
+            ? [[0.5, '#14202c', 0.55], [0.56, '#1a2a30', 0.5]]
+            : [[0.44, '#a8784a', 0.3], [0.5, '#3f7f6a', 0.34], [0.56, '#2e6e7e', 0.36]])
+            hills(b, ctx, w, h, { base, color, alpha, peak: 0.15 });
+          // 水：汴河或西湖，占下面四成
+          ctx.fillStyle = night ? 'rgba(12,20,30,0.85)' : lake ? 'rgba(110,150,155,0.45)' : 'rgba(120,140,140,0.4)';
+          ctx.fillRect(0, h * 0.62, w, h * 0.38);
+          for (let i = 0; i < 34; i++) { const x = b.r(0, w), y = b.r(h * 0.64, h * 0.98); ctx.fillStyle = `rgba(${night ? '150,180,210' : '244,250,246'},${b.r(0.08, 0.32).toFixed(2)})`; ctx.fillRect(x, y, b.r(14, 48), 2); }
+          if (lake) {
+            // 苏堤：一条横过水面的长堤，堤上一排柳
+            ctx.fillStyle = 'rgba(120,112,86,0.7)'; ctx.fillRect(0, h * 0.7, w, h * 0.022);
+            for (let i = 0; i < 14; i++) {
+              const x = w * (0.02 + i * 0.072);
+              ctx.strokeStyle = 'rgba(70,90,66,0.65)'; ctx.lineWidth = 3;
+              ctx.beginPath(); ctx.moveTo(x, h * 0.7); ctx.lineTo(x + b.r(-4, 4), h * 0.64); ctx.stroke();
+              for (let k = 0; k < 4; k++) { ctx.strokeStyle = 'rgba(96,126,88,0.5)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, h * 0.645); ctx.quadraticCurveTo(x + b.r(-10, 10), h * 0.665, x + b.r(-14, 14), h * 0.7); ctx.stroke(); }
+            }
+          } else {
+            // 虹桥：一道无柱的木拱，桥上一串小人
+            const x0 = w * 0.16, x1 = w * 0.84, yb = h * 0.66, rise = h * 0.16;
+            const arcY = (t) => yb - Math.sin(t * Math.PI) * rise;
+            ctx.strokeStyle = night ? 'rgba(30,24,18,0.95)' : 'rgba(96,66,40,0.92)'; ctx.lineWidth = 9;
+            ctx.beginPath(); ctx.moveTo(x0, yb);
+            for (let t = 0; t <= 1.001; t += 0.05) ctx.lineTo(x0 + (x1 - x0) * t, arcY(t));
+            ctx.stroke();
+            ctx.lineWidth = 2.5;
+            for (let k = 1; k < 12; k++) { const t = k / 12, x = x0 + (x1 - x0) * t; ctx.beginPath(); ctx.moveTo(x, arcY(t)); ctx.lineTo(x, arcY(t) - h * 0.03); ctx.stroke(); }
+            for (let i = 0; i < 18; i++) {
+              const t = b.r(0.05, 0.95), x = x0 + (x1 - x0) * t, y = arcY(t) - h * 0.035;
+              ctx.fillStyle = night ? `rgba(60,70,84,${b.r(0.2, 0.5).toFixed(2)})` : `rgba(50,42,32,${b.r(0.45, 0.85).toFixed(2)})`;
+              ctx.fillRect(x - 2, y, 4, h * 0.028);
+              ctx.beginPath(); ctx.arc(x, y - 3, 2.6, 0, 6.28); ctx.fill();
+            }
+          }
+          roofline(b, ctx, w, h, { base: 0.62, color: night ? '#121a24' : '#4a4038', alpha: night ? 0.9 : 0.72, lit: night ? '255,190,110' : '255,230,170' });
+          if (night) for (let i = 0; i < 90; i++) { const x = b.r(0, w); ctx.strokeStyle = `rgba(180,200,220,${b.r(0.08, 0.3).toFixed(2)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, b.r(0, h * 0.8)); ctx.lineTo(x - 5, b.r(0, h * 0.8) + 34); ctx.stroke(); }
+          floatChars(b, ctx, w, h, lake ? '山色空蒙水光潋滟' : '虹桥市声汴河漕运', { n: night ? 14 : 22, color: night ? '170,196,220' : '80,96,88', y1: 0.38 });
+        },
+        // 三关都用石板：西湖那关站的是苏堤，不是草地，'stone' 铺出来是一整片没纹路的绿灰，太空
+        floor: { kind: 'paved', base: night ? '#3a4048' : lake ? '#6e8288' : '#8a8272', dark: '#2a3038' },
+        ground: night ? '#0e1620' : lake ? '#4a6058' : '#5a5a4a',
+        inkDark: !night,
+        fog: [night ? 0x0c1622 : lake ? 0x9ab4a8 : 0xc0bca8, 26, 92],
+        lights: night
+          ? { hemiSky: 0x5a74a0, hemiGround: 0x101820, hemiI: 1.0, key: 0xbccfff, keyI: 1.8, keyPos: [4, 12, -6], fill: [0xffa860, 0.4, [-5, 4, 5]] }
+          : { hemiSky: 0xd8e8e0, hemiGround: 0x4a5a50, hemiI: 1.3, key: 0xfff4d8, keyI: 2.4, keyPos: [-6, 12, 4] },
+        motes: { n: night ? 55 : 70, color: night ? '#a8c0e0' : '#e8f0e0' },
+        props: (root) => {
+          const mats = M();
+          const R = mulberry32(167);
+          // 一条泊着的漕船。汴河上的运粮船是平底方头的，不像海船那样带三根桅。
+          const boat = new THREE.Group();
+          const hull = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.9, 1.7), new THREE.MeshStandardMaterial({ color: 0x3a2818, roughness: 0.92 }));
+          hull.position.y = 0.45; hull.castShadow = true; boat.add(hull);
+          const roof = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 2.4, 12, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x7a6a4a, roughness: 0.95, side: THREE.DoubleSide }));
+          roof.rotation.z = Math.PI / 2; roof.position.set(0.4, 0.95, 0); boat.add(roof);   // 船篷
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 3.6, 8), mats.wood);
+          mast.position.set(-1.8, 2.2, 0); boat.add(mast);
+          boat.position.set(0, -0.7, -10.2); boat.rotation.y = 0.1;
+          boat.userData.tick = (dt, t) => { boat.position.y = -0.7 + Math.sin(t * 0.55) * 0.06; boat.rotation.z = Math.sin(t * 0.45) * 0.012; };
+          root.add(boat);
+          if (lake) {
+            for (let k = 0; k < 6; k++) { const s = k % 2 ? 1 : -1; root.add(pineTree(s * (7.4 + R() * 1.2), -4.4 + (k % 3) * 3.2, 1.5 + R() * 0.7)); }
+            for (let k = 0; k < 6; k++) root.add(rock((k % 2 ? 1 : -1) * (6.6 + R()), -3 + (k % 3) * 3, 0.5 + R() * 0.4));
+          } else {
+            // 市集：桥头堆着的货箱和酒瓮
+            for (let k = 0; k < 10; k++) {
+              const side = k % 2 ? 1 : -1, x = side * (7.2 + R() * 1.4), z = -4.6 + (k % 5) * 2.1;
+              if (R() < 0.4) {
+                const jar = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 }));
+                jar.scale.y = 1.3; jar.position.set(x, -0.1, z); jar.castShadow = true; root.add(jar);
+              } else {
+                const box = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.65, 0.65), mats.wood);
+                box.position.set(x, -0.28, z); box.rotation.y = R(); box.castShadow = true; root.add(box);
+              }
+            }
+          }
+          for (const z of [-3.4, 2.6]) for (const s of [-1, 1]) root.add(lampPost(mats, s * 7.6, z, { dir: -s, h: 3.4 }));
+        },
+      };
+    },
+
     // ── 藏书楼 ────────────────────────────────────────────────────────────
     cangshu: (variant) => {
       const lamp = variant === 'lamp', court = variant === 'court';

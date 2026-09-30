@@ -5,6 +5,7 @@ import { LATE_CARDS, LATE_BONDS } from './cardsLate.js';
 import { ARTIFACTS } from './artifacts.js';
 import { RELIC_ARTIFACTS } from './cardsRelic.js';
 import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
+import { SONG_CARDS, SONG_BOND } from './cardsSong.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
@@ -52,6 +53,7 @@ export const BONDS = {
     auto: { generals: ['LJ-014', 'LJ-015', 'LJ-017'], need: 2, wenmai: 'WM-011', perk: 'skill' } },
   ...LATE_BONDS,
   ...XIYOU_BOND,
+  ...SONG_BOND,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -205,42 +207,43 @@ add({ id: 'WM-007', name: '皮影·旦角', short: '旦角', type: 'wenmai', fac
   flavor: '皮上不过几道刻痕，灯后却是一整个江湖。', lore: '皮影人偶需经选皮、刮制、描样、雕刻、上色等数十道工序。2011 年中国皮影戏入选非遗名录。',
   art: { motif: 'scroll-shadow' } });
 
-// ───────────────────────────── 第二章 · 唐宋古风篇 ─────────────────────────────
-add({ id: 'LJ-010', name: '李白·诗仙', short: '李白', type: 'general', faction: '唐宋风华', cost: 5, atk: 6, def: 3, hp: 9, el: 'metal', bonds: ['shisheng'],
+// ───────────────────────────── 大唐气象篇（原「唐宋古风」拆出的唐这一半）─────────────────────────────
+// 苏轼和活字印刷（毕昇）是宋人，跟着第八章走，牌面上的势力也改成了「两宋风雅」。
+add({ id: 'LJ-010', name: '李白·诗仙', short: '李白', type: 'general', faction: '大唐气象', cost: 5, atk: 6, def: 3, hp: 9, el: 'metal', bonds: ['shisheng'],
   text: '【斗酒诗百篇】召唤时抽 1 张牌；我方每打出 1 张符箓，李白本回合 ATK +1。',
   skill: { name: '将进酒', cost: 3, target: null, text: '对敌方所有灵将造成 2 点固定伤害。' },
   quote: '李白斗酒诗百篇，长安市上酒家眠。天子呼来不上船，自称臣是酒中仙。', source: '杜甫《饮中八仙歌》',
   flavor: '一壶酒，一轮月，整个盛唐都在他笔下。',
   lore: '李白字太白，号青莲居士。《新唐书》载其母梦长庚星而生，故以"太白"为字。天宝初供奉翰林，不久赐金放还，此后漫游天下，存诗近千首。',
   art: { motif: 'poet', tint: '#C8A04A' } });
-add({ id: 'LJ-011', name: '杜甫·诗圣', short: '杜甫', type: 'general', faction: '唐宋风华', cost: 4, atk: 3, def: 5, hp: 10, el: 'earth', bonds: ['shisheng'],
+add({ id: 'LJ-011', name: '杜甫·诗圣', short: '杜甫', type: 'general', faction: '大唐气象', cost: 4, atk: 3, def: 5, hp: 10, el: 'earth', bonds: ['shisheng'],
   guard: true, text: '【守护】【广厦千万间】回合结束时，我方所有灵将回复 1 点 HP。',
   skill: { name: '春望', cost: 2, target: 'friendlyGeneral', text: '清除我方灵将所有负面状态，并使其 DEF +2，持续 2 回合。' },
   quote: '安得广厦千万间，大庇天下寒士俱欢颜！风雨不动安如山。', source: '杜甫《茅屋为秋风所破歌》',
   flavor: '自己的屋顶被秋风卷走的那一夜，他想的是天下所有漏雨的屋子。',
   lore: '杜甫字子美，自号少陵野老。应试不第，困守长安十年，安史之乱中辗转流离。他的诗记下了一个时代的疼痛，后世称为"诗史"。',
   art: { motif: 'cottage', tint: '#8C6040' } });
-add({ id: 'LJ-012', name: '苏轼·东坡', short: '苏轼', type: 'general', faction: '唐宋风华', cost: 4, atk: 5, def: 3, hp: 8, el: 'water', bonds: ['shisheng'],
+add({ id: 'LJ-012', name: '苏轼·东坡', short: '苏轼', type: 'general', faction: '两宋风雅', cost: 4, atk: 5, def: 3, hp: 8, el: 'water', bonds: ['shisheng'],
   text: '【大江东去】召唤时对敌方随机 1 张灵将造成 3 点固定伤害（敌方无灵将时对主将造成 2 点）。',
   skill: { name: '定风波', cost: 2, target: null, text: '我方所有灵将免疫负面状态 2 回合。' },
   quote: '大江东去，浪淘尽，千古风流人物。', source: '苏轼《念奴娇·赤壁怀古》',
   flavor: '竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。（苏轼《定风波》）',
   lore: '苏轼字子瞻，号东坡居士，北宋文学家、书画家。一生屡遭贬谪，黄州、惠州、儋州越走越远，却在每一处都留下了诗文与笑谈。',
   art: { motif: 'river', tint: '#2A4A7A' } });
-add({ id: 'LJ-013', name: '公孙大娘·剑器', short: '公孙大娘', type: 'general', faction: '唐宋风华', cost: 3, atk: 4, def: 2, hp: 6, el: 'fire', bonds: [],
+add({ id: 'LJ-013', name: '公孙大娘·剑器', short: '公孙大娘', type: 'general', faction: '大唐气象', cost: 3, atk: 4, def: 2, hp: 6, el: 'fire', bonds: [],
   text: '【剑器浑脱】攻击后若存活，获得「潜行」（免疫下一次攻击）。',
   skill: { name: '剑器行', cost: 2, target: 'enemyGeneral', text: '对敌方灵将造成 4 点固定伤害。' },
   quote: '昔有佳人公孙氏，一舞剑器动四方。观者如山色沮丧，天地为之久低昂。', source: '杜甫《观公孙大娘弟子舞剑器行》',
   flavor: '她舞剑的时候，连天地都要屏住呼吸。',
   lore: '公孙大娘是唐玄宗时的舞者，以剑器舞名动一时。杜甫幼年曾观其舞，五十年后见其弟子李十二娘再舞，作诗追忆；诗序说张旭观公孙大娘舞剑器，自此草书长进。',
   art: { motif: 'dancer', tint: '#C03A2A' } });
-add({ id: 'WM-008', name: '活字印刷', short: '活字', type: 'wenmai', faction: '唐宋风华', cost: 3, el: 'earth', bonds: [],
+add({ id: 'WM-008', name: '活字印刷', short: '活字', type: 'wenmai', faction: '两宋风雅', cost: 3, el: 'earth', bonds: [],
   text: '每回合开始，若手牌少于 3 张，额外抽 1 张牌。', up: '珍品：手牌少于 4 张即触发。',
   quote: '庆历中，有布衣毕昇，又为活板。其法用胶泥刻字，薄如钱唇，每字为一印，火烧令坚。', source: '沈括《梦溪笔谈》卷十八·技艺',
   flavor: '一个字刻一次，却能印一万次。记忆也是这样被传下去的。',
   lore: '北宋毕昇发明胶泥活字，比欧洲早约四百年。2010 年"中国木活字印刷术"列入联合国教科文组织急需保护的非物质文化遗产名录。',
   art: { motif: 'scroll-type' } });
-add({ id: 'WM-009', name: '陆羽茶经', short: '茶经', type: 'wenmai', faction: '唐宋风华', cost: 4, el: 'wood', bonds: [],
+add({ id: 'WM-009', name: '陆羽茶经', short: '茶经', type: 'wenmai', faction: '大唐气象', cost: 4, el: 'wood', bonds: [],
   text: '每回合开始获得 1 点额外灵力。', up: '珍品：并使我方主将回复 1 点 HP。',
   quote: '茶者，南方之嘉木也。一尺、二尺乃至数十尺。', source: '陆羽《茶经·一之源》',
   flavor: '一盏茶的工夫，足够让人慢下来，想起一些事。',
@@ -333,6 +336,7 @@ ZL({ id: 'ZL-018', name: '尘封之幕', short: '落幕', type: 'talisman', cost
 
 for (const c of LATE_CARDS) add(c);          // chapters 4–10 (src/data/cardsLate.js)
 for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/cardsXiyou.js)
+for (const c of SONG_CARDS) add(c);          // 两宋风雅 (src/data/cardsSong.js)
 add(XIYOU_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)
 for (const c of RELIC_ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 文物器物 (src/data/cardsRelic.js)

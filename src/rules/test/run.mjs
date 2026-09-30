@@ -4,7 +4,7 @@ import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
 import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward } from '../../data/story.js';
-import { insertCard, deckProblem } from '../../game/save.js';
+import { insertCard, deckProblem, migrateSave } from '../../game/save.js';
 import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
 import { CHAPTERS } from '../../data/story.js';
 import { SIGNATURE } from '../../game/cardvfx.js';
@@ -80,14 +80,37 @@ test('守护者「持盈」：手牌上限随之抬高', () => {
 test('守护者修行：等级表算出来的加成和引擎字段对得上', () => {
   const maxed = Object.fromEntries(GUARDIAN.map((t) => [t.k, t.max]));
   const b = boonOf(maxed);
-  eq(b.hp, 70, 'hp'); eq(b.armor, 3, 'armor'); eq(b.regen, 5, 'regen');
+  eq(b.hp, 80, 'hp'); eq(b.armor, 3, 'armor'); eq(b.regen, 5, 'regen');
   eq(b.mana, 4, 'mana'); eq(b.hand, 3, 'hand'); eq(b.handCap, 3, 'handCap');
-  eq(RULES.HERO_HP + b.hp, 90, '点满后的气血上限');
-  eq(boonOf({ hp: 99 }).hp, 70, 'levels are clamped to the track max');
+  eq(RULES.HERO_HP + b.hp, 100, '点满后的气血上限');
+  eq(boonOf({ hp: 99 }).hp, 80, 'levels are clamped to the track max');
   eq(boonOf({}).hp, 0, 'empty table means no boon');
   const s = createGame({ seed: 1, first: 0, players: [{ deck: filler, boon: b }, { deck: filler }] });
-  eq(s.players[0].maxHp, 90, '引擎收下的就是这个数');
+  eq(s.players[0].maxHp, 100, '引擎收下的就是这个数');
   for (const t of GUARDIAN) ok(t.cost.length === t.max, `${t.k} 的费用表要和等级数一致`);
+});
+test('章节：按朝代编年一路排下来，id 前缀和章号都不重复', () => {
+  const order = CHAPTERS.map((C) => C.key);
+  eq(order.join(' '), 'shenhua xianqin chuci qinhan weijin dunhuang datang liangsong haisi shijing tiangong feiyi guizang',
+    '章节顺序 = 神话 → 朝代编年 → 传承 → 终章');
+  eq(new Set(order).size, order.length, '每章一个 id 前缀');
+  eq(new Set(CHAPTERS.map((C) => C.n)).size, CHAPTERS.length, '章号不重复');
+  CHAPTERS.forEach((C, i) => eq(C.n, i + 1, `第 ${i + 1} 章的章号要连着`));
+  for (const C of CHAPTERS) eq(C.levels.length, 3, `${C.short} 该有三关`);
+  // 进度门禁吃的是 LEVELS 的下标，所以扁平表也必须是按章排好的
+  eq(LEVELS.map((L) => L.id).join(' '), CHAPTERS.flatMap((C) => C.levels.map((L) => L.id)).join(' '), 'LEVELS 要和章节顺序一致');
+});
+test('存档迁移：v1 的 chN-M 和 v2 的 tangsong-* 都能落到今天的关卡 id 上', () => {
+  const v1 = migrateSave({ done: ['ch1-1', 'ch1-2', 'ch1-3', 'ch2-1', 'ch2-3', 'ch11-1'], seenPro: [2, 11] });
+  eq(v1.done.join(','), 'shenhua-1,shenhua-2,shenhua-3,datang-1,datang-3,haisi-1', 'v1 的关卡 id');
+  eq(v1.seenPro.join(','), '7,9', 'v1 的章号：唐宋是第七章，海丝在拆章后成了第九章');
+  const v2 = migrateSave({ v: 2, done: ['tangsong-2', 'haisi-3', 'guizang-1'], seenPro: [7, 8, 12] });
+  eq(v2.done.join(','), 'datang-2,haisi-3,guizang-1', 'v2 只需要改唐那三关');
+  eq(v2.seenPro.join(','), '7,9,13', '第八章往后的序章标记跟着章号一起后移');
+  const v3 = migrateSave({ v: 3, done: ['datang-3', 'liangsong-1'], seenPro: [8] });
+  eq(v3.done.join(','), 'datang-3,liangsong-1', 'v3 原样收下');
+  eq(v3.seenPro.join(','), '8', 'v3 的章号不再动');
+  eq(migrateSave({ v: 3, done: ['tangsong-1', '不存在的关'] }).done.length, 0, '认不出的关卡 id 一律丢掉');
 });
 test('守护者境界：总重数决定称呼，点满即圆满', () => {
   const none = guardianRank({});
@@ -99,7 +122,11 @@ test('守护者境界：总重数决定称呼，点满即圆满', () => {
   // 境界只能往上走，不能中途掉回去。
   let last = -1;
   for (let n = 0; n <= GUARDIAN_MAX; n++) {
-    const r = guardianRank({ hp: Math.min(7, n), armor: Math.min(3, Math.max(0, n - 7)), regen: Math.min(5, Math.max(0, n - 10)) });
+    // 把 n 重按声明顺序摊到各条路上，这样某条路的上限一改，这里也不用跟着改。
+    const levels = {};
+    let left = n;
+    for (const t of GUARDIAN) { levels[t.k] = Math.min(t.max, left); left -= levels[t.k]; }
+    const r = guardianRank(levels);
     ok(r.level >= last, '重数单调不减'); last = r.level;
     ok(r.next === null || r.next.need >= 1, `第 ${r.level} 重的进阶差值要是正数`);
   }

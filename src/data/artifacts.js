@@ -80,7 +80,7 @@ export const ARTIFACTS = [
     lore: '铁扇公主的芭蕉扇，能灭火焰山八百里烈焰。它本是昆仑山的灵宝，天地开辟时自然生成。有意思的是这把扇子从不用来伤人，它的全部威力都在「让一件事停下来」。',
     art: { motif: 'gear-fan', tint: '#C03A2A' } },
 
-  { id: 'QW-008', name: '紫毫笔', short: '紫毫', type: 'artifact', faction: '唐宋风华', cost: 2, el: 'wood',
+  { id: 'QW-008', name: '紫毫笔', short: '紫毫', type: 'artifact', faction: '大唐气象', cost: 2, el: 'wood',
     target: 'friendlyGeneral', gear: { atk: 2, only: ['LJ-010', 'LJ-011', 'LJ-012', 'LJ-030'] },
     text: '【器物·执笔者专属】只能佩于李白、杜甫、苏轼或王羲之。佩戴者 ATK +2，攻击后抽 1 张牌（每回合 1 次）。',
     up: '珍品：抽牌时额外获得 1 点灵力。',

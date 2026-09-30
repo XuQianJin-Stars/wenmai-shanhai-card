@@ -45,6 +45,7 @@ const PASSIVE_ZH = {
   wangchuan: { name: '忘川', every: 2, mine: '我方灵将 ATK -1，遗忘之渊回复 2 点生命并抽 1 张牌', foe: '对方灵将 ATK -1，自身回复 2 点生命并抽 1 张牌。' },
   chenzhou: { name: '覆舟', every: 3, mine: '我方灵将受 1 点伤害且 ATK -1，沉舟之影回复 2 点生命并抽 1 张牌', foe: '对方灵将受 1 点伤害且 ATK -1，自身回复 2 点生命并抽 1 张牌。' },
   wuren: { name: '合卷', every: 3, mine: '烧掉我方 1 张手牌，我方灵将 ATK -1，无人读回复 1 点生命', foe: '烧掉对方 1 张手牌，对方灵将 ATK -1，自身回复 1 点生命。' },
+  sanyi: { name: '散佚', every: 3, mine: '烧掉我方 1 张手牌，我方灵将永久 -1 防御，散箧巨影回复 2 点生命', foe: '烧掉对方 1 张手牌，对方灵将永久 -1 防御，自身回复 2 点生命。' },
 };
 const ST_TEXT = { stun: ['眩晕', '#8fb4ff'], seal: ['封印', '#d8a070'], bleed: ['流血', '#ff6a5a'], immune: ['免疫', '#ffe08a'], defUp: ['护体', '#ffe08a'],
   atkUp: ['勇武', '#ffb080'], atkDown: ['削弱', '#b0b0b0'], defDown: ['破防', '#b0b0b0'], dodge: ['潜行', '#a8d0f0'], reflect: ['反伤', '#ffe08a'] };
@@ -864,6 +865,7 @@ export function startBattle(ctx, cfg) {
       case 'wangchuan': await bossCue(e, '忘川', '我方灵将 ATK -1，遗忘之渊回复 2 点生命', 0x080c18, '#8aa0c8', '忘'); break;
       case 'chenzhou': await bossCue(e, '覆舟', '我方灵将受 1 点伤害且 ATK -1，对方回复 2 点生命', 0x0a1828, '#9ac0e0', '覆舟'); break;
       case 'wuren': await bossCue(e, '合卷', '烧掉我方 1 张手牌，我方灵将 ATK -1', 0x140e08, '#e8c890', '合卷'); break;
+      case 'sanyi': await bossCue(e, '散佚', '烧掉我方 1 张手牌，我方灵将永久 -1 防御', 0x14202c, '#a8c4d8', '南渡'); break;
       // 第十一 / 十二章卡牌
       case 'sail': { const p = posOf(e.uid); fx.ring(p.clone().setY(0), { color: '#8ac0e0', size: 5, life: 1.3 }); fx.glyphs(p, '涉沧溟', { color: '#cfe4ff', spread: 2 }); audio.sfx('buff'); await W(0.4); break; }
       case 'kiln': { const p = posOf(e.uid); fx.fire(p); fx.text(p.clone().add(V(0, 1.2, 0)), '入窑一色', { color: '#ffd0a0', size: 0.7 }); await W(0.35); break; }

@@ -608,7 +608,7 @@ export async function boot(params, fontsReady) {
 
   // ── settings ──
   // 存档导出 / 导入。进度只活在 localStorage 里，换浏览器、清缓存、或者被谁手抖覆盖一次就没了，
-  // 所以留一个能自己拿走的副本。格式就是存档本身的 JSON，validate() 会把不合法的字段挡掉。
+  // 所以留一个能自己拿走的副本。格式就是存档本身的 JSON，migrateSave() 会把不合法的字段挡掉，旧版本也在那里补迁移。
   function exportSave() {
     save.write();
     const stamp = new Date().toISOString().slice(0, 10);
@@ -629,7 +629,7 @@ export async function boot(params, fontsReady) {
       const ok = await modal('导入存档', `将用「${f.name}」覆盖当前进度（已通 ${raw.done.length} 关），确定吗？`,
         [{ label: '确定导入', value: true }, { label: '取消', value: false, primary: true }]);
       if (!ok) return;
-      // 直接写进 localStorage 再刷新：让 createSave 走一遍 validate，脏字段自然被洗掉。
+      // 直接写进 localStorage 再刷新：让 createSave 走一遍 migrateSave，脏字段自然被洗掉。
       localStorage.setItem('wenmai_save_v1', JSON.stringify(raw));
       location.reload();
     };
