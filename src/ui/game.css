@@ -37,9 +37,11 @@ button { font: inherit; color: inherit; }
 .logo-main { font-family: var(--brush); font-size: min(150px, 22vw); line-height: 1; }
 .logo-dot { font-family: var(--brush); font-size: 60px; color: var(--cinnabar); }
 .logo-sub { font-family: var(--brush); font-size: min(64px, 9vw); letter-spacing: 0.2em; }
-.logo.small { position: absolute; left: calc(7vw + var(--sal)); top: 11%; }
-.logo.small .logo-main { font-size: 96px; }
-.logo.small .logo-sub { font-size: 44px; }
+/* 菜单在左侧的暗底上，角标题就放到右边的水墨亮区——深墨字配白光晕本来就该落在浅色上，
+   也不会跟菜单抢地方。top 取 max 是为了不管屏多矮都压在碎片计数下面。 */
+.logo.small { position: absolute; right: calc(7vw + var(--sar)); top: max(calc(56px + var(--sat)), 11%); }
+.logo.small .logo-main { font-size: clamp(56px, calc(11 * var(--u)), 96px); }
+.logo.small .logo-sub { font-size: clamp(26px, calc(5 * var(--u)), 44px); }
 .tagline { margin-top: 18px; color: #2a2218; font-size: 17px; letter-spacing: 0.35em; text-shadow: 0 0 12px rgba(255, 250, 235, 0.9); animation: inkIn 2s .4s ease both; }
 .press { margin-top: min(12vh, 54px); color: #fff8e8; letter-spacing: 0.4em; font-size: 15px; text-shadow: 0 0 8px #000; animation: breathe 2.4s ease-in-out infinite; }
 .credit { position: absolute; bottom: 16px; font-size: 12px; letter-spacing: 0.2em; color: rgba(255, 248, 232, 0.6); text-shadow: 0 0 6px #000; }
@@ -48,12 +50,16 @@ button { font: inherit; color: inherit; }
 
 /* main menu */
 .menu-screen { background: linear-gradient(90deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.3) 38%, rgba(0,0,0,0) 60%); }
-.menu { position: absolute; left: calc(7vw + var(--sal)); top: 34%; display: flex; flex-direction: column; gap: 10px; }
-.menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 300px; padding: 12px 22px 12px 26px;
+/* 上下都钉住、内容居中，条目尺寸跟着视口高度缩：菜单增减条目都落在角标题和战绩之间。
+   矮窗口下会收到下限，高窗口下就是原来的 32px 标题、12px 内边距。 */
+.menu { position: absolute; left: calc(7vw + var(--sal)); top: 25%; bottom: calc(9% + var(--sab));
+  display: flex; flex-direction: column; justify-content: center; gap: clamp(4px, calc(1.2 * var(--u)), 10px); }
+.menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 300px;
+  padding: clamp(5px, calc(1.3 * var(--u)), 12px) 22px clamp(5px, calc(1.3 * var(--u)), 12px) 26px;
   background: linear-gradient(90deg, rgba(20, 18, 15, 0.8), rgba(20, 18, 15, 0.15)); border: 0; border-left: 3px solid rgba(200, 160, 74, 0.5);
   animation: slideIn .5s ease both; transition: all .2s; text-align: left; }
-.menu-t { font-family: var(--brush); font-size: 32px; color: var(--paper); letter-spacing: 0.2em; }
-.menu-s { font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
+.menu-t { font-family: var(--brush); font-size: clamp(21px, calc(4.2 * var(--u)), 32px); color: var(--paper); letter-spacing: 0.2em; }
+.menu-s { font-size: clamp(10px, calc(1.8 * var(--u)), 13px); color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
 .stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(5% + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
 @keyframes slideIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 
@@ -150,10 +156,17 @@ button { font: inherit; color: inherit; }
 .set-row input[type=range] { width: 180px; accent-color: var(--cinnabar); pointer-events: auto; }
 .set-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--cinnabar); pointer-events: auto; }
 
-/* 「怎么全屏？」指引（纸面配色，跟着 modal 走） */
-.guide { max-width: 420px; }
-.guide p { margin: 0 0 12px; }
-.guide p.small { font-size: 12.5px; line-height: 1.65; }
+/* 帮助（纸面配色，跟着 modal 走）。分页而不是长滚动，矮屏上也翻得动。 */
+.help { width: min(460px, 78vw); }
+.help-tabs { margin-bottom: 14px; }
+.help-body { max-height: min(330px, 46vh); overflow: auto; overscroll-behavior: contain; }
+.help-pane > :first-child { margin-top: 0; }
+.help-pane p { margin: 0 0 12px; }
+.help-pane p.small { line-height: 1.65; }
+.help-list { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 7px; }
+.help-list li { padding-left: 2px; }
+.help-list::marker, .help-list li::marker { color: var(--cinnabar); }
+.help-pane .set-row { margin: 14px 0 0; }
 .steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .steps li { display: flex; align-items: baseline; gap: 10px; }
 .steps i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--cinnabar); color: #f6f0e2;
@@ -293,14 +306,14 @@ button { font: inherit; color: inherit; }
 .short .top { padding-top: calc(8px + var(--sat)); padding-bottom: 8px; gap: 12px; }
 .short .top-title { font-size: 22px; }
 .short .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
-.short .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; }
+.short .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; justify-content: flex-end; }
 .short .menu-item { min-width: 190px; padding: 6px 16px 6px 18px; }
 .short .menu-t { font-size: 21px; letter-spacing: 0.12em; }
 .short .menu-s { font-size: 10px; }
 .short .stats { display: none; }
-.short .logo.small { top: 6%; }
-.short .logo.small .logo-main { font-size: 52px; }
-.short .logo.small .logo-sub { font-size: 24px; }
+.short .logo.small .logo-main { font-size: 46px; }
+.short .logo.small .logo-sub { font-size: 22px; }
+.short .logo.small .logo-dot { font-size: 28px; }
 .short .endturn { width: 74px; height: 74px; border-width: 2px; }
 .short .endturn-t { font-size: 16px; }
 .short .endturn-s { font-size: 9px; }
@@ -346,7 +359,6 @@ button { font: inherit; color: inherit; }
 
 /* Under ~360px of usable height — an in-app browser such as WeChat, which keeps a navigation bar and
    a toolbar over the page. The title screen and the menu both have to give up the corner logo. */
-.tiny .logo.small { display: none; }
 .tiny .logo-main { font-size: 74px; }
 .tiny .logo-dot { font-size: 30px; }
 .tiny .logo-sub { font-size: 32px; }

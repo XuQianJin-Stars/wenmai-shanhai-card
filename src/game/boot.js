@@ -143,6 +143,7 @@ export async function boot(params, fontsReady) {
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
       ['牌组编成', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
       ['设　　置', '音量 · 速度 · 计时', () => settingsModal()],
+      ['帮　　助', '玩法 · 操作 · 屏幕', () => helpModal()],
     ];
     screen.append(
       h('div.logo.small', h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' })),
@@ -414,24 +415,36 @@ export async function boot(params, fontsReady) {
     draw();
   }
 
-  // ── settings ──
-  /** 「全屏」一行：能全屏就给开关，不能（iPhone Safari）就给「添加到主屏幕」的指引。 */
-  function fullscreenRow() {
-    const label = h('span', { text: '全屏' });
-    if (standalone()) return h('div.set-row', label, h('span.dim.small', { text: '已在独立窗口中运行' }));
-    if (canFullscreen()) {
-      const b = h('button.btn.small', { text: isFullscreen() ? '退出全屏' : '进入全屏', onclick: async () => {
-        await toggleFullscreen();
-        b.textContent = isFullscreen() ? '退出全屏' : '进入全屏';
-      } });
-      return h('div.set-row', label, b);
-    }
-    return h('div.set-row', label, h('button.btn.small', { text: '怎么全屏？', onclick: () => homeScreenGuide() }));
+  // ── help ──
+  const bullets = (...items) => h('ul.help-list', items.map((t) => h('li', { text: t })));
+
+  /** 「全屏」开关。只在真的能全屏时出现——否则全屏这件事属于帮助，不属于设置。 */
+  function fullscreenButton() {
+    const b = h('button.btn.small', { text: isFullscreen() ? '退出全屏' : '进入全屏', onclick: async () => {
+      await toggleFullscreen();
+      b.textContent = isFullscreen() ? '退出全屏' : '进入全屏';
+    } });
+    return b;
   }
 
-  function homeScreenGuide() {
+  function screenPane() {
     const step = (n, text) => h('li', h('i', { text: String(n) }), text);
-    return modal('在 iPhone 上全屏', h('div.guide',
+    const pane = h('div.help-pane',
+      bullets(
+        '牌桌是横向构图，请横屏游玩；竖屏时卡面会小到读不了字。',
+        '画面按视口宽高比自动取景，窗口是什么比例都能玩。',
+      ));
+    if (standalone()) {
+      pane.append(h('p.dim.small', { text: '当前已从主屏幕图标以独立窗口运行，这就是全屏。' }));
+      return pane;
+    }
+    if (canFullscreen()) {
+      pane.append(h('div.set-row', h('span', { text: '全屏' }), fullscreenButton()),
+        h('p.dim.small', { text: '触屏设备在标题页「开卷」时也会自动请求全屏。' }));
+      return pane;
+    }
+    // iPhone 的 Safari（以及微信等内置浏览器）没有全屏 API，只能走主屏幕图标。
+    pane.append(
       h('p', { text: 'iPhone 的 Safari 不支持网页全屏，地址栏和标签栏收不起来。把游戏存成主屏幕图标，从图标启动就是真全屏了：' }),
       h('ol.steps',
         step(1, '点屏幕下方（横屏时在右上角）的「分享」按钮'),
@@ -439,10 +452,46 @@ export async function boot(params, fontsReady) {
         step(3, '回主屏幕，从「文脉·山海卡」图标启动'),
       ),
       h('p.dim.small', { text: '若是从微信、抖音等 App 里打开的，先点右上角「···」→「在 Safari 中打开」。' }),
-      h('p.dim.small', { text: 'iPad 与电脑上支持网页全屏，这一行会直接变成全屏开关。' }),
-    ), [{ label: '知道了', value: true, primary: true }]);
+      h('p.dim.small', { text: 'iPad 与电脑支持网页全屏，那里这一栏会是个开关。' }),
+    );
+    return pane;
   }
 
+  function helpModal() {
+    const panes = {
+      玩法: () => h('div.help-pane', bullets(
+        '双方主将各 20 点气血，先把对方主将打空者胜。',
+        '每个自己的回合灵力上限 +1（最多 10）并回满，同时抽 1 张牌；手牌上限 7 张。',
+        '灵将（金框）留在场上，下个回合起可以攻击，最多同时 5 名。',
+        '符箓（银白框）即时生效，用完就消散。',
+        '文脉（竹青框）进入文脉区持续生效，最多 6 张。',
+        '每回合最多攻击 2 次。对方有【守护】灵将时必须先击破它，否则可以直取主将。',
+        '五行相克：金克木、木克土、土克水、水克火、火克金，克制时伤害 ×1.3，目标会闪红光。',
+        '在卡牌图鉴里用文脉碎片升阶，升到珍品会解锁卡牌自带的技能。',
+      )),
+      操作: () => h('div.help-pane', bullets(
+        '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',
+        '攻击：先点自己的灵将，再点要打的目标。',
+        '技能：选中灵将后点出现的技能按钮。',
+        touch() ? '看卡面详情：点一下卡牌。' : '看卡面详情：把鼠标停在卡牌上。',
+        '取消选中：点空白处、按右键，或者按 Esc。',
+        '「録」是战报，「☰」是暂停菜单（Esc 也能开）。',
+      )),
+      屏幕: screenPane,
+    };
+    const keys = Object.keys(panes);
+    const body = h('div.help-body');
+    const tabs = h('div.seg.help-tabs', keys.map((k, i) => h('button' + (i === 0 ? '.on' : ''), { text: k, onclick: (e) => {
+      tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+      e.target.classList.add('on');
+      audio.sfx('click');
+      clear(body).append(panes[k]());
+    } })));
+    body.append(panes[keys[0]]());
+    return modal('帮助', h('div.help', tabs, body), [{ label: '知道了', value: true, primary: true }]);
+  }
+
+  // ── settings ──
   async function settingsModal() {
     const st = save.data.settings;
     const slider = (label, key) => h('label.set-row', h('span', { text: label }), h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: st[key],
@@ -453,7 +502,7 @@ export async function boot(params, fontsReady) {
       slider('总音量', 'master'), slider('音乐', 'music'), slider('音效', 'sfx'),
       h('label.set-row', h('span', { text: '动画速度' }), speed),
       check('回合计时（一炷香 · 30 秒）', 'timer'), check('教学提示', 'hints'),
-      fullscreenRow(),
+      canFullscreen() && !standalone() ? h('div.set-row', h('span', { text: '全屏' }), fullscreenButton()) : null,
       h('div.set-row', h('span', { text: '存档' }), h('button.btn.small', { text: '重置全部进度', onclick: async () => {
         const ok = await modal('重置进度', '将清除全部碎片、解锁、升阶与关卡进度，确定吗？', [{ label: '确定重置', value: true }, { label: '取消', value: false, primary: true }]);
         if (ok) { save.reset(); toast('进度已重置'); location.reload(); }

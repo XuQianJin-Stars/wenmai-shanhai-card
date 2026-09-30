@@ -3,6 +3,8 @@
   --cinnabar: #b8322a; --jade: #4a8c5c; --blue: #2a4a7a;
   --brush: 'Ma Shan Zheng', 'STKaiti', 'Kaiti SC', 'KaiTi', serif;
   --serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  /* 实测视口高度的 1%。用它而不是 vh，因为内置浏览器的布局视口会比可见区域大（见 app.js）。 */
+  --u: calc(var(--vh, 100vh) / 100);
   color-scheme: dark;
 }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none;

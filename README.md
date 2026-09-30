@@ -62,7 +62,7 @@ node tools/play.mjs --turns 5                                 # 用真实鼠标�
 
 iPad 与 iPhone **请横屏**——牌桌是横向构图，竖屏时卡面会小到读不了字，因此竖屏直接提示旋转设备。已处理刘海与 Home 条安全区、双击缩放、下拉刷新与长按菜单；悬停态只在真正有指针的设备上生效。视口尺寸一律取自 `visualViewport` 实测值（`src/render/app.js` 写成 `--vw` / `--vh`），微信等内置浏览器把原生工具栏叠在布局视口上时也不会错位。
 
-**全屏**：桌面、Android 与 iPadOS 走 Fullscreen API，设置里有开关，触屏设备在标题页「开卷」那一下会顺手请求全屏。iPhone 的 Safari 至今没有网页全屏 API，那里唯一的真全屏是**添加到主屏幕**后从图标启动（`apple-mobile-web-app-capable` + `public/manifest.webmanifest`），设置里的「全屏」一行会相应变成操作指引。图标由 `node tools/icon.mjs` 生成。
+**全屏**：桌面、Android 与 iPadOS 走 Fullscreen API，设置里有开关，触屏设备在标题页「开卷」那一下会顺手请求全屏。iPhone 的 Safari 至今没有网页全屏 API，那里唯一的真全屏是**添加到主屏幕**后从图标启动（`apple-mobile-web-app-capable` + `public/manifest.webmanifest`），主菜单的「帮助 · 屏幕」一页会给出具体步骤。图标由 `node tools/icon.mjs` 生成。
 
 ## 技术
 
