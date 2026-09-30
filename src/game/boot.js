@@ -332,7 +332,7 @@ export async function boot(params, fontsReady) {
     let filter = 'all';
     const grid = h('div.grid');
     const side = h('div.side');
-    const tabs = h('div.seg', [['all', '全部'], ['general', '灵将'], ['talisman', '符箓'], ['wenmai', '文脉'], ['zhuo', '浊灵']].map(([k, t]) =>
+    const tabs = h('div.seg', [['all', '全部'], ['general', '灵将'], ['talisman', '符箓'], ['wenmai', '文脉'], ['artifact', '器物'], ['zhuo', '浊灵']].map(([k, t]) =>
       h('button' + (k === filter ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); filter = k; tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } })));
     function draw() {
       clear(grid);
@@ -449,11 +449,11 @@ export async function boot(params, fontsReady) {
     function draw() {
       clear(pool); clear(list); clear(head);
       const prob = deckProblem(deck);
-      const types = { general: 0, talisman: 0, wenmai: 0 };
+      const types = { general: 0, talisman: 0, wenmai: 0, artifact: 0 };
       deck.forEach((id) => types[card(id).type]++);
       const curve = Array(8).fill(0); deck.forEach((id) => curve[Math.min(7, card(id).cost)]++);
       head.append(h('div.deck-n' + (prob ? '.bad' : ''), { text: `${deck.length} / ${DECK_SIZE}` }),
-        h('div.dim', { text: `灵将 ${types.general} · 符箓 ${types.talisman} · 文脉 ${types.wenmai}` }),
+        h('div.dim', { text: `灵将 ${types.general} · 符箓 ${types.talisman} · 文脉 ${types.wenmai} · 器物 ${types.artifact}` }),
         h('div.curve', curve.map((n, c) => h('div.bar', { title: `${c}${c === 7 ? '+' : ''} 费：${n} 张` }, h('i', { style: { height: `${Math.min(64, n * 7)}px` } }), h('span', { text: c === 7 ? '7+' : c })))),
         prob ? h('div.warn', { text: prob }) : h('div.ok', { text: '牌组可用 ✓' }));
       for (const id of save.data.owned.slice().sort((a, b) => card(a).cost - card(b).cost || a.localeCompare(b))) {

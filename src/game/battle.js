@@ -260,7 +260,7 @@ export function startBattle(ctx, cfg) {
     u = u ?? findUnit(s, m.uid);
     if (!u) return;
     const v = unitView(s, u), base = statsOf(u.id, u.grade).base;
-    m.stats.set({ atk: v.atk, def: v.def, hp: overrideHp.get(u.uid) ?? v.hp, maxHp: v.maxHp, base, st: v.st },
+    m.stats.set({ atk: v.atk, def: v.def, hp: overrideHp.get(u.uid) ?? v.hp, maxHp: v.maxHp, base, st: v.st, gear: v.gear },
       { guard: isGuard(u), ready: u.owner === 0 && s.active === 0 && !s.over && (v.canAttack || v.canSkill) });
   }
   function refreshHeroes() {
@@ -450,6 +450,30 @@ export function startBattle(ctx, cfg) {
         await signature(e.id, 'summon', e, V(slot.pos.x, 0.2, BOARD_Z[e.p] + 0.3));
         shake = Math.max(shake, card(e.id).cost >= 5 ? 0.25 : 0.1);
         await W(0.25);
+        break;
+      }
+      // 器物飞到佩戴者身上，然后消失——它不占场上格位，之后只在灵将的状态条上留一枚牌子
+      case 'equip': {
+        const m = meshes.get(e.gearUid), host = meshes.get(e.uid);
+        const to = host ? host.position.clone().add(V(0, 0.45, 0.25)) : castSpot().pos;
+        log(`「${card(e.id).name}」佩于「${nameOf(e.uid)}」`, e.p ? 'foe' : 'me');
+        if (m) {
+          world.attach(m);
+          await moveTo(m, { pos: to, rot: new THREE.Euler(0, 0, 0), scale: 0.42 }, 0.3);
+          audio.sfx('upgrade');
+          fx.ring(to.clone().setY(0.05), { color: '#7fb2bd', size: 1.8 });
+          await signature(e.id, 'equip', e, to.clone());
+          await burnOut(m, { splash: false });
+        }
+        refreshPlate(meshes.get(e.uid));
+        await W(0.2);
+        break;
+      }
+      case 'unequip': {
+        log(e.why === 'death' ? `「${card(e.id).name}」随之碎裂` : `「${card(e.id).name}」被换下`);
+        const host = meshes.get(e.uid);
+        if (host) fx.sparks(host.position.clone(), { color: '#7fb2bd', n: 10, speed: 1.6 });
+        refreshPlate(host);
         break;
       }
       case 'wenmai': {
@@ -925,6 +949,7 @@ export function startBattle(ctx, cfg) {
     if (costOf(s, 0, u) > P.mana) return `灵力不足（需要 ${costOf(s, 0, u)}）`;
     if (d.type === 'general' && P.board.length >= RULES.MAX_BOARD) return '场上灵将已满（5）';
     if (d.target === 'enemyGeneral') return '没有可指定的敌方灵将';
+    if (d.gear?.only) return `专属器物，只能佩于${d.gear.only.map((id) => card(id).short ?? card(id).name).join('、')}`;
     if (d.target === 'friendlyGeneral') return '没有可指定的我方灵将';
     return '现在不能打出';
   }

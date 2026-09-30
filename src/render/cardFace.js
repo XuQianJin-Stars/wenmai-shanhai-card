@@ -1,6 +1,6 @@
 // Card face / back textures (Canvas 2D). Layout follows docs/art/CARD_ART_SPEC.md: art window, 回纹 corners,
 // type-coloured frame (灵将 bronze-gold, 符箓 silver-white, 文脉 bamboo-green — hue gap > 90°), cost jade, element seal.
-import { card, EL, TYPE_ZH, GRADE_ZH, GRADE_BONUS, BONDS } from '../data/cards.js';
+import { card, EL, TYPE_ZH, GRADE_ZH, GRADE_BONUS, GEAR_GRADE, BONDS } from '../data/cards.js';
 import { canvas, paper, seal, roundRect, huiwen, wrap, brush, rgba, INK, FONT_BRUSH, FONT_SERIF } from './ink.js';
 import { paintArt } from './cardArt.js';
 
@@ -9,6 +9,8 @@ export const FRAME = {
   general: { a: '#6e4c1e', b: '#d9b45a', line: '#3a2810', label: '灵将' },
   talisman: { a: '#8d949a', b: '#f2f0ea', line: '#4a5058', label: '符箓' },
   wenmai: { a: '#24503a', b: '#7aa87c', line: '#123022', label: '文脉' },
+  // 器物取青铜绿锈：色相约 190°，和金 45°、竹青 122°、银白都隔得开（CARD_ART_SPEC 要求 > 90°）
+  artifact: { a: '#274a54', b: '#7fb2bd', line: '#12303a', label: '器物' },
   zhuo: { a: '#1a1a1a', b: '#5a5550', line: '#000', label: '浊灵' },
 };
 const ART = { x: 30, y: 78, w: 452, h: 318 };
@@ -62,9 +64,13 @@ export function drawFace(ctx, id, grade = 0, { dim = false } = {}) {
   ctx.fillRect(ART.x, ry, ART.w, 30);
   ctx.fillStyle = '#f3ecdd'; ctx.font = `20px ${FONT_SERIF}`; ctx.textAlign = 'left';
   const bondTxt = (d.bonds ?? []).map((k) => BONDS[k].name).join(' · ');
-  ctx.fillText(`${d.zhuo ? '浊灵' : TYPE_ZH[d.type]} · ${d.faction}${d.guard ? ' · 守护' : ''}`, ART.x + 10, ry + 16);
+  const guardTxt = d.guard || d.gear?.guard ? ' · 守护' : '';
+  ctx.fillText(`${d.zhuo ? '浊灵' : TYPE_ZH[d.type]} · ${d.faction}${guardTxt}`, ART.x + 10, ry + 16);
   ctx.textAlign = 'right';
-  if (bondTxt) ctx.fillText(bondTxt, ART.x + ART.w - 10, ry + 16);
+  // 专属器物把主人写在绶带右端，跟灵将的羁绊占同一个位置
+  const only = d.gear?.only;
+  if (only) ctx.fillText(`专属 · ${only.map((x) => card(x).short ?? card(x).name).join('／')}`, ART.x + ART.w - 10, ry + 16);
+  else if (bondTxt) ctx.fillText(bondTxt, ART.x + ART.w - 10, ry + 16);
   // rules text
   const tx = 44, tw = W - 88;
   let y = ry + 50;
@@ -78,7 +84,7 @@ export function drawFace(ctx, id, grade = 0, { dim = false } = {}) {
     ctx.fillStyle = grade >= 1 ? '#9a2a1e' : 'rgba(26,26,26,0.38)';
     for (const line of wrap(ctx, up, tw)) { ctx.fillText(line, tx, y); y += 24; }
   }
-  const bottomLimit = d.type === 'general' ? H - 108 : H - 50;
+  const bottomLimit = d.type === 'general' || d.type === 'artifact' ? H - 108 : H - 50;
   if (d.flavor && y < bottomLimit - 30) {
     ctx.font = `italic 17px ${FONT_SERIF}`; ctx.fillStyle = 'rgba(60,50,40,0.7)';
     const fl = wrap(ctx, d.flavor, tw - 20);
@@ -94,8 +100,11 @@ export function drawFace(ctx, id, grade = 0, { dim = false } = {}) {
   ctx.font = `bold 50px ${FONT_SERIF}`; ctx.fillText(String(d.cost), 50, 53);
   // element seal
   seal(ctx, W - 52, 50, 60, EL[d.el].zh, { color: EL[d.el].color, seed: seedOf(id) });
+  // 上古十大神器另压一枚朱印，压在五行印下面，跟品阶印分左右不打架
+  if (d.divine) seal(ctx, 50, ART.y + ART.h - 30, 40, '神', { color: '#B23A2F', seed: seedOf(id) + 7 });
   // stats
   if (d.type === 'general') drawStats(ctx, statsOf(id, grade), { y: H - 58 });
+  if (d.type === 'artifact') drawStats(ctx, gearStats(id, grade), { y: H - 58 });
   // grade marks
   if (grade >= 1) {
     ctx.strokeStyle = grade >= 2 ? '#e8c35a' : '#c9a24a'; ctx.lineWidth = grade >= 2 ? 5 : 3;
@@ -110,6 +119,13 @@ export function drawFace(ctx, id, grade = 0, { dim = false } = {}) {
 export function statsOf(id, grade = 0) {
   const d = card(id), g = GRADE_BONUS[grade];
   return { atk: d.atk + g.atk, def: d.def + g.def, hp: d.hp + g.hp, maxHp: d.hp + g.hp, base: { atk: d.atk + g.atk, def: d.def + g.def, hp: d.hp + g.hp } };
+}
+
+/** 器物卡面上那三颗牌子显示的是「佩戴后加多少」，所以 base 和 val 一样，不该染色。 */
+export function gearStats(id, grade = 0) {
+  const g = card(id).gear ?? {}, b = GEAR_GRADE[grade] ?? 0;
+  const v = { atk: (g.atk ?? 0) + b, def: (g.def ?? 0) + b, hp: g.hp ?? 0 };
+  return { ...v, maxHp: v.hp, base: { ...v } };
 }
 
 /** Three stat medallions: 攻 / 防 / 血. Values that differ from base are tinted (green up, red down). */

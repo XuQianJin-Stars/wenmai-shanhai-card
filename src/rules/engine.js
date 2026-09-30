@@ -2,7 +2,7 @@
 //   const s = createGame(cfg); const ev = act(s, action); — mutates s, returns the events it produced.
 // The state is plain JSON (structuredClone-able) so the AI can simulate, tests can replay, and the view can re-sync.
 // Rules: docs/design/CORE_LOOP_v2.md (v1.1), BOND_SYSTEM.md, RESONANCE.md, CARD_LIST_v1.md.
-import { card, COUNTERS, GRADE_BONUS, EL_KEYS, BONDS } from '../data/cards.js';
+import { card, COUNTERS, GRADE_BONUS, GEAR_GRADE, EL_KEYS, BONDS } from '../data/cards.js';
 import { rand, randInt, pick, shuffle } from './rng.js';
 import { FX, PASSIVES } from './cardfx.js';
 
@@ -21,7 +21,9 @@ function makeInst(s, owner, id, grade = 0) {
   const u = { uid: `u${++s.uidc}`, id, owner, grade, costMod: 0 };
   if (d.type === 'general') {
     Object.assign(u, { atk: d.atk + b.atk, def: d.def + b.def, hp: d.hp + b.hp, maxHp: d.hp + b.hp,
-      st: [], sleep: true, attacks: 0, skillUsed: false, ctrl: 0 });
+      // rush（白龙马的「意马」）：落地就能动。写在 makeInst 里而不是 summon 钩子里，
+      // 这样 emit 出去的那份 unit 快照就已经是醒着的，前端不用再补一次刷新。
+      st: [], sleep: !d.rush, attacks: 0, skillUsed: false, ctrl: 0 });
   }
   return u;
 }
@@ -29,6 +31,16 @@ function resetInst(s, u) { // a card leaving play forgets everything that happen
   const fresh = makeInst(s, u.owner, u.id, u.grade);
   fresh.uid = u.uid; s.uidc--;
   return fresh;
+}
+
+/**
+ * 佩戴中的器物给的属性；没戴就是 null。品阶只抬 ATK/DEF（cards.js 的 GEAR_GRADE），
+ * HP 是佩戴那一刻实打实加到灵将身上的，卸下要原样还回去，所以不跟品阶走。
+ */
+export function gearOf(u) {
+  if (!u?.gear) return null;
+  const g = card(u.gear.id).gear ?? {}, b = GEAR_GRADE[u.gear.grade] ?? 0;
+  return { atk: (g.atk ?? 0) + b, def: (g.def ?? 0) + b, hp: g.hp ?? 0, guard: !!g.guard };
 }
 
 /** 守护者修行带来的永久加成（src/data/guardian.js 算好后传进来）。缺省全 0。 */
@@ -152,13 +164,14 @@ function auraDef(s, u) {
   if (bs.feiyi >= 3) a += 1;                                        // 手艺三生完阵
   return Math.min(3, a);   // single-turn DEF bonus cap +3 (S-CROSS-001)
 }
+// 器物加成走在光环封顶之外：光环是「场面给的」，会被 cap 压住；器物是玩家花一张牌换的，不该被压。
 export function atkOf(s, u, target = null) {
-  let v = u.atk + auraAtk(s, u, target);
+  let v = u.atk + auraAtk(s, u, target) + (gearOf(u)?.atk ?? 0);
   for (const x of u.st) { if (x.k === 'atkUp') v += x.v; if (x.k === 'atkDown') v -= x.v; }
   return Math.max(0, v);
 }
 export function defOf(s, u) {
-  let v = u.def + auraDef(s, u);
+  let v = u.def + auraDef(s, u) + (gearOf(u)?.def ?? 0);
   for (const x of u.st) { if (x.k === 'defUp') v += x.v; if (x.k === 'defDown') v -= x.v; }
   return Math.max(0, v);
 }
@@ -277,6 +290,7 @@ function reapDead(s) {
     for (const u of [...P.board]) {
       if (u.hp > 0) continue;
       P.board.splice(P.board.indexOf(u), 1);
+      if (u.gear) dropGear(s, u, 'death');      // 器物押在这名灵将身上，人没了，东西也碎
       P.discard.push(resetInst(s, u));
       emit(s, { t: 'die', uid: u.uid, p: P.i, id: u.id });
       any = true;
@@ -384,7 +398,8 @@ export function playTargets(s, i, u) {
   const d = card(u.id), P = s.players[i], O = s.players[opp(i)];
   switch (d.target) {
     case 'enemyGeneral': return O.board.map((x) => x.uid);
-    case 'friendlyGeneral': return P.board.map((x) => x.uid);
+    // 专属器物只认名单上的人（gear.only）；别的卡没有这个字段，行为不变。
+    case 'friendlyGeneral': return P.board.filter((x) => !d.gear?.only || d.gear.only.includes(x.id)).map((x) => x.uid);
     case 'friendlyGeneralOpt': return P.board.length ? P.board.map((x) => x.uid) : null;
     case 'enemyGeneralOrHero': return O.board.length ? O.board.map((x) => x.uid) : [heroId(opp(i))];
     default: return null;
@@ -398,8 +413,8 @@ export function canPlay(s, i, u) {
   if ((d.target === 'enemyGeneral' || d.target === 'friendlyGeneral') && !playTargets(s, i, u).length) return false;
   return true;
 }
-/** 守场: a 守护 general that is not stunned must be attacked first. */
-export const isGuard = (u) => !!card(u.id).guard && !hasSt(u, 'stun');
+/** 守场: a 守护 general that is not stunned must be attacked first. 器物也能给「守护」。 */
+export const isGuard = (u) => !!(card(u.id).guard || gearOf(u)?.guard) && !hasSt(u, 'stun');
 export function attackTargets(s, u) {
   const O = s.players[opp(u.owner)];
   const guards = O.board.filter(isGuard);
@@ -488,6 +503,8 @@ function ctxFor(s, i, u, T = null) {
     weakest: (list) => [...list].sort((a, b) => atkOf(s, a) - atkOf(s, b))[0] ?? null,
     has: (t, k) => hasSt(t, k),
     el: (t) => card(t.id).el,
+    atk: (t) => atkOf(s, t),          // 结算后的 ATK（含光环、器物、增益），给「造成 ATK 伤害」这类效果用
+
     handSize: () => P.hand.length,
     wenmaiCount: () => P.wenmai.length,
     dmg: (t, n) => { if (t && t.hp > 0) damageUnit(s, t, n, { src: u.uid, fixed: true }); },
@@ -500,6 +517,8 @@ function ctxFor(s, i, u, T = null) {
     buff: (t, k, turns, v = 1) => { if (t && t.hp > 0) addBuff(s, t, k, turns, v); },
     dodge: (t) => { if (t && t.hp > 0 && !hasSt(t, 'dodge')) addBuff(s, t, 'dodge', 99, 1); },
     cleanse: (t) => { if (t) cleanse(s, t); },
+    /** 驱散对方身上的增益，n 次。给「火眼金睛」这类看破的效果用。 */
+    dispel: (t, n = 1) => { if (t) for (let k = 0; k < n; k++) dispelOne(s, t); },
     immune: (t, turns) => {
       if (!t || t.hp <= 0) return;
       const ex = t.st.find((x) => x.k === 'immune');
@@ -545,8 +564,11 @@ function ctxFor(s, i, u, T = null) {
   return c;
 }
 function runFx(hook, s, i, u, T = null) {
-  const f = FX[u.id]?.[hook];
-  if (f) f(ctxFor(s, i, u, T));
+  FX[u.id]?.[hook]?.(ctxFor(s, i, u, T));
+  // 器物的钩子挂在佩戴者身上：c.u 还是那名灵将（卡面文案因此一律写「佩戴者」），
+  // 但 c.up 得看器物自己的品阶，不是灵将的。
+  const g = u.gear && FX[u.gear.id]?.[hook];
+  if (g) { const c = ctxFor(s, i, u, T); c.up = (u.gear.grade ?? 0) >= 1; g(c); }
 }
 
 function bumpPlayed(s, i) {
@@ -595,6 +617,8 @@ function doPlay(s, i, a) {
       reapDead(s);
     }
     onTalismanPlayed(s, i, d.el);
+  } else if (d.type === 'artifact') {
+    equipGear(s, i, u, a.target);
   } else {
     if (P.wenmai.length >= RULES.MAX_WENMAI) {
       const old = P.wenmai.shift();
@@ -607,6 +631,35 @@ function doPlay(s, i, a) {
   }
   checkBonds(s, i);
   bumpPlayed(s, i);
+}
+
+/** 把器物挂到 host 身上。身上已有的那件先卸下来。 */
+function equipGear(s, i, u, targetUid) {
+  const host = findUnit(s, targetUid);
+  if (!host || host.owner !== i) throw new Error('bad gear target');
+  if (host.gear) dropGear(s, host, 'replaced');
+  host.gear = u;
+  const g = gearOf(host);
+  if (g.hp) { host.maxHp += g.hp; host.hp += g.hp; }
+  emit(s, { t: 'equip', p: i, uid: host.uid, gearUid: u.uid, id: u.id, unit: structuredClone(host) });
+  runFx('equip', s, i, host);
+}
+/**
+ * 器物离身，进弃牌堆。灵将阵亡时也走这里（`why: 'death'`），那种情况 HP 已经没意义了。
+ * 换装时要把 gear.hp 还回去——还回去之后可能只剩 0，所以兜底留 1 点，不让「换个器物」变成自杀。
+ */
+function dropGear(s, host, why) {
+  const u = host.gear;
+  if (!u) return null;
+  const g = gearOf(host);
+  host.gear = null;
+  if (g.hp && why !== 'death') {
+    host.maxHp = Math.max(1, host.maxHp - g.hp);
+    host.hp = Math.max(1, Math.min(host.hp, host.maxHp));
+  }
+  s.players[u.owner].discard.push(resetInst(s, u));
+  emit(s, { t: 'unequip', p: u.owner, uid: host.uid, gearUid: u.uid, id: u.id, why });
+  return u;
 }
 
 function summonEffect(s, i, u) {
@@ -1021,7 +1074,7 @@ export function spawn(s, i, id, { grade = 0, zone = 'board' } = {}) {
 
 // ───────────────────────────── view helpers ─────────────────────────────
 export function unitView(s, u) {
-  return { atk: atkOf(s, u), def: defOf(s, u), hp: u.hp, maxHp: u.maxHp,
+  return { atk: atkOf(s, u), def: defOf(s, u), hp: u.hp, maxHp: u.maxHp, gear: u.gear?.id ?? null,
     canAttack: canAttack(s, u), canSkill: canSkill(s, u), st: u.st.map((x) => x.k) };
 }
 export { rand, randInt };

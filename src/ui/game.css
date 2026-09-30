@@ -12,7 +12,9 @@ button { font: inherit; color: inherit; }
 .btn.small { padding: 5px 12px; font-size: 13px; }
 .icon-btn { pointer-events: auto; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(200, 160, 74, 0.6);
   background: rgba(20, 18, 15, 0.7); color: var(--paper2); font-family: var(--brush); font-size: 20px; }
-.seg { display: inline-flex; border: 1px solid rgba(200, 160, 74, 0.5); border-radius: 3px; overflow: hidden; pointer-events: auto; }
+/* flex: none 是必须的——overflow:hidden 把自动最小尺寸降成 0，
+   当 .seg 是 flex 子项、旁边的列表又装不下时，整排按钮会被压成一条线。 */
+.seg { display: inline-flex; flex: none; border: 1px solid rgba(200, 160, 74, 0.5); border-radius: 3px; overflow: hidden; pointer-events: auto; }
 .seg button { cursor: pointer; background: rgba(20, 18, 15, 0.6); border: 0; padding: 6px 14px; color: var(--paper2); letter-spacing: 0.1em; }
 .seg button + button { border-left: 1px solid rgba(200, 160, 74, 0.3); }
 .seg button.on { background: var(--cinnabar); color: #fff; }
@@ -95,7 +97,8 @@ button { font: inherit; color: inherit; }
 /* collection */
 .coll { display: flex; gap: 20px; height: 100%; }
 .coll-left { flex: 1.25; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.grid { display: flex; flex-wrap: wrap; gap: 10px; overflow: auto; padding: 4px; align-content: flex-start; }
+/* 卡池比分类栏长得多，所以让它吃掉剩下的高度并自己滚动，别去挤上面那排按钮 */
+.grid { flex: 1; min-height: 0; display: flex; flex-wrap: wrap; gap: 10px; overflow: auto; padding: 4px; align-content: flex-start; }
 .cell { position: relative; cursor: pointer; transition: transform .15s; border-radius: 8px; }
 .cell.sel { outline: 2px solid var(--gold2); outline-offset: 2px; border-radius: 8px; }
 .cell.locked canvas { filter: grayscale(1) brightness(0.45); }

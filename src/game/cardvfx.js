@@ -182,6 +182,19 @@ export const SIGNATURE = {
   'LJ-053': { skill: sig([L('beam', { color: '#ffb060', at: 'target' }), L('shards', { color: '#e8dcc0', n: 12, at: 'target' })], { sfx: 'burn' }) },
   'WM-020': { play: sig([L('shards', { color: '#7a5434', n: 14, size: 0.2 }), L('glyphs', { glyphs: '刻梓', color: '#e0d4b8' })], { sfx: 'playWenmai' }) },
 
+  // ───────── 西游取经五众 ─────────
+  'LJ-054': { summon: sig([L('burst', { color: '#ffb030', r: 2.4 }), L('orbit', { color: '#ffd060', n: 14, r: 1.3 }), L('glyphs', { glyphs: '齐天大圣', color: '#ffe8b0' })], { sfx: 'playGeneral', shake: 0.22, flash: ['#ffd88a', 0.18] }),
+    skill: sig([L('ring', { color: '#e8e0d0', r: 3 }), L('beam', { color: '#ffd060', at: 'target' }), L('shards', { color: '#c8951f', n: 14, at: 'target' })], { sfx: 'attack', shake: 0.28 }) },
+  'LJ-055': { summon: sig([L('spikes', { color: '#8a9a52', n: 9, r: 1.6, h: 1.2 }), L('splash', { color: 0x3a4a28, size: 1.4 })], { sfx: 'playGeneral' }),
+    skill: sig([L('petals', { color: '#bfe0a8', n: 14, at: 'mine' }), L('dome', { color: '#8ac06a', r: 2.2, at: 'mine' })], { sfx: 'heal' }) },
+  'LJ-056': { summon: sig([L('water', { color: '#7a8a80', n: 16 }), L('dome', { color: '#a8b0a0', r: 2 })], { sfx: 'playGeneral' }),
+    skill: sig([L('beam', { color: '#c8b890', at: 'target' }), L('shards', { color: '#6a5a46', n: 12, at: 'target' })], { sfx: 'attack' }) },
+  'LJ-057': { summon: sig([L('flame', { color: '#e06a3a', n: 12 }), L('ribbon', { color: '#efe8dc', n: 3 })], { sfx: 'playGeneral', flash: ['#ffd0a0', 0.14] }),
+    skill: sig([L('vortex', { color: '#e8894a', r: 2.2 }), L('glyphs', { glyphs: '化龙', color: '#ffd8b0' })], { sfx: 'buff', shake: 0.18 }) },
+  'LJ-058': { summon: sig([L('rings', { color: '#f0d890', n: 4, r: 2.8 }), L('dome', { color: '#f4e4b0', r: 2.4 }), L('glyphs', { glyphs: '金蝉', color: '#fff0c8' })], { sfx: 'playGeneral' }),
+    skill: sig([L('orbit', { color: C.paper, n: 14, r: 1.2, at: 'mine' }), L('glyphs', { glyphs: '通关文牒', color: '#f0e6cc', at: 'mine' })], { sfx: 'draw' }) },
+  'WM-021': { play: sig([L('road', { color: '#c8b48c' }), L('glyphs', { glyphs: '释厄', color: '#e8dcc0' })], { sfx: 'playWenmai' }) },
+
   // ───────── 浊灵中几个有标志性登场的 ─────────
   'ZL-005': { summon: sig([L('splash', { color: 0x181210, size: 1.8 }), L('spikes', { color: '#564a3a', n: 6, r: 1.8, h: 1.4 }), L('shards', { color: '#6a5a4a', n: 16 }), L('ring', { color: '#7a5a40', r: 2.6 })], { sfx: 'die', shake: 0.25 }) },
   'ZL-011': { summon: sig([L('splash', { color: 0x181210, size: 1.6 }), L('flame', { color: '#8a5a7a', color2: '#2a1020', h: 2.4, r: 0.6, life: 1.2 }), L('ribbon', { color: '#8878a0', n: 3 }), L('petals', { color: '#a890b8', n: 10 })], { sfx: 'mist' }) },
@@ -209,6 +222,29 @@ export const SIGNATURE = {
       L('orbit', { color: '#d8e8ff', n: 16, r: 1.4 }), L('glyphs', { glyphs: '昆仑', color: '#eaf2ff' }),
     ], { sfx: 'bond', flash: ['#dfe8ff', 0.22] }),
   },
+
+  // ───────── 器物：都在 equip 这一相，落点是佩戴者 ─────────
+  'QW-001': { equip: sig([L('blades', { color: C.gold, n: 5 }), L('beam', { color: '#ffe0a0', at: 'target' }), L('glyphs', { glyphs: '轩辕', color: '#ffe8c0' })], { sfx: 'attack', shake: 0.18, flash: ['#ffe8b0', 0.18] }) },
+  'QW-002': { equip: sig([L('dome', { color: C.earth, r: 2.2 }), L('spikes', { color: '#8a7250', n: 6, r: 1.6, h: 1.4 }), L('glyphs', { glyphs: '山河', color: '#e8d8b0' })], { sfx: 'buff' }) },
+  'QW-003': { equip: sig([L('ribbon', { color: '#e8503a', n: 4 }), L('orbit', { color: '#ff9a80', n: 12, r: 1 })], { sfx: 'buff' }) },
+  'QW-004': { equip: sig([L('pillar', { color: '#cfe0f0', h: 7, r: 0.28, life: 1.8 }), L('waterColumn', { color: '#8ac8f0', h: 2.4, r: 0.8 }), L('glyphs', { glyphs: '定海', color: '#e0f0ff' })], { sfx: 'thunder', shake: 0.28 }) },
+  'QW-005': { equip: sig([L('rings', { color: '#bfe0ee', n: 3 }), L('dome', { color: '#cfe8f4', r: 1.8 }), L('glyphs', { glyphs: '照', color: '#eaf6ff' })], { sfx: 'resonance', el: 'water' }) },
+  'QW-006': { equip: sig([L('orbit', { color: C.jade, n: 14, r: 1.1 }), L('petals', { color: '#bfe0b8', n: 10 }), L('glyphs', { glyphs: '百草', color: '#d8f0d0' })], { sfx: 'heal' }) },
+  'QW-007': { equip: sig([L('ribbon', { color: '#8fbf6a', n: 3 }), L('rings', { color: '#a8d08a', n: 2, at: 'foe' }), L('sparks', { color: '#c8e0a0', n: 24, at: 'foe' })], { sfx: 'resonance', el: 'wood', shake: 0.14 }) },
+  'QW-008': { equip: sig([L('glyphs', { glyphs: '紫毫', color: '#d8c8f0' }), L('sparks', { color: '#b8a0e0', n: 18 })], { sfx: 'pick' }) },
+  'QW-009': { equip: sig([L('dome', { color: '#7fb2bd', r: 2 }), L('rings', { color: '#9fd0d8', n: 2 }), L('glyphs', { glyphs: '纵目', color: '#d0eef2' })], { sfx: 'bond' }) },
+  'QW-010': { equip: sig([L('vines', { color: '#6f8f4a', n: 4, h: 2, r: 0.9 }), L('petals', { color: '#bfe0a8', n: 10 })], { sfx: 'heal' }) },
+  // 上古十大神器余下的七件：分量比一般器物重，都配了闪屏或震屏
+  'QW-011': { equip: sig([L('rings', { color: '#e8d8a0', n: 4, r: 3.2 }), L('dome', { color: '#cfe0d8', r: 2.6 }), L('glyphs', { glyphs: '东皇', color: '#ffe8c0' })], { sfx: 'thunder', shake: 0.22, flash: ['#f4e8c0', 0.2] }) },
+  'QW-012': { equip: sig([L('kaitian', { color: '#fff4c8' }), L('blades', { color: '#b8c4cc', n: 3 }), L('shards', { color: '#6b737b', n: 16 })], { sfx: 'attack', shake: 0.34, flash: ['#fff8d8', 0.26] }) },
+  'QW-013': { equip: sig([L('vortex', { color: '#a060c8', r: 2.4 }), L('orbit', { color: '#d0a0ec', n: 14, r: 1.4 }), L('glyphs', { glyphs: '炼妖', color: '#e8c0ff' })], { sfx: 'mist', shake: 0.18 }) },
+  'QW-014': { equip: sig([L('pillar', { color: '#e8c878', h: 7, r: 1.2, life: 2 }), L('rings', { color: '#f0dca0', n: 3, r: 2.2 }), L('glyphs', { glyphs: '昊天', color: '#ffe8b0' })], { sfx: 'buff' }) },
+  'QW-015': { equip: sig([L('dome', { color: '#b23a2f', r: 2 }), L('splash', { color: 0xb23a2f, size: 1.8 }), L('glyphs', { glyphs: '崆峒', color: '#ffd8c8' })], { sfx: 'attack', shake: 0.2 }) },
+  'QW-016': { equip: sig([L('petals', { color: '#ffc070', n: 14 }), L('sparks', { color: '#ffd8a0', n: 18 }), L('dome', { color: '#e87a52', r: 2.2 })], { sfx: 'heal', flash: ['#ffd8a0', 0.14] }) },
+  'QW-017': { equip: sig([L('string', { color: '#e8dcb0', n: 7 }), L('rings', { color: '#bfe0a8', n: 3, r: 2 })], { sfx: 'upgrade' }) },
+
+  'ZL-055': { equip: sig([L('shards', { color: '#4a5a66', n: 14 }), L('ring', { color: '#6e8694', r: 2.2 })], { sfx: 'mist' }) },
+  'ZL-056': { equip: sig([L('spikes', { color: '#564a3a', n: 5, r: 1.4, h: 1.6 }), L('splash', { color: 0x181210, size: 1.4 })], { sfx: 'mist' }) },
 };
 
 // ───────── 浊灵通用：五行的浊化倒影 ─────────

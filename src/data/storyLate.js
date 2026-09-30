@@ -53,7 +53,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '灭学之雾', hp: 28, portrait: 'gagMist', deck: [
           'ZL-020', 'ZL-020', 'ZL-020', 'ZL-021', 'ZL-021', 'ZL-021', 'ZL-022', 'ZL-022', 'ZL-019', 'ZL-019',
           'ZL-003', 'ZL-003', 'ZL-004', 'ZL-014', 'ZL-014', 'ZL-012', 'ZL-012', 'FL-003', 'FL-005', 'FL-006'] },
-        reward: { fragments: 35, unlock: ['LJ-019', 'WM-012'] },
+        reward: { fragments: 35, unlock: ['LJ-019', 'WM-012', 'QW-015'] },
         pre: [
           { who: '', text: '（讲堂里坐满了人。他们张着嘴，却没有声音。一层灰白的雾贴在每个人脸上。）' },
           { who: '守护者', text: '他们在说话，可是……' },
@@ -78,7 +78,7 @@ export const LATE_CHAPTERS = [
           'ZL-021', 'ZL-021', 'ZL-021', 'ZL-022', 'ZL-022', 'ZL-020', 'ZL-020', 'ZL-019', 'ZL-019', 'ZL-005',
           'ZL-004', 'ZL-014', 'ZL-015', 'ZL-012', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 45, unlock: ['LJ-021'] },
+        reward: { fragments: 45, unlock: ['LJ-021', 'QW-009'] },
         pre: [
           { who: '', text: '（高台上只剩一个影子。它很大，由无数张嘴组成，每一张都在说话。）' },
           { who: '诡辩巨影', text: '白马非马。' },
@@ -150,7 +150,7 @@ export const LATE_CHAPTERS = [
           'ZL-026', 'ZL-026', 'ZL-025', 'ZL-025', 'ZL-025', 'ZL-024', 'ZL-024', 'ZL-023', 'ZL-023', 'ZL-022',
           'ZL-010', 'ZL-014', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-012', 'ZL-018', 'FL-001', 'FL-003', 'FL-004'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 35, unlock: ['LJ-024', 'WM-013'] },
+        reward: { fragments: 35, unlock: ['LJ-024', 'WM-013', 'QW-011'] },
         pre: [
           { who: '', text: '（水中央有一座小庙，四面挂满幡。风一吹，幡上的字全是空白。）' },
           { who: '山鬼之灵', text: '这是招魂的地方。念着名字，魂就回来。' },
@@ -173,7 +173,7 @@ export const LATE_CHAPTERS = [
           'ZL-026', 'ZL-026', 'ZL-025', 'ZL-025', 'ZL-024', 'ZL-024', 'ZL-023', 'ZL-023', 'ZL-005', 'ZL-016',
           'ZL-010', 'ZL-011', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-006': 1 } },
-        reward: { fragments: 50, unlock: ['LJ-022'] },
+        reward: { fragments: 50, unlock: ['LJ-022', 'QW-010'] },
         pre: [
           { who: '', text: '（江口开阔。水是浑的，天是低的。一个巨大的影子立在江心，身上挂满了幡。）' },
           { who: '女娲之灵', text: '它把这一带所有散掉的魂都收进了自己身上。' },
@@ -245,7 +245,7 @@ export const LATE_CHAPTERS = [
           'ZL-029', 'ZL-029', 'ZL-029', 'ZL-030', 'ZL-030', 'ZL-027', 'ZL-027', 'ZL-028', 'ZL-028', 'ZL-022',
           'ZL-010', 'ZL-016', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-001', 'FL-003', 'FL-004', 'FL-006'],
           grades: { 'FL-004': 1 } },
-        reward: { fragments: 40, unlock: ['LJ-028', 'WM-014'] },
+        reward: { fragments: 40, unlock: ['LJ-028', 'WM-014', 'QW-014'] },
         pre: [
           { who: '', text: '（宫殿只剩夯土的骨架。地上厚厚一层灰，风一吹，灰里亮起许多红点。）' },
           { who: '守护者', text: '还在烧？' },
@@ -269,7 +269,7 @@ export const LATE_CHAPTERS = [
           'ZL-029', 'ZL-029', 'ZL-030', 'ZL-027', 'ZL-027', 'ZL-028', 'ZL-028', 'ZL-019', 'ZL-019', 'ZL-016',
           'ZL-022', 'ZL-010', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 55, unlock: ['LJ-026'] },
+        reward: { fragments: 55, unlock: ['LJ-026', 'QW-001'] },
         pre: [
           { who: '', text: '（台顶立着一柱火。它不照亮任何东西，只是烧。）' },
           { who: '焚书余焰', text: '写下来做什么？写下来就要被烧。' },
@@ -341,7 +341,7 @@ export const LATE_CHAPTERS = [
           'ZL-033', 'ZL-033', 'ZL-033', 'ZL-034', 'ZL-034', 'ZL-032', 'ZL-032', 'ZL-031', 'ZL-031', 'ZL-022',
           'ZL-016', 'ZL-010', 'ZL-014', 'ZL-025', 'ZL-030', 'ZL-012', 'ZL-018', 'FL-001', 'FL-003', 'FL-005'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 40, unlock: ['LJ-030', 'WM-015'] },
+        reward: { fragments: 40, unlock: ['LJ-030', 'WM-015', 'QW-013'] },
         pre: [
           { who: '', text: '（竹林里有一张琴，弦断了三根。可琴还在响，反复响着同一段，永远停在同一处。）' },
           { who: '陶渊明之灵', text: '《广陵散》。弹这曲子的人，刑场上弹完就走了。' },
@@ -365,7 +365,7 @@ export const LATE_CHAPTERS = [
           'ZL-034', 'ZL-033', 'ZL-033', 'ZL-032', 'ZL-032', 'ZL-031', 'ZL-031', 'ZL-031', 'ZL-016', 'ZL-019',
           'ZL-022', 'ZL-010', 'ZL-026', 'ZL-030', 'ZL-020', 'ZL-012', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 60, unlock: ['LJ-033'] },
+        reward: { fragments: 60, unlock: ['LJ-033', 'QW-006'] },
         pre: [
           { who: '', text: '（天快黑了。亭中坐着一个透明的大影子，正在说话，说得非常好听。）' },
           { who: '空谈巨影', text: '……故曰：有即是无，无即是有。既然如此，做与不做，又有何异？' },
@@ -511,7 +511,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '禁毁书影', hp: 34, portrait: 'bannedBook', deck: [
           'ZL-039', 'ZL-039', 'ZL-039', 'ZL-040', 'ZL-040', 'ZL-041', 'ZL-041', 'ZL-042', 'ZL-029', 'ZL-019',
           'ZL-027', 'ZL-014', 'ZL-020', 'ZL-013', 'ZL-008', 'ZL-006', 'ZL-012', 'FL-002', 'FL-003', 'FL-006'] },
-        reward: { fragments: 45, unlock: ['LJ-039', 'LJ-041'] },
+        reward: { fragments: 45, unlock: ['LJ-039', 'LJ-041', 'LJ-054', 'LJ-055'] },
         pre: [
           { who: '', text: '（书坊后巷堆着一堆灰。灰上摊着一张单子，单子上全是书名，每个名字都打了叉。）' },
           { who: '守护者', text: '这些书……' },
@@ -535,7 +535,7 @@ export const LATE_CHAPTERS = [
           'ZL-041', 'ZL-041', 'ZL-041', 'ZL-042', 'ZL-042', 'ZL-040', 'ZL-040', 'ZL-039', 'ZL-039', 'ZL-016',
           'ZL-026', 'ZL-010', 'ZL-030', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-001', 'FL-003', 'FL-004'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 50, unlock: ['LJ-040', 'WM-017'] },
+        reward: { fragments: 50, unlock: ['LJ-040', 'WM-017', 'LJ-056', 'LJ-057'] },
         pre: [
           { who: '', text: '（河上停着一条药船。船舱里挂满药包，包上的字大半模糊了。）' },
           { who: '徐霞客之灵', text: '我在路上见过。有的村子里，会治病的老人一走，方子就没了。' },
@@ -559,7 +559,7 @@ export const LATE_CHAPTERS = [
           'ZL-042', 'ZL-042', 'ZL-041', 'ZL-041', 'ZL-040', 'ZL-040', 'ZL-039', 'ZL-039', 'ZL-016', 'ZL-005',
           'ZL-026', 'ZL-022', 'ZL-030', 'ZL-010', 'ZL-020', 'ZL-012', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-006': 1 } },
-        reward: { fragments: 70, unlock: ['LJ-038'] },
+        reward: { fragments: 70, unlock: ['LJ-038', 'LJ-058', 'WM-021'] },
         pre: [
           { who: '', text: '（书坊里一盏灯亮着。灯下坐着一个影子，正在一本一本地翻书，翻到的每一本都合上、放到左边。）' },
           { who: '禁毁之影', text: '这本不合适。这本也不合适。' },
@@ -657,7 +657,7 @@ export const LATE_CHAPTERS = [
           'ZL-046', 'ZL-046', 'ZL-045', 'ZL-045', 'ZL-044', 'ZL-044', 'ZL-043', 'ZL-043', 'ZL-005', 'ZL-016',
           'ZL-026', 'ZL-022', 'ZL-030', 'ZL-010', 'ZL-011', 'ZL-020', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-004': 1, 'FL-006': 1 } },
-        reward: { fragments: 100, unlock: ['LJ-044'] },
+        reward: { fragments: 100, unlock: ['LJ-044', 'QW-007'] },
         pre: [
           { who: '', text: '（守护者登上观星台顶。满天星宿在头顶缓缓转动，台下的炉火一点点亮着。）' },
           { who: '', text: '（星与火之间，空出一块什么都没有的地方。那块"什么都没有"，正在往外扩。）' },
@@ -765,7 +765,7 @@ export const LATE_CHAPTERS = [
           'ZL-050', 'ZL-050', 'ZL-049', 'ZL-049', 'ZL-048', 'ZL-048', 'ZL-047', 'ZL-047', 'ZL-016', 'ZL-026',
           'ZL-022', 'ZL-030', 'ZL-010', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-004': 1 } },
-        reward: { fragments: 75, unlock: ['LJ-046'] },
+        reward: { fragments: 75, unlock: ['LJ-046', 'QW-004'] },
         pre: [
           { who: '', text: '（夜里的海面比天还亮。浪尖上立着一条船的影子——桅断了，帆烂了，还在往前走。）' },
           { who: '沉舟之影', text: '别出海。' },
@@ -838,7 +838,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '空架之影', hp: 34, portrait: 'emptyShelf', deck: [
           'ZL-052', 'ZL-054', 'ZL-054', 'ZL-053', 'ZL-053', 'ZL-051', 'ZL-051', 'ZL-051', 'ZL-019', 'ZL-013',
           'ZL-030', 'ZL-014', 'ZL-020', 'ZL-027', 'ZL-012', 'ZL-018', 'FL-001', 'FL-002', 'FL-003', 'FL-004'] },
-        reward: { fragments: 60, unlock: ['LJ-050', 'WM-020'] },
+        reward: { fragments: 60, unlock: ['LJ-050', 'WM-020', 'QW-012'] },
         pre: [
           { who: '', text: '（后院的书橱一直排到墙根。每一格都贴着签条，写着类目和编号。每一格都是空的。）' },
           { who: '守护者', text: '书呢？' },
@@ -863,7 +863,7 @@ export const LATE_CHAPTERS = [
           'ZL-052', 'ZL-054', 'ZL-054', 'ZL-053', 'ZL-053', 'ZL-051', 'ZL-051', 'ZL-016', 'ZL-019', 'ZL-019',
           'ZL-047', 'ZL-014', 'ZL-020', 'ZL-027', 'ZL-013', 'ZL-012', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-004': 1 } },
-        reward: { fragments: 120, unlock: ['LJ-052'] },
+        reward: { fragments: 120, unlock: ['LJ-052', 'QW-002'] },
         pre: [
           { who: '', text: '（楼上只剩一张桌子、一盏灯。桌上摊着一本书，翻开在某一页。）' },
           { who: '', text: '（灯下坐着一个人形。它很安静，既不发光也不冒黑气——它只是坐在那儿，在看书。）' },

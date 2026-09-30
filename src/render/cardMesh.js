@@ -169,7 +169,7 @@ class StatPlate extends THREE.Group {
     this.key = '';
   }
   set(v, { guard = false, ready = false } = {}) {
-    const key = JSON.stringify([v.atk, v.def, v.hp, v.maxHp, v.base, v.st, guard, ready]);
+    const key = JSON.stringify([v.atk, v.def, v.hp, v.maxHp, v.base, v.st, v.gear, guard, ready]);
     if (key === this.key) return;
     this.key = key;
     const ctx = this.c.getContext('2d');
@@ -180,9 +180,12 @@ class StatPlate extends THREE.Group {
     drawStats(ctx, v, { y: 78, gap: 150, r: 40, font: 46 });
     const st = [...new Set(v.st)].filter((k) => STATUS_ICON[k]);
     if (guard) st.unshift('guard');
+    if (v.gear) st.unshift('gear');            // 佩戴的器物排在最前，一眼能看出这名灵将被押了注
     st.slice(0, 6).forEach((k, i) => {
       const x = 256 + (i - (Math.min(6, st.length) - 1) / 2) * 62, y = 158;
-      const ic = k === 'guard' ? { ch: '守', c: '#1a5276' } : STATUS_ICON[k];
+      const ic = k === 'guard' ? { ch: '守', c: '#1a5276' }
+        : k === 'gear' ? { ch: (card(v.gear).short ?? '器')[0], c: '#3f6a6e' }
+          : STATUS_ICON[k];
       ctx.fillStyle = ic.c; roundRect(ctx, x - 26, y - 26, 52, 52, 8); ctx.fill();
       ctx.strokeStyle = '#f1e6cf'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = '#f7f0e0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

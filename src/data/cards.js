@@ -2,11 +2,15 @@
 // Quotes are copied from the narrative files; do not paraphrase them.
 //
 import { LATE_CARDS, LATE_BONDS } from './cardsLate.js';
+import { ARTIFACTS } from './artifacts.js';
+import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
 
-// type: general 灵将 | talisman 符箓 | wenmai 文脉
+// type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
 // target: null | 'enemyGeneral' | 'friendlyGeneral' | 'friendlyGeneralOpt' (may be played with no target)
 // skill (珍品 active, generals only): { name, cost, target, text }
+// gear (器物 only): { atk, def, hp, guard, only } — 佩戴时加给灵将的属性，灵将阵亡时随之进弃牌堆。
+//                   only: [灵将 id]，专属器物只有名单里的人拿得动（定海神针只有孙悟空抡得起来）
 
 export const EL = {
   metal: { zh: '金', color: '#C8A04A', beast: '白虎' },
@@ -18,9 +22,11 @@ export const EL = {
 export const EL_KEYS = ['metal', 'wood', 'water', 'fire', 'earth'];
 // 金克木 → 木克土 → 土克水 → 水克火 → 火克金
 export const COUNTERS = { metal: 'wood', wood: 'earth', earth: 'water', water: 'fire', fire: 'metal' };
-export const TYPE_ZH = { general: '灵将', talisman: '符箓', wenmai: '文脉' };
+export const TYPE_ZH = { general: '灵将', talisman: '符箓', wenmai: '文脉', artifact: '器物' };
 export const GRADE_ZH = ['凡品', '珍品', '极品'];
 export const GRADE_BONUS = [{ atk: 0, def: 0, hp: 0 }, { atk: 1, def: 1, hp: 2 }, { atk: 2, def: 2, hp: 3 }];
+// 器物升阶只抬 ATK/DEF，不抬 HP——HP 是佩戴那一刻加到灵将身上的，跟着品阶变会让卸下时的账很难算。
+export const GEAR_GRADE = [0, 1, 2];
 export const UPGRADE_COST = [10, 25]; // 凡→珍, 珍→极 (文脉碎片)
 
 export const BONDS = {
@@ -44,6 +50,7 @@ export const BONDS = {
     line: '一方氍毹，几盏油灯。台上唱的是别人的悲欢，台下坐的是自己的一生。',
     auto: { generals: ['LJ-014', 'LJ-015', 'LJ-017'], need: 2, wenmai: 'WM-011', perk: 'skill' } },
   ...LATE_BONDS,
+  ...XIYOU_BOND,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -324,6 +331,9 @@ ZL({ id: 'ZL-018', name: '尘封之幕', short: '落幕', type: 'talisman', cost
   text: '眩晕敌方灵将 1 回合，并使其 DEF -2，持续 2 回合。', flavor: '幕布一落，台上的人就不存在了。', lore: '浊灵扬起的积尘。', art: { motif: 'seal-curtain' } });
 
 for (const c of LATE_CARDS) add(c);          // chapters 4–10 (src/data/cardsLate.js)
+for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/cardsXiyou.js)
+add(XIYOU_WENMAI);
+for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)
 
 export const CARDS = Object.fromEntries(C.map((c) => [c.id, Object.freeze(c)]));
 export const PLAYER_CARD_IDS = C.filter((c) => !c.zhuo).map((c) => c.id);

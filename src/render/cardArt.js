@@ -3,6 +3,8 @@
 import { brush, paper, seal, rgba, mix, INK, PAPER, FONT_BRUSH } from './ink.js';
 import { EL } from '../data/cards.js';
 import { lateMotifs } from './cardArtLate.js';
+import { gearMotifs } from './cardArtGear.js';
+import { xiyouMotifs } from './cardArtXiyou.js';
 
 const GOLD = '#C8A04A', RED = '#C03A2A', CINNABAR = '#B8322A', JADE = '#4A8C5C', BLUE = '#2A4A7A', OCHRE = '#8C6040';
 
@@ -849,6 +851,8 @@ M.nvwaSpirit = (b, w, h) => {
 };
 
 Object.assign(M, lateMotifs({ sky, figure, flame, pine, wave, eye, talisman, scrollFrame, murk }));
+Object.assign(M, gearMotifs({ sky }));
+Object.assign(M, xiyouMotifs({ sky, figure, flame, wave, scrollFrame }));
 
 export const MOTIFS = Object.keys(M);
 

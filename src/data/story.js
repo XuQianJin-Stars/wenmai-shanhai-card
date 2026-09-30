@@ -79,7 +79,7 @@ export const LEVELS = [
       'ZL-001', 'ZL-001', 'ZL-001', 'ZL-002', 'ZL-002', 'ZL-002', 'ZL-003', 'ZL-003', 'ZL-004', 'ZL-004',
       'ZL-006', 'ZL-006', 'FL-003', 'FL-001', 'ZL-002', 'ZL-001', 'ZL-003', 'ZL-004', 'ZL-006', 'ZL-002'] },
     ai: 'normal', playerFirst: true,
-    reward: { fragments: 15, unlock: ['LJ-002', 'FL-005'] },
+    reward: { fragments: 15, unlock: ['LJ-002', 'FL-005', 'QW-016'] },
     pre: [
       { who: '', text: '（守护者走近残缺石碑，碑上文字几乎全部消失，只余两个依稀可辨的字："造化"。）' },
       { who: '守护者', text: '这是什么碑？' },
@@ -105,7 +105,7 @@ export const LEVELS = [
       'ZL-001', 'ZL-001', 'ZL-006', 'ZL-006', 'FL-003', 'FL-004', 'FL-005', 'FL-001', 'ZL-003', 'ZL-001'],
       grades: { 'FL-003': 1, 'FL-004': 0 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 25, unlock: ['WM-006'] },
+    reward: { fragments: 25, unlock: ['WM-006', 'QW-005'] },
     pre: [
       { who: '', text: '（守护者站在最高台，面对虚空裂缝。浓厚的混沌之气中，一个巨大的扭曲身影正在成型。）' },
       { who: '女娲之灵', text: '你感觉到了吗？' },
@@ -178,7 +178,7 @@ LEVELS.push(
       'ZL-008', 'ZL-008', 'ZL-008', 'ZL-010', 'ZL-010', 'ZL-007', 'ZL-007', 'ZL-007', 'ZL-009', 'ZL-009',
       'ZL-003', 'ZL-003', 'ZL-004', 'ZL-004', 'ZL-012', 'ZL-012', 'ZL-002', 'ZL-002', 'FL-005', 'FL-001'] },
     ai: 'hard', playerFirst: true,
-    reward: { fragments: 25, unlock: ['LJ-011', 'WM-008'] },
+    reward: { fragments: 25, unlock: ['LJ-011', 'WM-008', 'QW-017'] },
     pre: [
       { who: '', text: '（大雁塔在暮色里静立。塔砖上刻满了名字，一层叠着一层，大多已模糊得认不出笔画。）' },
       { who: '李白之灵', text: '新科进士登塔题名，是长安最风光的事。孟郊考了半辈子，中了以后写："春风得意马蹄疾，一日看尽长安花。"' },
@@ -206,7 +206,7 @@ LEVELS.push(
       'ZL-012', 'ZL-012', 'ZL-012', 'ZL-003', 'ZL-003', 'ZL-007', 'ZL-007', 'FL-003', 'FL-004', 'FL-006'],
       grades: { 'FL-003': 1, 'FL-004': 1 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 35, unlock: ['LJ-012', 'WM-009'] },
+    reward: { fragments: 35, unlock: ['LJ-012', 'WM-009', 'QW-008'] },
     pre: [
       { who: '', text: '（梨园空无一人。月光落在旧戏台上，台板缝里长出了草。）' },
       { who: '杜甫之灵', text: '这里曾聚着天下最好的乐工。后世说"梨园弟子"，就是从这儿来的。' },
@@ -314,7 +314,7 @@ LEVELS.push(
       'ZL-010', 'ZL-018', 'ZL-018', 'ZL-013', 'ZL-013', 'ZL-011', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
       grades: { 'FL-003': 1 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 40, unlock: ['LJ-016', 'WM-010'] },
+    reward: { fragments: 40, unlock: ['LJ-016', 'WM-010', 'QW-003'] },
     pre: [
       { who: '', text: '（天快亮了。戏台空着，锣鼓架翻倒在一旁，台口积着厚厚一层灰。）' },
       { who: '', text: '（灰自己动起来，聚成一个人形——像班主，像伶人，又像一整座戏台站了起来。）' },

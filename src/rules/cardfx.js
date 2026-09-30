@@ -5,15 +5,21 @@
 // context `c` of primitives and calls the hook, so a card is a few lines of data rather than a new branch
 // in five different switches.
 //
-// Hooks: play (talisman/wenmai resolves) · summon (general arrives) · skill (珍品 active) · turn (owner's
+// Hooks: play (talisman/wenmai resolves) · summon (general arrives) · equip (器物 attaches, c.u = wearer)
+// · skill (珍品 active) · turn (owner's
 // turn starts, for board units and wenmai) · endTurn (owner's turn ends) · afterAttack (this unit attacked)
 // · onHit (this unit connected, c.T = victim) · whenHit (this unit was attacked, c.T = attacker)
 // · onDeath (a friendly general died, c.T = the dead unit) · auraSelf ({atk, def} added to this unit).
 //
 // The context (see ctxFor in engine.js) gives: s i u T P O · foe() mine() rnd(list) strongest(list)
 // weakest(list) hurt() · dmg(t,n) dmgHero(n) heal(t,n) healHero(n) · draw(n) mana(n) · neg(t,k,turns,v)
-// buff(t,k,turns,v) cleanse(t) immune(t,turns) dodge(t) · recover(fn) summonFrom(fn) discardPile(fn)
-// · wenmaiCount() elCount(el) fx(kind, extra) log.
+// buff(t,k,turns,v) cleanse(t) immune(t,turns) dodge(t) dispel(t,n) · recover(fn) summonFrom(fn)
+// discardPile(fn) · atk(t) wenmaiCount() elCount(el) fx(kind, extra) log.
+
+import { XIYOU_BOND } from '../data/cardsXiyou.js';
+
+/** 取经五众的 id，《西游释厄传》要数场上有没有取经人。 */
+const XIYOU = new Set(XIYOU_BOND.xiyou.auto.generals);
 
 export const FX = {
   // ───────── 第四章 · 先秦诸子（稷下学宫） ─────────
@@ -260,6 +266,80 @@ export const FX = {
   'ZL-052': { turn: (c) => c.healHero(2) },
   'ZL-053': { onDeath: (c) => c.dmgHero(1) },
   'ZL-054': { summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'seal', 2, 0); } },
+
+  // ───────── 西游取经五众（src/data/cardsXiyou.js） ─────────
+  'LJ-054': {   // 孙悟空：火眼金睛看破一切障眼法，所以是驱散而不是伤害
+    summon: (c) => {
+      for (const t of c.foe()) c.dispel(t, 3);
+      const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, c.up ? 3 : 2);
+    },
+    afterAttack: (c) => c.dodge(c.u),
+    // 筋斗云：一棒打死就再来一下。attacks 是已攻击次数，退一格等于多一次
+    skill: (c) => { c.dmg(c.T, c.atk(c.u)); if (c.T.hp <= 0) c.u.attacks = Math.max(0, c.u.attacks - 1); },
+  },
+  'LJ-055': {   // 猪八戒
+    whenHit: (c) => { c.neg(c.T, 'atkDown', 1, 1); if (c.up) c.heal(c.u, 1); },
+    skill: (c) => { for (const u of c.mine()) c.heal(u, 2); c.heal(c.u, 2); },
+  },
+  'LJ-056': {   // 沙悟净
+    turn: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 1, 1); if (c.up) c.heal(c.u, 1); },
+    skill: (c) => { c.dmg(c.T, 4); c.neg(c.T, 'defDown', 2, 2); },
+  },
+  'LJ-057': {   // 白龙马：「意马」是卡表上的 rush，引擎在 makeInst 里就把它叫醒了
+    summon: (c) => { if (c.up) c.mana(1); },
+    afterAttack: (c) => { if (!c.T && c.oncePerTurn('LJ-057')) c.draw(1); },   // T 为空 = 这一下打的是主将
+    skill: (c) => { c.buff(c.u, 'atkUp', 2, 3); c.dodge(c.u); },
+  },
+  'LJ-058': {   // 唐三藏
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'stun', 1, 0); },
+    turn: (c) => c.healHero(c.up ? 3 : 2),
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.cleanse(u); },
+  },
+  'WM-021': {   // 西游释厄传
+    turn: (c) => { if (c.mine().some((u) => XIYOU.has(u.id))) { c.draw(1); if (c.up) c.healHero(1); } },
+  },
+
+  // ───────── 器物（src/data/artifacts.js） ─────────
+  // 器物的钩子由 runFx 挂在佩戴者身上跑，所以这里的 c.u 是那名灵将，c.up 看的是器物自己的品阶。
+  // ATK/DEF/HP/守护 这些静态加成不写在这儿——它们在卡表的 gear 字段里，引擎直接读。
+  'QW-001': {   // 轩辕·帝剑
+    equip: (c) => { const t = c.strongest(c.foe()); if (t) c.dmg(t, 2); } },
+  'QW-003': {   // 混天绫
+    equip: (c) => c.dodge(c.u) },
+  'QW-004': {   // 定海神针
+    afterAttack: (c) => { if (c.u.hp > 0) c.buff(c.u, 'atkUp', 2, 1); } },
+  'QW-005': {   // 昆仑·照世镜
+    equip: (c) => c.draw(1),
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); } },
+  'QW-006': {   // 神农药鼎
+    turn: (c) => { c.heal(c.u, 2); c.healHero(2); } },
+  'QW-007': {   // 芭蕉扇
+    equip: (c) => { for (const t of c.foe()) { c.dmg(t, c.up ? 2 : 1); if (t.hp > 0) c.neg(t, 'atkDown', 1, 1); } } },
+  'QW-008': {   // 紫毫笔
+    afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('QW-008')) { c.draw(1); if (c.up) c.mana(1); } } },
+  'QW-009': {   // 青铜纵目
+    equip: (c) => { c.cleanse(c.u); c.immune(c.u, c.up ? 3 : 2); } },
+  'QW-010': {   // 九节杖
+    turn: (c) => { for (const u of c.mine()) c.heal(u, c.up ? 2 : 1); } },
+  'QW-011': {   // 东皇钟
+    equip: (c) => { for (const t of c.foe()) c.neg(t, 'stun', 1, 0); } },
+  'QW-012': {   // 盘古斧
+    equip: (c) => { for (const t of c.foe()) c.dmg(t, 3); } },
+  'QW-013': {   // 炼妖壶：收妖成了，壶把那口气还给佩戴者，所以挂 99 回合（引擎里 >=99 视为永久）
+    equip: (c) => { const t = c.weakest(c.foe()); if (!t) return; c.dmg(t, c.up ? 8 : 6); if (t.hp <= 0) c.buff(c.u, 'atkUp', 99, 2); } },
+  'QW-014': {   // 昊天塔
+    equip: (c) => c.healHero(3) },
+  'QW-015': {   // 崆峒印
+    equip: (c) => { const t = c.strongest(c.foe()); if (!t) return; c.neg(t, 'stun', c.up ? 2 : 1, 0); c.neg(t, 'defDown', 2, 2); } },
+  'QW-016': {   // 女娲石
+    equip: (c) => { for (const u of c.mine()) c.cleanse(u); },
+    turn: (c) => c.healHero(c.up ? 3 : 2) },
+  'QW-017': {   // 伏羲琴
+    equip: (c) => c.draw(c.up ? 3 : 2),
+    afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('QW-017')) c.mana(1); } },
+
+  'ZL-055': {   // 蚀骨枷
+    equip: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 2); } },
 };
 
 /**

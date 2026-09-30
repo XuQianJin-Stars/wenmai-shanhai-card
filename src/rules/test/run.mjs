@@ -1,5 +1,5 @@
 // Headless rules tests: `npm test`. Each test builds a small position by hand and checks one rule from the design docs.
-import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, costOf, bondState, heroReduction, damageHero, RULES } from '../engine.js';
+import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, canPlay, attackTargets, playTargets, isGuard, costOf, bondState, heroReduction, damageHero, skillCost, RULES } from '../engine.js';
 import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
@@ -159,6 +159,124 @@ test('summoned generals are asleep', () => {
   act(s, { type: 'play', uid: u.uid });
   ok(!canAttack(s, s.players[0].board[0]));
 });
+// ───────── 器物 ─────────
+test('器物：挂上去加属性，灵将阵亡时随之进弃牌堆', () => {
+  const s = blank();
+  const g = spawn(s, 0, 'ZL-001');                       // 2/0/3
+  const base = { atk: atkOf(s, g), def: defOf(s, g), hp: g.hp };
+  const gear = hand(s, 0, 'QW-011');                     // 东皇钟 ATK+2 DEF+3 HP+3
+  act(s, { type: 'play', uid: gear.uid, target: g.uid });
+  eq(atkOf(s, g), base.atk + 2, 'ATK');
+  eq(defOf(s, g), base.def + 3, 'DEF');
+  eq(g.hp, base.hp + 3, 'HP');
+  eq(g.maxHp, base.hp + 3, 'maxHP');
+  eq(g.gear.id, 'QW-011', '挂上了');
+  g.hp = 0;
+  act(s, { type: 'end' });
+  ok(s.players[0].discard.some((x) => x.id === 'QW-011'), '器物跟着进弃牌堆');
+  ok(!s.players[0].board.length, '灵将没了');
+});
+test('器物：换装时旧的进弃牌堆，还回去的 HP 不会把人还死', () => {
+  const s = blank();
+  const g = spawn(s, 0, 'ZL-001');
+  act(s, { type: 'play', uid: hand(s, 0, 'QW-011').uid, target: g.uid });   // HP +3 → 6
+  g.hp = 2;                                              // 被打得只剩 2，此时上限 6
+  act(s, { type: 'play', uid: hand(s, 0, 'QW-001').uid, target: g.uid });   // 轩辕剑，没有 HP
+  eq(g.gear.id, 'QW-001', '换上了新的');
+  eq(g.maxHp, 3, '上限还回去了');
+  ok(g.hp >= 1, `换装不该直接把人换死（hp=${g.hp}）`);
+  ok(s.players[0].discard.some((x) => x.id === 'QW-011'), '旧器物进弃牌堆');
+});
+test('器物：可以给不带守护的灵将加上守护', () => {
+  const s = blank();
+  const g = spawn(s, 0, 'ZL-001');
+  ok(!isGuard(g), '本来没有守护');
+  act(s, { type: 'play', uid: hand(s, 0, 'QW-002').uid, target: g.uid });   // 山河社稷图
+  ok(isGuard(g), '器物给了守护');
+  // 对手现在必须先打它
+  s.active = 1;
+  const a = spawn(s, 1, 'ZL-002');
+  a.sleep = false;
+  eq(attackTargets(s, a).join(), g.uid, '守场生效，主将打不到');
+});
+test('器物：钩子挂在佩戴者身上，伏羲琴每回合只给 1 点灵力', () => {
+  const s = blank();
+  const g = spawn(s, 0, 'LJ-004');
+  g.sleep = false;
+  act(s, { type: 'play', uid: hand(s, 0, 'QW-017').uid, target: g.uid });   // 伏羲琴：攻击后 +1 灵力
+  s.players[0].mana = 0;
+  act(s, { type: 'attack', uid: g.uid, target: 'H1' });
+  eq(s.players[0].mana, 1, '攻击后给了 1 点');
+  g.attacks = 0;
+  act(s, { type: 'attack', uid: g.uid, target: 'H1' });
+  eq(s.players[0].mana, 1, '每回合只给 1 点');
+});
+test('器物：专属器物只能挂在名单上的灵将身上', () => {
+  const s = blank();
+  const other = spawn(s, 0, 'ZL-001');
+  const jingu = hand(s, 0, 'QW-004');                    // 定海神针，只认孙悟空
+  ok(!canPlay(s, 0, jingu), '场上只有别人时打不出来');
+  const wukong = spawn(s, 0, 'LJ-054');
+  ok(canPlay(s, 0, jingu), '悟空在场就能打');
+  eq(playTargets(s, 0, jingu).join(), wukong.uid, '可选目标只有悟空一个');
+  act(s, { type: 'play', uid: jingu.uid, target: wukong.uid });
+  eq(wukong.gear.id, 'QW-004', '挂到了悟空身上');
+  ok(!other.gear, '别人身上没有');
+});
+test('器物：没有我方灵将时打不出来', () => {
+  const s = blank();
+  const gear = hand(s, 0, 'QW-001');
+  ok(!canPlay(s, 0, gear), '场上空着就不能装备');
+  ok(!legalActions(s).some((a) => a.uid === gear.uid), '也不该出现在合法行动里');
+  spawn(s, 0, 'ZL-001');
+  ok(canPlay(s, 0, gear), '有人了就能装');
+});
+test('器物：每章通关各给一件，且不会被自动编入牌组', () => {
+  const gear = Object.values(CARDS).filter((c) => c.type === 'artifact' && !c.zhuo).map((c) => c.id);
+  const dropped = LEVELS.flatMap((L) => L.reward.unlock).filter((id) => CARDS[id].type === 'artifact');
+  eq(new Set(dropped).size, dropped.length, '同一件器物不能掉两次');
+  for (const id of gear) ok(dropped.includes(id), `${id} 拿不到`);
+  // 起手牌组里没有器物，insertCard 找不到同类可换，所以解锁后只进图鉴，不会顶掉别的牌
+  for (const id of gear) eq(insertCard([...STARTER_DECK], id), null, `${id} 不该自动编入`);
+});
+test('器物：上古十大神器凑齐十件', () => {
+  const want = ['东皇钟', '轩辕剑', '盘古斧', '炼妖壶', '昊天塔', '崆峒印', '昆仑镜', '女娲石', '神农鼎', '伏羲琴'];
+  const got = Object.values(CARDS).filter((c) => c.divine);
+  eq(got.length, 10, '不多不少十件');
+  for (const n of want) ok(got.some((c) => c.name === n), `缺了${n}`);
+  for (const c of got) eq(c.type, 'artifact', `${c.id} 神器得是器物`);
+});
+test('西游组：两名取经人 → ATK/DEF +1；补上释厄传 → 技能费用 -1', () => {
+  const s = blank();
+  const wk = spawn(s, 0, 'LJ-054');
+  const a0 = atkOf(s, wk), d0 = defOf(s, wk);
+  spawn(s, 0, 'LJ-058');
+  eq(bondState(s, 0).xiyou >= 1, true, '两个人就成组');
+  eq(atkOf(s, wk), a0 + 1, 'ATK +1');
+  eq(defOf(s, wk), d0 + 1, 'DEF +1');
+  const cost0 = skillCost(s, wk);
+  spawn(s, 0, 'WM-021', { zone: 'wenmai' });
+  eq(bondState(s, 0).xiyou, 2, '文脉卡把羁绊抬到二级');
+  eq(skillCost(s, wk), cost0 - 1, '技能便宜 1 点');
+});
+test('白龙马「意马」落地就能动', () => {
+  const s = blank();
+  const m = spawn(s, 0, 'LJ-057');
+  ok(!m.sleep, '不沉睡');
+  ok(canAttack(s, m), '当回合就能攻击');
+  act(s, { type: 'play', uid: hand(s, 0, 'LJ-055').uid });
+  ok(s.players[0].board.at(-1).sleep, '别的灵将从手里打出来照旧沉睡');
+});
+test('器物：品阶抬 ATK/DEF，不抬 HP', () => {
+  const s = blank();
+  const g = spawn(s, 0, 'ZL-001');
+  const a0 = atkOf(s, g);
+  const gear = hand(s, 0, 'QW-001', 1);                  // 珍品轩辕剑
+  act(s, { type: 'play', uid: gear.uid, target: g.uid });
+  eq(atkOf(s, g), a0 + 4, '珍品 = 基础 3 + 品阶 1');
+  eq(g.maxHp, 3, 'HP 不随品阶动');
+});
+
 test('hero minimum hit 2 and reductions do not stack (五彩石 + 门神 → -1)', () => {
   const s = blank();
   spawn(s, 1, 'WM-002', { zone: 'wenmai' });
@@ -475,6 +593,10 @@ test('every card has the required fields', () => {
   for (const c of Object.values(CARDS)) {
     ok(c.name && c.type && Number.isInteger(c.cost) && c.el, `${c.id} fields`);
     if (c.type === 'general') ok(c.atk >= 0 && c.def >= 0 && c.hp > 0, `${c.id} stats`);
+    if (c.type === 'artifact') {
+      ok(c.gear && Object.keys(c.gear).length, `${c.id} 器物得有 gear`);
+      eq(c.target, 'friendlyGeneral', `${c.id} 器物只能挂在我方灵将身上`);
+    }
     if (!c.zhuo) ok(c.quote && c.source && c.flavor, `${c.id} citation`);
   }
 });
