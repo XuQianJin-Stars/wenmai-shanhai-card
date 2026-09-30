@@ -10,7 +10,8 @@ import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
 import { createSave, deckProblem } from './save.js';
 import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
-import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade } from './ui.js';
+import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
+import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, REWARD_PRACTICE, DECK_SIZE, MAX_COPIES } from '../data/story.js';
 
@@ -114,7 +115,15 @@ export async function boot(params, fontsReady) {
     screen.append(h('div.logo', h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' })),
       h('div.tagline', { text: '以卡为笔，以牌为墨 —— 守护那些快被遗忘的名字' }), start,
       h('div.credit', { text: 'three.js · WebAudio 实时合成 · 程序化水墨' }));
-    await new Promise((r) => { const go = () => { screen.removeEventListener('pointerdown', go); window.removeEventListener('keydown', go); r(); }; screen.addEventListener('pointerdown', go); window.addEventListener('keydown', go); });
+    await new Promise((r) => {
+      const go = (e) => {
+        screen.removeEventListener('pointerdown', go); window.removeEventListener('keydown', go);
+        // 手机、平板上浏览器外壳要吃掉不少画面，开卷这一下正好是可以请求全屏的用户手势。
+        if (touch() && e.type === 'pointerdown' && !standalone()) requestFullscreen();
+        r();
+      };
+      screen.addEventListener('pointerdown', go); window.addEventListener('keydown', go);
+    });
     audio.unlock();
     audio.music('menu');
     audio.sfx('bond');
@@ -406,6 +415,34 @@ export async function boot(params, fontsReady) {
   }
 
   // ── settings ──
+  /** 「全屏」一行：能全屏就给开关，不能（iPhone Safari）就给「添加到主屏幕」的指引。 */
+  function fullscreenRow() {
+    const label = h('span', { text: '全屏' });
+    if (standalone()) return h('div.set-row', label, h('span.dim.small', { text: '已在独立窗口中运行' }));
+    if (canFullscreen()) {
+      const b = h('button.btn.small', { text: isFullscreen() ? '退出全屏' : '进入全屏', onclick: async () => {
+        await toggleFullscreen();
+        b.textContent = isFullscreen() ? '退出全屏' : '进入全屏';
+      } });
+      return h('div.set-row', label, b);
+    }
+    return h('div.set-row', label, h('button.btn.small', { text: '怎么全屏？', onclick: () => homeScreenGuide() }));
+  }
+
+  function homeScreenGuide() {
+    const step = (n, text) => h('li', h('i', { text: String(n) }), text);
+    return modal('在 iPhone 上全屏', h('div.guide',
+      h('p', { text: 'iPhone 的 Safari 不支持网页全屏，地址栏和标签栏收不起来。把游戏存成主屏幕图标，从图标启动就是真全屏了：' }),
+      h('ol.steps',
+        step(1, '点屏幕下方（横屏时在右上角）的「分享」按钮'),
+        step(2, '在列表里下滑，选「添加到主屏幕」'),
+        step(3, '回主屏幕，从「文脉·山海卡」图标启动'),
+      ),
+      h('p.dim.small', { text: '若是从微信、抖音等 App 里打开的，先点右上角「···」→「在 Safari 中打开」。' }),
+      h('p.dim.small', { text: 'iPad 与电脑上支持网页全屏，这一行会直接变成全屏开关。' }),
+    ), [{ label: '知道了', value: true, primary: true }]);
+  }
+
   async function settingsModal() {
     const st = save.data.settings;
     const slider = (label, key) => h('label.set-row', h('span', { text: label }), h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: st[key],
@@ -416,6 +453,7 @@ export async function boot(params, fontsReady) {
       slider('总音量', 'master'), slider('音乐', 'music'), slider('音效', 'sfx'),
       h('label.set-row', h('span', { text: '动画速度' }), speed),
       check('回合计时（一炷香 · 30 秒）', 'timer'), check('教学提示', 'hints'),
+      fullscreenRow(),
       h('div.set-row', h('span', { text: '存档' }), h('button.btn.small', { text: '重置全部进度', onclick: async () => {
         const ok = await modal('重置进度', '将清除全部碎片、解锁、升阶与关卡进度，确定吗？', [{ label: '确定重置', value: true }, { label: '取消', value: false, primary: true }]);
         if (ok) { save.reset(); toast('进度已重置'); location.reload(); }

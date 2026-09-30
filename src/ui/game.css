@@ -150,6 +150,15 @@ button { font: inherit; color: inherit; }
 .set-row input[type=range] { width: 180px; accent-color: var(--cinnabar); pointer-events: auto; }
 .set-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--cinnabar); pointer-events: auto; }
 
+/* 「怎么全屏？」指引（纸面配色，跟着 modal 走） */
+.guide { max-width: 420px; }
+.guide p { margin: 0 0 12px; }
+.guide p.small { font-size: 12.5px; line-height: 1.65; }
+.steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.steps li { display: flex; align-items: baseline; gap: 10px; }
+.steps i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--cinnabar); color: #f6f0e2;
+  font: 600 12px/20px var(--serif); font-style: normal; text-align: center; align-self: center; }
+
 /* modal */
 .modal { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(8, 7, 6, 0.55); opacity: 0; transition: opacity .25s; pointer-events: auto; }
 .modal.in { opacity: 1; }
