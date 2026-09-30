@@ -54,7 +54,7 @@ export const LEVELS = [
       'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-002', 'ZL-002', 'ZL-001', 'ZL-002',
       'ZL-001', 'ZL-002', 'ZL-001', 'ZL-006', 'ZL-001', 'ZL-002', 'ZL-001', 'ZL-001', 'ZL-002', 'ZL-001'], ordered: false },
     ai: 'easy', playerFirst: true, tutorial: true, playerDeck: TUTORIAL_DECK, ordered: true,
-    reward: { fragments: 10, unlock: ['LJ-001'] },
+    reward: { fragments: 10, unlock: ['LJ-001', 'QW-019'] },
     pre: [
       { who: '', text: '（守护者抵达昆仑墟边缘，前方有数团黑色雾气在地面游荡，侵蚀着文脉晶石，石面被染成暗灰色。）' },
       { who: '女娲之灵', text: '看到了吗？那些黑雾，是迷失的记忆。曾经有人知道这里的名字，后来他们忘了。' },
@@ -105,7 +105,7 @@ export const LEVELS = [
       'ZL-001', 'ZL-001', 'ZL-006', 'ZL-006', 'FL-003', 'FL-004', 'FL-005', 'FL-001', 'ZL-003', 'ZL-001'],
       grades: { 'FL-003': 1, 'FL-004': 0 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 25, unlock: ['WM-006', 'QW-005'] },
+    reward: { fragments: 25, unlock: ['WM-006', 'QW-005', 'QW-018'] },
     pre: [
       { who: '', text: '（守护者站在最高台，面对虚空裂缝。浓厚的混沌之气中，一个巨大的扭曲身影正在成型。）' },
       { who: '女娲之灵', text: '你感觉到了吗？' },
@@ -207,7 +207,7 @@ LEVELS.push(
       'ZL-012', 'ZL-012', 'ZL-012', 'ZL-003', 'ZL-003', 'ZL-007', 'ZL-007', 'FL-003', 'FL-004', 'FL-006'],
       grades: { 'FL-003': 1, 'FL-004': 1 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 60, unlock: ['LJ-012', 'WM-009', 'QW-008'] },
+    reward: { fragments: 60, unlock: ['LJ-012', 'WM-009', 'QW-008', 'QW-027'] },
     pre: [
       { who: '', text: '（梨园空无一人。月光落在旧戏台上，台板缝里长出了草。）' },
       { who: '杜甫之灵', text: '这里曾聚着天下最好的乐工。后世说"梨园弟子"，就是从这儿来的。' },
@@ -360,10 +360,12 @@ LEVELS.sort((a, b) => (a.chapter ?? 1) - (b.chapter ?? 1));
 const DIGITS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 /** 1 → 一, 10 → 十, 12 → 十二, 21 → 二十一. Chapter counts have outgrown a hand-written list twice now. */
 const numeral = (n) => (n < 10 ? DIGITS[n] : n < 20 ? `十${DIGITS[n - 10]}` : `${DIGITS[Math.floor(n / 10)]}十${DIGITS[n % 10]}`);
-const chapter = (n, short, prologue, desc) => ({
-  n, short, title: `第${numeral(n)}章 · ${short}`, num: numeral(n), prologue, desc,
-  levels: LEVELS.filter((L) => (L.chapter ?? 1) === n),
-});
+const chapter = (n, short, prologue, desc) => {
+  const levels = LEVELS.filter((L) => (L.chapter ?? 1) === n);
+  // key 是关卡 id 的前缀（shenhua / xianqin …），也就是这一章的稳定标识。
+  // 章号会随重排变，key 不会，所以文物志一类的外部数据一律按 key 挂。
+  return { n, key: levels[0].id.replace(/-\d+$/, ''), short, title: `第${numeral(n)}章 · ${short}`, num: numeral(n), prologue, desc, levels };
+};
 
 // 章节顺序 = 中国神话 → 朝代编年 → 传承 → 终章。想插一章进去，改这里的章号即可，
 // 关卡 id 用的是朝代拼音（shenhua-1 / xianqin-1 …）而不是章号，重排不会动到存档。

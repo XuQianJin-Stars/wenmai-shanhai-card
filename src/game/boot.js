@@ -15,6 +15,7 @@ import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFulls
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, DECK_SIZE, MAX_COPIES } from '../data/story.js';
 import { GUARDIAN } from '../data/guardian.js';
+import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
 import { RULES } from '../rules/engine.js';
 
 const MENU_CAM = { pos: new THREE.Vector3(0, 2.2, 9), look: new THREE.Vector3(0, 3.2, -30) };
@@ -148,6 +149,7 @@ export async function boot(params, fontsReady) {
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
+      ['文 物 志', relicSub(), () => relicScreen()],
       ['守护者', guardianSub(), () => guardianScreen()],
       ['牌组编成', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
       ['设　　置', '音量 · 速度 · 计时', () => settingsModal()],
@@ -353,6 +355,7 @@ export async function boot(params, fontsReady) {
       showViewer(id, owned ? g : 0, { pos: new THREE.Vector3(0.3, 0.02, -3.2), scale: 0.78 });
       side.append(cardInfo(id, owned ? g : 0));
       if (d.lore) side.append(h('div.lore', h('b', { text: '典故　' }), d.lore));
+      for (const r of RELICS_BY_CARD[id] ?? []) side.append(relicCard(r));
       if (!owned) side.append(h('div.warn', { text: '尚未解锁：通关故事关卡获得。' }));
       else if (!d.zhuo) {
         const cost = save.upgradeCost(id);
@@ -371,6 +374,44 @@ export async function boot(params, fontsReady) {
     draw();
     pickCard(sel ?? all[0]);
     if (!sel) sel = all[0];
+  }
+
+  // ── 文物志 ──
+  // 卡牌讲传说，文物讲「东西还在，你可以去看」。按章解锁：打通哪一章，就看得到那一章的文物。
+  const relicOpenChapters = () => CHAPTERS.filter((C) => save.isDone(C.levels.at(-1).id));
+  const relicsSeen = () => relicOpenChapters().reduce((n, C) => n + (RELICS_BY_CHAPTER[C.key] ?? []).length, 0);
+  const relicTotal = Object.values(RELICS_BY_CHAPTER).reduce((n, list) => n + list.length, 0);
+  const relicSub = () => {
+    const n = relicsSeen();
+    return n ? `已录 ${n}/${relicTotal} 件 · 按朝代` : '通关章节解锁真实文物';
+  };
+
+  /** 一条文物：卡牌详情和文物志共用这一块。 */
+  function relicCard(r) {
+    return h('div.relic',
+      h('div.relic-head', h('i.relic-tag', { text: '文物' }), h('b', { text: r.name }), h('span', { text: r.era })),
+      h('div.relic-meta', { text: r.found }),
+      h('div.relic-meta', { text: `现藏　${r.where}` }),
+      r.spec ? h('div.relic-spec', { text: r.spec }) : null,
+      h('div.relic-note', { text: r.note }));
+  }
+
+  function relicScreen() {
+    setStage('menu'); menuCam(); hideViewer();
+    audio.music('menu');
+    const body = frame('文物志', { back: () => mainMenu() });
+    const list = h('div.relics');
+    for (const C of CHAPTERS) {
+      const items = RELICS_BY_CHAPTER[C.key] ?? [];
+      if (!items.length) continue;
+      const open = save.isDone(C.levels.at(-1).id);
+      list.append(h('div.relic-era',
+        h('div.relic-era-t', h('b', { text: C.short }), h('span', { text: open ? `${items.length} 件` : '未解锁' })),
+        open
+          ? h('div.relic-grid', items.map(relicCard))
+          : h('div.relic-lock', { text: `通关「${C.short}」后录入此处的 ${items.length} 件文物。` })));
+    }
+    body.append(h('div.relic-intro', { text: '这里的每一件都真实存在，年代、出土地与现藏机构均据公开著录。看完了，可以去馆里看原件。' }), list);
   }
 
   // ── guardian cultivation ──
@@ -566,6 +607,37 @@ export async function boot(params, fontsReady) {
   }
 
   // ── settings ──
+  // 存档导出 / 导入。进度只活在 localStorage 里，换浏览器、清缓存、或者被谁手抖覆盖一次就没了，
+  // 所以留一个能自己拿走的副本。格式就是存档本身的 JSON，validate() 会把不合法的字段挡掉。
+  function exportSave() {
+    save.write();
+    const stamp = new Date().toISOString().slice(0, 10);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(save.data, null, 1)], { type: 'application/json' }));
+    Object.assign(document.createElement('a'), { href: url, download: `wenmai-save-${stamp}.json` }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('存档已导出');
+  }
+
+  function importSave() {
+    const inp = h('input', { type: 'file', accept: 'application/json,.json', style: { display: 'none' } });
+    inp.onchange = async () => {
+      const f = inp.files?.[0];
+      if (!f) return;
+      let raw;
+      try { raw = JSON.parse(await f.text()); } catch { return toast('读不出来：不是有效的存档文件'); }
+      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.done)) return toast('读不出来：不像是本游戏的存档');
+      const ok = await modal('导入存档', `将用「${f.name}」覆盖当前进度（已通 ${raw.done.length} 关），确定吗？`,
+        [{ label: '确定导入', value: true }, { label: '取消', value: false, primary: true }]);
+      if (!ok) return;
+      // 直接写进 localStorage 再刷新：让 createSave 走一遍 validate，脏字段自然被洗掉。
+      localStorage.setItem('wenmai_save_v1', JSON.stringify(raw));
+      location.reload();
+    };
+    document.body.append(inp);
+    inp.click();
+    setTimeout(() => inp.remove(), 60000);
+  }
+
   async function settingsModal() {
     const st = save.data.settings;
     const slider = (label, key) => h('label.set-row', h('span', { text: label }), h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: st[key],
@@ -577,10 +649,14 @@ export async function boot(params, fontsReady) {
       h('label.set-row', h('span', { text: '动画速度' }), speed),
       check('回合计时（一炷香 · 30 秒）', 'timer'), check('教学提示', 'hints'),
       canFullscreen() && !standalone() ? h('div.set-row', h('span', { text: '全屏' }), fullscreenButton()) : null,
-      h('div.set-row', h('span', { text: '存档' }), h('button.btn.small', { text: '重置全部进度', onclick: async () => {
-        const ok = await modal('重置进度', '将清除全部碎片、解锁、升阶与关卡进度，确定吗？', [{ label: '确定重置', value: true }, { label: '取消', value: false, primary: true }]);
-        if (ok) { save.reset(); toast('进度已重置'); location.reload(); }
-      } })),
+      h('div.set-row', h('span', { text: '存档' }),
+        h('div.set-btns',
+          h('button.btn.small', { text: '导出', onclick: () => exportSave() }),
+          h('button.btn.small', { text: '导入', onclick: () => importSave() }),
+          h('button.btn.small', { text: '重置全部进度', onclick: async () => {
+            const ok = await modal('重置进度', '将清除全部碎片、解锁、升阶与关卡进度，确定吗？', [{ label: '确定重置', value: true }, { label: '取消', value: false, primary: true }]);
+            if (ok) { save.reset(); toast('进度已重置'); location.reload(); }
+          } }))),
       h('div.dim.small', { text: '音乐与音效全部由 WebAudio 实时合成：古琴、箫、堂鼓、编钟、锣。' }));
     await modal('设置', body, [{ label: '完成', value: true, primary: true }]);
     save.write();

@@ -3,6 +3,7 @@
 //
 import { LATE_CARDS, LATE_BONDS } from './cardsLate.js';
 import { ARTIFACTS } from './artifacts.js';
+import { RELIC_ARTIFACTS } from './cardsRelic.js';
 import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
@@ -334,6 +335,7 @@ for (const c of LATE_CARDS) add(c);          // chapters 4–10 (src/data/cardsL
 for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/cardsXiyou.js)
 add(XIYOU_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)
+for (const c of RELIC_ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 文物器物 (src/data/cardsRelic.js)
 
 export const CARDS = Object.fromEntries(C.map((c) => [c.id, Object.freeze(c)]));
 export const PLAYER_CARD_IDS = C.filter((c) => !c.zhuo).map((c) => c.id);

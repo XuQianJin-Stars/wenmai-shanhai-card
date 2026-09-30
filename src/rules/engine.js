@@ -46,7 +46,9 @@ export function gearOf(u) {
 /** 守护者修行带来的永久加成（src/data/guardian.js 算好后传进来）。缺省全 0。 */
 function boonOf(raw) {
   const n = (v, hi) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(hi, Math.floor(v))) : 0);
-  return { hp: n(raw?.hp, 40), armor: n(raw?.armor, 5), regen: n(raw?.regen, 6),
+  // 上界是防篡改存档的，不是平衡阀门——要跟着 guardian.js 的「点满值」走，
+  // 压低了会把正常点满的守护者也削掉（固本满 7 重 = +70）。
+  return { hp: n(raw?.hp, 70), armor: n(raw?.armor, 5), regen: n(raw?.regen, 6),
     mana: n(raw?.mana, 6), hand: n(raw?.hand, 4), handCap: n(raw?.handCap, 5) };
 }
 
@@ -516,6 +518,8 @@ function ctxFor(s, i, u, T = null) {
     neg: (t, k, turns, v = 0) => { if (t && t.hp > 0) applyNeg(s, t, k, CONTROL.has(k) ? ctrlTurns(s, i, turns) : turns, v, u.id); },
     buff: (t, k, turns, v = 1) => { if (t && t.hp > 0) addBuff(s, t, k, turns, v); },
     dodge: (t) => { if (t && t.hp > 0 && !hasSt(t, 'dodge')) addBuff(s, t, 'dodge', 99, 1); },
+    /** 提前解除召唤失眠。前端的「能不能攻击」直接读 u.sleep，所以改状态就够了。 */
+    wake: (t) => { if (t && t.hp > 0) t.sleep = false; },
     cleanse: (t) => { if (t) cleanse(s, t); },
     /** 驱散对方身上的增益，n 次。给「火眼金睛」这类看破的效果用。 */
     dispel: (t, n = 1) => { if (t) for (let k = 0; k < n; k++) dispelOne(s, t); },

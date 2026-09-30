@@ -5,6 +5,10 @@ import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
 import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward } from '../../data/story.js';
 import { insertCard, deckProblem } from '../../game/save.js';
+import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
+import { CHAPTERS } from '../../data/story.js';
+import { SIGNATURE } from '../../game/cardvfx.js';
+import { readFileSync } from 'node:fs';
 
 let pass = 0, fail = 0;
 const results = [];
@@ -76,13 +80,13 @@ test('守护者「持盈」：手牌上限随之抬高', () => {
 test('守护者修行：等级表算出来的加成和引擎字段对得上', () => {
   const maxed = Object.fromEntries(GUARDIAN.map((t) => [t.k, t.max]));
   const b = boonOf(maxed);
-  eq(b.hp, 28, 'hp'); eq(b.armor, 3, 'armor'); eq(b.regen, 5, 'regen');
+  eq(b.hp, 70, 'hp'); eq(b.armor, 3, 'armor'); eq(b.regen, 5, 'regen');
   eq(b.mana, 4, 'mana'); eq(b.hand, 3, 'hand'); eq(b.handCap, 3, 'handCap');
-  eq(RULES.HERO_HP + b.hp, 48, '点满后的气血上限');
-  eq(boonOf({ hp: 99 }).hp, 28, 'levels are clamped to the track max');
+  eq(RULES.HERO_HP + b.hp, 90, '点满后的气血上限');
+  eq(boonOf({ hp: 99 }).hp, 70, 'levels are clamped to the track max');
   eq(boonOf({}).hp, 0, 'empty table means no boon');
   const s = createGame({ seed: 1, first: 0, players: [{ deck: filler, boon: b }, { deck: filler }] });
-  eq(s.players[0].maxHp, 48, '引擎收下的就是这个数');
+  eq(s.players[0].maxHp, 90, '引擎收下的就是这个数');
   for (const t of GUARDIAN) ok(t.cost.length === t.max, `${t.k} 的费用表要和等级数一致`);
 });
 test('守护者境界：总重数决定称呼，点满即圆满', () => {
@@ -245,6 +249,47 @@ test('器物：上古十大神器凑齐十件', () => {
   eq(got.length, 10, '不多不少十件');
   for (const n of want) ok(got.some((c) => c.name === n), `缺了${n}`);
   for (const c of got) eq(c.type, 'artifact', `${c.id} 神器得是器物`);
+});
+test('文物：每张 relic 卡都能在文物志里找到对应条目，反过来也对得上', () => {
+  const cards = Object.values(CARDS).filter((c) => c.relic);
+  ok(cards.length >= 10, `文物器物至少十件，现在 ${cards.length}`);
+  for (const c of cards) {
+    ok(RELIC_BY_ID[c.relic], `${c.id} 指向的文物 ${c.relic} 不存在`);
+    ok((RELIC_BY_ID[c.relic].cards ?? []).includes(c.id), `${c.relic} 没把 ${c.id} 列回来，两边得互指`);
+    ok(!c.divine, `${c.id} 是真文物，不该同时挂神器印`);
+  }
+  for (const r of RELICS) {
+    for (const id of r.cards ?? []) ok(CARDS[id], `文物 ${r.id} 指向了不存在的卡 ${id}`);
+    ok(CHAPTERS.some((C) => C.key === r.ch), `文物 ${r.id} 的章节 ${r.ch} 不在章节表里`);
+  }
+});
+test('文物器物：银香囊（常平架）受击后自己解控，铜奔马落地就能动', () => {
+  const s = blank();
+  const host = spawn(s, 0, 'LJ-029');
+  act(s, { type: 'play', uid: hand(s, 0, 'QW-027').uid, target: host.uid });
+  host.st.push({ k: 'stun', t: 2, v: 0, src: 'test' });
+  act(s, { type: 'end' });
+  const atk = spawn(s, 1, 'LJ-001');
+  act(s, { type: 'attack', uid: atk.uid, target: host.uid });
+  ok(!host.st.some((x) => x.k === 'stun'), '挨一下之后应当自己转正');
+
+  const s2 = blank();
+  const horse = spawn(s2, 0, 'LJ-029');
+  horse.sleep = true;
+  act(s2, { type: 'play', uid: hand(s2, 0, 'QW-024').uid, target: horse.uid });
+  eq(horse.sleep, false, '铜奔马解除召唤失眠');
+});
+test('战斗特效：每个 shape 都在 battle.js 的分发表里（拼错了会静默什么都不放）', () => {
+  const src = readFileSync(new URL('../../game/battle.js', import.meta.url), 'utf8');
+  // 只认 switch (l.shape) 那一段里的 case，别把别处 switch 的分支也算进来
+  const from = src.indexOf('switch (l.shape) {');
+  ok(from > 0, '没找到 shape 的分发表');
+  const block = src.slice(from, src.indexOf('default: break;', from));
+  const shapes = new Set([...block.matchAll(/case '([a-zA-Z]+)':/g)].map((m) => m[1]));
+  ok(shapes.size > 15, `分发表没解析出来，只找到 ${shapes.size} 个`);
+  for (const [id, hooks] of Object.entries(SIGNATURE))
+    for (const [hook, sg] of Object.entries(hooks))
+      for (const l of sg.layers ?? []) ok(shapes.has(l.shape), `${id}.${hook} 用了不存在的特效 ${l.shape}`);
 });
 test('西游组：两名取经人 → ATK/DEF +1；补上释厄传 → 技能费用 -1', () => {
   const s = blank();

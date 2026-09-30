@@ -187,13 +187,13 @@ export const SIGNATURE = {
     skill: sig([L('ring', { color: '#e8e0d0', r: 3 }), L('beam', { color: '#ffd060', at: 'target' }), L('shards', { color: '#c8951f', n: 14, at: 'target' })], { sfx: 'attack', shake: 0.28 }) },
   'LJ-055': { summon: sig([L('spikes', { color: '#8a9a52', n: 9, r: 1.6, h: 1.2 }), L('splash', { color: 0x3a4a28, size: 1.4 })], { sfx: 'playGeneral' }),
     skill: sig([L('petals', { color: '#bfe0a8', n: 14, at: 'mine' }), L('dome', { color: '#8ac06a', r: 2.2, at: 'mine' })], { sfx: 'heal' }) },
-  'LJ-056': { summon: sig([L('water', { color: '#7a8a80', n: 16 }), L('dome', { color: '#a8b0a0', r: 2 })], { sfx: 'playGeneral' }),
+  'LJ-056': { summon: sig([L('waterColumn', { color: '#7a8a80', h: 2.6, r: 1 }), L('dome', { color: '#a8b0a0', r: 2 })], { sfx: 'playGeneral' }),
     skill: sig([L('beam', { color: '#c8b890', at: 'target' }), L('shards', { color: '#6a5a46', n: 12, at: 'target' })], { sfx: 'attack' }) },
   'LJ-057': { summon: sig([L('flame', { color: '#e06a3a', n: 12 }), L('ribbon', { color: '#efe8dc', n: 3 })], { sfx: 'playGeneral', flash: ['#ffd0a0', 0.14] }),
     skill: sig([L('vortex', { color: '#e8894a', r: 2.2 }), L('glyphs', { glyphs: '化龙', color: '#ffd8b0' })], { sfx: 'buff', shake: 0.18 }) },
   'LJ-058': { summon: sig([L('rings', { color: '#f0d890', n: 4, r: 2.8 }), L('dome', { color: '#f4e4b0', r: 2.4 }), L('glyphs', { glyphs: '金蝉', color: '#fff0c8' })], { sfx: 'playGeneral' }),
     skill: sig([L('orbit', { color: C.paper, n: 14, r: 1.2, at: 'mine' }), L('glyphs', { glyphs: '通关文牒', color: '#f0e6cc', at: 'mine' })], { sfx: 'draw' }) },
-  'WM-021': { play: sig([L('road', { color: '#c8b48c' }), L('glyphs', { glyphs: '释厄', color: '#e8dcc0' })], { sfx: 'playWenmai' }) },
+  'WM-021': { play: sig([L('ribbon', { color: '#c8b48c', n: 3, len: 3.4 }), L('glyphs', { glyphs: '释厄', color: '#e8dcc0' })], { sfx: 'playWenmai' }) },
 
   // ───────── 浊灵中几个有标志性登场的 ─────────
   'ZL-005': { summon: sig([L('splash', { color: 0x181210, size: 1.8 }), L('spikes', { color: '#564a3a', n: 6, r: 1.8, h: 1.4 }), L('shards', { color: '#6a5a4a', n: 16 }), L('ring', { color: '#7a5a40', r: 2.6 })], { sfx: 'die', shake: 0.25 }) },
@@ -236,12 +236,24 @@ export const SIGNATURE = {
   'QW-010': { equip: sig([L('vines', { color: '#6f8f4a', n: 4, h: 2, r: 0.9 }), L('petals', { color: '#bfe0a8', n: 10 })], { sfx: 'heal' }) },
   // 上古十大神器余下的七件：分量比一般器物重，都配了闪屏或震屏
   'QW-011': { equip: sig([L('rings', { color: '#e8d8a0', n: 4, r: 3.2 }), L('dome', { color: '#cfe0d8', r: 2.6 }), L('glyphs', { glyphs: '东皇', color: '#ffe8c0' })], { sfx: 'thunder', shake: 0.22, flash: ['#f4e8c0', 0.2] }) },
-  'QW-012': { equip: sig([L('kaitian', { color: '#fff4c8' }), L('blades', { color: '#b8c4cc', n: 3 }), L('shards', { color: '#6b737b', n: 16 })], { sfx: 'attack', shake: 0.34, flash: ['#fff8d8', 0.26] }) },
+  'QW-012': { equip: sig([L('pillar', { color: '#fff4c8', h: 10, r: 0.8, life: 1.5 }), L('blades', { color: '#b8c4cc', n: 3 }), L('shards', { color: '#6b737b', n: 16 })], { sfx: 'attack', shake: 0.34, flash: ['#fff8d8', 0.26] }) },
   'QW-013': { equip: sig([L('vortex', { color: '#a060c8', r: 2.4 }), L('orbit', { color: '#d0a0ec', n: 14, r: 1.4 }), L('glyphs', { glyphs: '炼妖', color: '#e8c0ff' })], { sfx: 'mist', shake: 0.18 }) },
   'QW-014': { equip: sig([L('pillar', { color: '#e8c878', h: 7, r: 1.2, life: 2 }), L('rings', { color: '#f0dca0', n: 3, r: 2.2 }), L('glyphs', { glyphs: '昊天', color: '#ffe8b0' })], { sfx: 'buff' }) },
   'QW-015': { equip: sig([L('dome', { color: '#b23a2f', r: 2 }), L('splash', { color: 0xb23a2f, size: 1.8 }), L('glyphs', { glyphs: '崆峒', color: '#ffd8c8' })], { sfx: 'attack', shake: 0.2 }) },
   'QW-016': { equip: sig([L('petals', { color: '#ffc070', n: 14 }), L('sparks', { color: '#ffd8a0', n: 18 }), L('dome', { color: '#e87a52', r: 2.2 })], { sfx: 'heal', flash: ['#ffd8a0', 0.14] }) },
-  'QW-017': { equip: sig([L('string', { color: '#e8dcb0', n: 7 }), L('rings', { color: '#bfe0a8', n: 3, r: 2 })], { sfx: 'upgrade' }) },
+  'QW-017': { equip: sig([L('ribbon', { color: '#e8dcb0', n: 7, len: 2.2 }), L('rings', { color: '#bfe0a8', n: 3, r: 2 })], { sfx: 'upgrade' }) },
+
+  // 文物器物：底色统一偏青铜绿／银灰，和神器那批的金红分得开
+  'QW-018': { equip: sig([L('petals', { color: '#8fa890', n: 12 }), L('pillar', { color: '#a8c4a0', h: 6, r: 1.1, life: 1.8 }), L('sparks', { color: '#d8e8c0', n: 14 })], { sfx: 'buff' }) },
+  'QW-019': { equip: sig([L('ring', { color: '#7fae8c', r: 2.4 }), L('dome', { color: '#4e6b52', r: 2 })], { sfx: 'heal', flash: ['#bfe0a8', 0.12] }) },
+  'QW-020': { equip: sig([L('glyphs', { glyphs: '宅兹中国', color: '#e8dcb0' }), L('rings', { color: '#9cb3a4', n: 3, r: 2 })], { sfx: 'upgrade' }) },
+  'QW-021': { equip: sig([L('pillar', { color: '#8fa89a', h: 5, r: 1.6, life: 2.2 }), L('splash', { color: 0x56695f, size: 1.8 }), L('rings', { color: '#b8c8a8', n: 2, r: 2.6 })], { sfx: 'buff', shake: 0.3 }) },
+  'QW-022': { equip: sig([L('rings', { color: '#c8a04a', n: 5, r: 2.8 }), L('ribbon', { color: '#e8dcb0', n: 8, len: 2.4 }), L('sparks', { color: '#ffe8b0', n: 20 })], { sfx: 'resonance', flash: ['#f0e0b0', 0.16] }) },
+  'QW-023': { equip: sig([L('blades', { color: '#cfe4ee', n: 3 }), L('shards', { color: '#7a8f94', n: 14, at: 'target' })], { sfx: 'attack', shake: 0.24 }) },
+  'QW-024': { equip: sig([L('ribbon', { color: '#d8a34a', n: 4, len: 3.2 }), L('sparks', { color: '#ffd08a', n: 18 }), L('ring', { color: '#b8863c', r: 2.2 })], { sfx: 'attack' }) },
+  'QW-025': { equip: sig([L('pillar', { color: '#ffd98a', h: 6, r: 0.9, life: 2 }), L('sparks', { color: '#f0a63c', n: 16 })], { sfx: 'heal', flash: ['#ffd98a', 0.14] }) },
+  'QW-026': { equip: sig([L('petals', { color: '#f2ece0', n: 16 }), L('dome', { color: '#cfc6ae', r: 2 })], { sfx: 'mist' }) },
+  'QW-027': { equip: sig([L('orbit', { color: '#c9ced0', n: 10, r: 1.2 }), L('sparks', { color: '#ffd08a', n: 12 })], { sfx: 'buff' }) },
 
   'ZL-055': { equip: sig([L('shards', { color: '#4a5a66', n: 14 }), L('ring', { color: '#6e8694', r: 2.2 })], { sfx: 'mist' }) },
   'ZL-056': { equip: sig([L('spikes', { color: '#564a3a', n: 5, r: 1.4, h: 1.6 }), L('splash', { color: 0x181210, size: 1.4 })], { sfx: 'mist' }) },

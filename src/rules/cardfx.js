@@ -338,6 +338,31 @@ export const FX = {
     equip: (c) => c.draw(c.up ? 3 : 2),
     afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('QW-017')) c.mana(1); } },
 
+  // ── 文物器物（cardsRelic.js）。效果都从实物本身的特点长出来，不硬安。 ──
+  'QW-018': {   // 青铜神树：九枝九鸟，树在鸟就回得来
+    equip: (c) => c.draw(c.up ? 2 : 1),
+    turn: (c) => { for (const u of c.mine()) c.heal(u, 1); } },
+  'QW-019': {   // 红山玉龙
+    equip: (c) => c.healHero(c.up ? 4 : 2) },
+  'QW-020': {   // 何尊：铭文记的是「宅兹中国」，所以攒的文脉越多，它越有分量
+    equip: (c) => { const n = Math.min(c.wenmaiCount(), c.up ? 5 : 3); if (n > 0) c.buff(c.u, 'atkUp', 99, n); } },
+  'QW-021': {   // 后母戊鼎
+    equip: (c) => c.healHero(c.up ? 7 : 4) },
+  'QW-022': {   // 曾侯乙编钟：一套 65 件十二律俱全，响起来是全场的事
+    equip: (c) => { for (const u of c.mine()) { c.buff(u, 'atkUp', 99, 1); if (c.up) c.buff(u, 'defUp', 99, 1); } } },
+  'QW-023': {   // 越王勾践剑：两千年不锈，所以也封不住
+    equip: (c) => { c.cleanse(c.u); const t = c.strongest(c.foe()); if (t) c.dmg(t, c.up ? 5 : 3); },
+    turn: (c) => c.cleanse(c.u) },
+  'QW-024': {   // 铜奔马：三足腾空，落地就已经在跑了
+    equip: (c) => { c.wake(c.u); if (c.up) c.u.attacks = Math.max(0, c.u.attacks - 1); } },
+  'QW-025': {   // 长信宫灯：烟顺着袖子沉进体腔，屋里不留烟
+    turn: (c) => { c.heal(c.u, c.up ? 3 : 2); c.cleanse(c.u); } },
+  'QW-026': {   // 素纱襌衣：49 克，轻到打不着
+    equip: (c) => { c.dodge(c.u); if (c.up) c.cleanse(c.u); } },
+  'QW-027': {   // 银香囊：常平架，怎么转小碗都朝上
+    equip: (c) => c.cleanse(c.u),
+    whenHit: (c) => c.cleanse(c.u) },
+
   'ZL-055': {   // 蚀骨枷
     equip: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 2); } },
 };

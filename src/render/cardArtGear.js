@@ -13,13 +13,15 @@ const IRON = '#39424b';
  * 两点直线。ink.js 的 stroke() 把首尾宽度都收到 0，只给两个点的话整条线会退化成
  * 零面积的多边形、什么都画不出来，所以这里必须补一个中点（顺手歪一点，像手画的）。
  */
-const line = (b, a, z, o = {}) => b.stroke([a, [(a[0] + z[0]) / 2 + (o.bow ?? 0), (a[1] + z[1]) / 2 + (o.sag ?? 0)], z], o);
+export const line = (b, a, z, o = {}) => b.stroke([a, [(a[0] + z[0]) / 2 + (o.bow ?? 0), (a[1] + z[1]) / 2 + (o.sag ?? 0)], z], o);
 
-export function gearMotifs({ sky }) {
-  const M = {};
+export const GEAR_PALETTE = { GOLD, RED, JADE, BLUE, OCHRE, BRONZE, IRON };
 
-  /** 素底 + 背光 + 台面。draw(b, w, h, u) 画器物本身，u = h 的百分之一。 */
-  const piece = ({ top = '#ded4c2', bottom = '#efe6d4', glow = GOLD, shadow = 1, draw }) => (b, w, h) => {
+/**
+ * 器物构图工厂：素底 + 背光 + 台面，draw(b, w, h, u) 只管画器物本身，u = h 的百分之一。
+ * 文物那批（cardArtRelic.js）也用这个，两批卡的底子必须是同一个，不然摆在一起像两副牌。
+ */
+export const gearPiece = ({ sky }) => ({ top = '#ded4c2', bottom = '#efe6d4', glow = GOLD, shadow = 1, draw }) => (b, w, h) => {
     sky(b, w, h, { top, bottom });
     // 器物是「宝」，背后得有自己的光，也把中间压亮、四周压暗，物体轮廓才跳得出来
     const g = b.ctx.createRadialGradient(w * 0.5, h * 0.46, 0, w * 0.5, h * 0.46, h * 0.62);
@@ -32,7 +34,11 @@ export function gearMotifs({ sky }) {
     draw(b, w, h, u);
     b.mist(w, h, h * 0.9, { alpha: 0.3, n: 3 });
     return null;
-  };
+};
+
+export function gearMotifs({ sky }) {
+  const M = {};
+  const piece = gearPiece({ sky });
 
   // ── 轩辕·帝剑：直身长剑，剑尖朝上 ──
   M['gear-sword'] = piece({ glow: GOLD, draw: (b, w, h, u) => {

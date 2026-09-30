@@ -102,6 +102,8 @@ export function drawFace(ctx, id, grade = 0, { dim = false } = {}) {
   seal(ctx, W - 52, 50, 60, EL[d.el].zh, { color: EL[d.el].color, seed: seedOf(id) });
   // 上古十大神器另压一枚朱印，压在五行印下面，跟品阶印分左右不打架
   if (d.divine) seal(ctx, 50, ART.y + ART.h - 30, 40, '神', { color: '#B23A2F', seed: seedOf(id) + 7 });
+  // 以真实文物为原型的器物压「物」印，和神器的「神」印占同一个位置——两者互斥
+  else if (d.relic) seal(ctx, 50, ART.y + ART.h - 30, 40, '物', { color: '#4A6B6E', seed: seedOf(id) + 7 });
   // stats
   if (d.type === 'general') drawStats(ctx, statsOf(id, grade), { y: H - 58 });
   if (d.type === 'artifact') drawStats(ctx, gearStats(id, grade), { y: H - 58 });

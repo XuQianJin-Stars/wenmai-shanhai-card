@@ -31,7 +31,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '断简残灵', hp: 20, portrait: 'brokenSlip', deck: [
           'ZL-019', 'ZL-019', 'ZL-019', 'ZL-019', 'ZL-020', 'ZL-020', 'ZL-020', 'ZL-021', 'ZL-021', 'ZL-022',
           'ZL-001', 'ZL-002', 'ZL-002', 'ZL-008', 'ZL-008', 'ZL-013', 'ZL-013', 'ZL-006', 'ZL-006', 'FL-002'] },
-        reward: { fragments: 20, unlock: ['LJ-018', 'LJ-020'] },
+        reward: { fragments: 20, unlock: ['LJ-018', 'LJ-020', 'QW-020'] },
         pre: [
           { who: '', text: '（学宫的庭院里铺满竹简。编绳烂了，简一根根散着，上面的字还在，却读不成句子。）' },
           { who: '守护者', text: '这些字我认得，可连起来不知道在说什么。' },
@@ -79,7 +79,7 @@ export const LATE_CHAPTERS = [
           'ZL-021', 'ZL-021', 'ZL-021', 'ZL-022', 'ZL-022', 'ZL-020', 'ZL-020', 'ZL-019', 'ZL-019', 'ZL-005',
           'ZL-004', 'ZL-014', 'ZL-015', 'ZL-012', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 35, unlock: ['LJ-021', 'QW-009'] },
+        reward: { fragments: 35, unlock: ['LJ-021', 'QW-009', 'QW-021'] },
         pre: [
           { who: '', text: '（高台上只剩一个影子。它很大，由无数张嘴组成，每一张都在说话。）' },
           { who: '诡辩巨影', text: '白马非马。' },
@@ -126,7 +126,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '泽畔哀影', hp: 24, portrait: 'marshWalker', deck: [
           'ZL-023', 'ZL-023', 'ZL-023', 'ZL-024', 'ZL-024', 'ZL-024', 'ZL-025', 'ZL-025', 'ZL-026', 'ZL-001',
           'ZL-002', 'ZL-002', 'ZL-007', 'ZL-007', 'ZL-013', 'ZL-019', 'ZL-006', 'ZL-006', 'FL-002', 'FL-003'] },
-        reward: { fragments: 25, unlock: ['LJ-023', 'LJ-025'] },
+        reward: { fragments: 25, unlock: ['LJ-023', 'LJ-025', 'QW-023'] },
         pre: [
           { who: '', text: '（水边的芦苇比人还高。雾里有脚步声，来回地走，从不停下。）' },
           { who: '守护者', text: '它一直在走同一段路。' },
@@ -174,7 +174,7 @@ export const LATE_CHAPTERS = [
           'ZL-026', 'ZL-026', 'ZL-025', 'ZL-025', 'ZL-024', 'ZL-024', 'ZL-023', 'ZL-023', 'ZL-005', 'ZL-016',
           'ZL-010', 'ZL-011', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-006': 1 } },
-        reward: { fragments: 40, unlock: ['LJ-022', 'QW-010'] },
+        reward: { fragments: 40, unlock: ['LJ-022', 'QW-010', 'QW-022'] },
         pre: [
           { who: '', text: '（江口开阔。水是浑的，天是低的。一个巨大的影子立在江心，身上挂满了幡。）' },
           { who: '女娲之灵', text: '它把这一带所有散掉的魂都收进了自己身上。' },
@@ -222,7 +222,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '烽燧空影', hp: 24, portrait: 'beacon', deck: [
           'ZL-028', 'ZL-028', 'ZL-028', 'ZL-027', 'ZL-027', 'ZL-027', 'ZL-029', 'ZL-029', 'ZL-030', 'ZL-019',
           'ZL-002', 'ZL-008', 'ZL-013', 'ZL-014', 'ZL-020', 'ZL-006', 'ZL-012', 'FL-002', 'FL-003', 'FL-006'] },
-        reward: { fragments: 30, unlock: ['LJ-027', 'LJ-029'] },
+        reward: { fragments: 30, unlock: ['LJ-027', 'LJ-029', 'QW-024'] },
         pre: [
           { who: '', text: '（烽燧一座接一座，火全点着了。可来往的路上空无一人。）' },
           { who: '守护者', text: '它在报警。' },
@@ -271,7 +271,7 @@ export const LATE_CHAPTERS = [
           'ZL-029', 'ZL-029', 'ZL-030', 'ZL-027', 'ZL-027', 'ZL-028', 'ZL-028', 'ZL-019', 'ZL-019', 'ZL-016',
           'ZL-022', 'ZL-010', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 45, unlock: ['LJ-026', 'QW-001'] },
+        reward: { fragments: 45, unlock: ['LJ-026', 'QW-001', 'QW-025'] },
         pre: [
           { who: '', text: '（台顶立着一柱火。它不照亮任何东西，只是烧。）' },
           { who: '焚书余焰', text: '写下来做什么？写下来就要被烧。' },
@@ -464,7 +464,7 @@ export const LATE_CHAPTERS = [
           'ZL-038', 'ZL-037', 'ZL-037', 'ZL-036', 'ZL-036', 'ZL-035', 'ZL-035', 'ZL-035', 'ZL-016', 'ZL-023',
           'ZL-026', 'ZL-022', 'ZL-030', 'ZL-010', 'ZL-020', 'ZL-012', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 55, unlock: ['LJ-034'] },
+        reward: { fragments: 55, unlock: ['LJ-034', 'QW-026'] },
         pre: [
           { who: '', text: '（藏经洞的门开着。里面是空的——地上只留下一圈圈堆放过的印子。）' },
           { who: '守护者', text: '东西呢？' },
