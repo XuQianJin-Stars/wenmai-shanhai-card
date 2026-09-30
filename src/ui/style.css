@@ -9,8 +9,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; u
   /* iOS: no rubber-band scroll behind the canvas, no long-press callout, no grey tap flash. */
   overscroll-behavior: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 body { position: fixed; inset: 0; }
-canvas#c { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; outline: none; }
-#ui { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-family: var(--serif); color: var(--paper);
+/* --vw/--vh are measured from visualViewport in src/render/app.js; the fallbacks only apply for the
+   first frame. Sizing the canvas and the UI layer from the same numbers keeps them exactly aligned. */
+canvas#c { position: fixed; top: 0; left: 0; width: var(--vw, 100vw); height: var(--vh, 100dvh); display: block; touch-action: none; outline: none; }
+#ui { position: fixed; top: 0; left: 0; width: var(--vw, 100vw); height: var(--vh, 100dvh);
+  pointer-events: none; z-index: 2; font-family: var(--serif); color: var(--paper);
   /* iPhone notch and home indicator; the meta viewport asks for the full screen with viewport-fit=cover. */
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }

@@ -37,24 +37,24 @@ button { font: inherit; color: inherit; }
 .logo-main { font-family: var(--brush); font-size: min(150px, 22vw); line-height: 1; }
 .logo-dot { font-family: var(--brush); font-size: 60px; color: var(--cinnabar); }
 .logo-sub { font-family: var(--brush); font-size: min(64px, 9vw); letter-spacing: 0.2em; }
-.logo.small { position: absolute; left: calc(7vw + var(--sal)); top: 11vh; }
+.logo.small { position: absolute; left: calc(7vw + var(--sal)); top: 11%; }
 .logo.small .logo-main { font-size: 96px; }
 .logo.small .logo-sub { font-size: 44px; }
 .tagline { margin-top: 18px; color: #2a2218; font-size: 17px; letter-spacing: 0.35em; text-shadow: 0 0 12px rgba(255, 250, 235, 0.9); animation: inkIn 2s .4s ease both; }
-.press { margin-top: 12vh; color: #fff8e8; letter-spacing: 0.4em; font-size: 15px; text-shadow: 0 0 8px #000; animation: breathe 2.4s ease-in-out infinite; }
+.press { margin-top: min(12vh, 54px); color: #fff8e8; letter-spacing: 0.4em; font-size: 15px; text-shadow: 0 0 8px #000; animation: breathe 2.4s ease-in-out infinite; }
 .credit { position: absolute; bottom: 16px; font-size: 12px; letter-spacing: 0.2em; color: rgba(255, 248, 232, 0.6); text-shadow: 0 0 6px #000; }
 @keyframes inkIn { from { opacity: 0; filter: blur(8px); transform: scale(1.04); } to { opacity: 1; filter: blur(0); transform: none; } }
 @keyframes breathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
 /* main menu */
 .menu-screen { background: linear-gradient(90deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.3) 38%, rgba(0,0,0,0) 60%); }
-.menu { position: absolute; left: calc(7vw + var(--sal)); top: 34vh; display: flex; flex-direction: column; gap: 10px; }
+.menu { position: absolute; left: calc(7vw + var(--sal)); top: 34%; display: flex; flex-direction: column; gap: 10px; }
 .menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 300px; padding: 12px 22px 12px 26px;
   background: linear-gradient(90deg, rgba(20, 18, 15, 0.8), rgba(20, 18, 15, 0.15)); border: 0; border-left: 3px solid rgba(200, 160, 74, 0.5);
   animation: slideIn .5s ease both; transition: all .2s; text-align: left; }
 .menu-t { font-family: var(--brush); font-size: 32px; color: var(--paper); letter-spacing: 0.2em; }
 .menu-s { font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
-.stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(5vh + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
+.stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(5% + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
 @keyframes slideIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 
 /* story */
@@ -186,7 +186,7 @@ button { font: inherit; color: inherit; }
 .dialogue { position: absolute; left: 0; right: 0; bottom: 0; top: 0; z-index: 22; pointer-events: auto; cursor: pointer; opacity: 0; transition: opacity .35s;
   background: linear-gradient(rgba(0,0,0,0) 55%, rgba(8, 7, 6, 0.6)); }
 .dialogue.in { opacity: 1; }
-.dlg-box { position: absolute; left: 50%; bottom: calc(5vh + var(--sab)); transform: translateX(-50%); width: min(980px, 92vw); min-height: 130px; display: flex; gap: 18px; align-items: flex-start;
+.dlg-box { position: absolute; left: 50%; bottom: calc(5% + var(--sab)); transform: translateX(-50%); width: min(980px, 92vw); min-height: 130px; display: flex; gap: 18px; align-items: flex-start;
   padding: 20px 28px; background: linear-gradient(rgba(246, 240, 226, 0.97), rgba(232, 222, 198, 0.97)); color: #1a1612; border-radius: 3px; border: 1px solid #8a6a3a;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.55); box-sizing: border-box; }
 .dlg-pic:empty { display: none; }
@@ -215,13 +215,13 @@ button { font: inherit; color: inherit; }
 .battle-title { position: absolute; top: calc(14px + var(--sat)); left: 50%; transform: translateX(-50%); font-family: var(--brush); font-size: 20px; color: rgba(248, 236, 212, 0.85); letter-spacing: 0.2em; text-shadow: 0 0 8px #000; }
 .menu-btn { position: absolute; top: calc(14px + var(--sat)); right: calc(16px + var(--sar)); }
 .log-btn { position: absolute; top: calc(14px + var(--sat)); right: calc(64px + var(--sar)); font-size: 16px; }
-.log { position: absolute; top: calc(62px + var(--sat)); right: calc(16px + var(--sar)); width: 280px; max-height: 42vh; overflow: auto; padding: 8px 12px; background: rgba(14, 12, 10, 0.82); border: 1px solid rgba(200, 160, 74, 0.35);
+.log { position: absolute; top: calc(62px + var(--sat)); right: calc(16px + var(--sar)); width: 280px; max-height: 42%; overflow: auto; padding: 8px 12px; background: rgba(14, 12, 10, 0.82); border: 1px solid rgba(200, 160, 74, 0.35);
   font-size: 12px; line-height: 1.7; display: none; pointer-events: auto; }
 .log.open { display: block; }
 .log-line.me { color: #cfe8d0; } .log-line.foe { color: #f0c0b0; } .log-line.gold { color: #ffe0a0; } .log-line.dim { color: #9a9080; }
 .log-line.turn { color: var(--gold); text-align: center; margin-top: 4px; }
 .detail { position: absolute; left: calc(14px + var(--sal)); top: 50%; transform: translate(-12px, -50%); width: 260px; padding: 12px; background: rgba(246, 240, 226, 0.96); color: #1a1612;
-  border: 1px solid #8a6a3a; border-radius: 3px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0; transition: all .18s; max-height: 86vh; overflow: hidden; }
+  border: 1px solid #8a6a3a; border-radius: 3px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0; transition: all .18s; max-height: 86%; overflow: hidden; }
 .detail.show { opacity: 1; transform: translate(0, -50%); }
 .detail .face { display: block; margin: 0 auto 8px; border-radius: 8px; }
 .detail .info-quote { display: none; }
@@ -256,7 +256,7 @@ button { font: inherit; color: inherit; }
 .incense-ember { position: absolute; top: -3px; left: -2px; width: 8px; height: 8px; border-radius: 50%; background: #ff7a2a; box-shadow: 0 0 10px #ff5a10, 0 0 3px #ffd080; animation: breathe 1s infinite; }
 .incense::before { content: ''; position: absolute; left: 0; bottom: -4px; width: 20px; height: 6px; border-radius: 50%; background: #3a2a1a; }
 .incense.low .incense-ember { background: #ff2a10; animation-duration: .4s; }
-.skill-btn { position: absolute; left: 50%; bottom: 29vh; transform: translate(-50%, 10px); pointer-events: none; opacity: 0; cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: center;
+.skill-btn { position: absolute; left: 50%; bottom: 29%; transform: translate(-50%, 10px); pointer-events: none; opacity: 0; cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: center;
   padding: 10px 24px; max-width: 460px; background: linear-gradient(#f6ecd4, #e0cfa8); color: #1a1612; border: 2px solid #c8a04a; border-radius: 3px; box-shadow: 0 0 24px rgba(255, 210, 120, 0.5); transition: all .2s; }
 .skill-btn.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .skill-btn b { font-family: var(--brush); font-size: 22px; font-weight: normal; color: var(--cinnabar); }
@@ -280,62 +280,88 @@ button { font: inherit; color: inherit; }
   .dlg-skip { padding: 10px 18px; }
 }
 
-/* Phone in landscape: ~390px of height for a full board plus HUD. */
-@media (max-height: 560px) {
-  .top { padding-top: calc(8px + var(--sat)); padding-bottom: 8px; gap: 12px; }
-  .top-title { font-size: 22px; }
-  .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
-  .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; }
-  .menu-item { min-width: 190px; padding: 6px 16px 6px 18px; }
-  .menu-t { font-size: 21px; letter-spacing: 0.12em; }
-  .menu-s { font-size: 10px; }
-  .stats { display: none; }
-  .logo.small { top: 6vh; }
-  .logo.small .logo-main { font-size: 52px; }
-  .logo.small .logo-sub { font-size: 24px; }
-  .endturn { width: 74px; height: 74px; border-width: 2px; }
-  .endturn-t { font-size: 16px; }
-  .endturn-s { font-size: 9px; }
-  .incense { height: 54px; }
-  .incense-stick { height: calc(6px + 46px * var(--k)); }
-  .turn-tag { font-size: 11px; }
+/* Phone in landscape (~390px tall). .short is set from the measured height in app.js. */
+.short .top { padding-top: calc(8px + var(--sat)); padding-bottom: 8px; gap: 12px; }
+.short .top-title { font-size: 22px; }
+.short .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
+.short .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; }
+.short .menu-item { min-width: 190px; padding: 6px 16px 6px 18px; }
+.short .menu-t { font-size: 21px; letter-spacing: 0.12em; }
+.short .menu-s { font-size: 10px; }
+.short .stats { display: none; }
+.short .logo.small { top: 6%; }
+.short .logo.small .logo-main { font-size: 52px; }
+.short .logo.small .logo-sub { font-size: 24px; }
+.short .endturn { width: 74px; height: 74px; border-width: 2px; }
+.short .endturn-t { font-size: 16px; }
+.short .endturn-s { font-size: 9px; }
+.short .incense { height: 54px; }
+.short .incense-stick { height: calc(6px + 46px * var(--k)); }
+.short .turn-tag { font-size: 11px; }
   /* No room for the face as well as the text — and the card it describes is already enlarged in hand. */
-  .detail { width: 196px; padding: 8px 10px; font-size: 12px; max-height: calc(100vh - 16px); overflow: auto; }
-  .detail .face { display: none; }
-  .detail .info { font-size: 11px; line-height: 1.5; }
-  .detail .info-name { font-size: 17px; }
-  .detail .info-meta { font-size: 10px; }
-  .detail .lore, .detail .info-flavor { display: none; }
-  .log { width: 210px; max-height: 52vh; font-size: 11px; }
-  .mana { padding: 3px 8px; gap: 6px; }
-  .mana-num { font-size: 15px; min-width: 34px; }
-  .mana-beads i { width: 9px; height: 9px; }
-  .chip { font-size: 10px; padding: 2px 7px; }
-  .hint { max-width: 74vw; font-size: 12px; padding: 7px 14px 7px 70px; }
-  .hint::before { font-size: 12px; top: 7px; }
-  .skill-btn { bottom: 24vh; padding: 7px 18px; }
-  .skill-btn b { font-size: 17px; }
-  .banner-title { font-size: clamp(28px, 6.5vw, 56px); }
-  .banner.turn-me .banner-title, .banner.turn-foe .banner-title { font-size: clamp(24px, 5vw, 44px); }
-  .banner.win .banner-title, .banner.lose .banner-title { font-size: clamp(72px, 18vw, 150px); }
-  .dlg-box { min-height: 84px; padding: 12px 18px; gap: 12px; }
-  .dlg-name { font-size: 19px; }
-  .dlg-text { font-size: 14px; line-height: 1.6; }
-  .dlg-pic .portrait { width: 64px !important; height: 64px !important; }
-  .result { padding: 14px 30px; gap: 7px; }
-  .result-big { font-size: clamp(64px, 16vw, 140px); }
-  .result-sub { font-size: 14px; }
-  .level { padding: 8px 12px; gap: 12px; }
-  .level-no { font-size: 28px; width: 42px; height: 42px; }
-  .level-t { font-size: 20px; }
-  .level-d { font-size: 12px; }
-  .level .portrait { width: 48px !important; height: 48px !important; }
-  .level-seal { right: 86px; font-size: 17px; }
+.short .detail { width: 196px; padding: 8px 10px; font-size: 12px; max-height: calc(100% - 16px); overflow: auto; }
+.short .detail .face { display: none; }
+.short .detail .info { font-size: 11px; line-height: 1.5; }
+.short .detail .info-name { font-size: 17px; }
+.short .detail .info-meta { font-size: 10px; }
+.short .detail .lore, .short .detail .info-flavor { display: none; }
+.short .log { width: 210px; max-height: 52%; font-size: 11px; }
+.short .mana { padding: 3px 8px; gap: 6px; }
+.short .mana-num { font-size: 15px; min-width: 34px; }
+.short .mana-beads i { width: 9px; height: 9px; }
+.short .chip { font-size: 10px; padding: 2px 7px; }
+.short .hint { max-width: 74vw; font-size: 12px; padding: 7px 14px 7px 70px; }
+.short .hint::before { font-size: 12px; top: 7px; }
+.short .skill-btn { bottom: 24%; padding: 7px 18px; }
+.short .skill-btn b { font-size: 17px; }
+.short .banner-title { font-size: clamp(28px, 6.5vw, 56px); }
+.short .banner.turn-me .banner-title, .short .banner.turn-foe .banner-title { font-size: clamp(24px, 5vw, 44px); }
+.short .banner.win .banner-title, .short .banner.lose .banner-title { font-size: clamp(72px, 18vw, 150px); }
+.short .dlg-box { min-height: 84px; padding: 12px 18px; gap: 12px; }
+.short .dlg-name { font-size: 19px; }
+.short .dlg-text { font-size: 14px; line-height: 1.6; }
+.short .dlg-pic .portrait { width: 64px !important; height: 64px !important; }
+.short .result { padding: 14px 30px; gap: 7px; }
+.short .result-big { font-size: clamp(64px, 16vw, 140px); }
+.short .result-sub { font-size: 14px; }
+.short .level { padding: 8px 12px; gap: 12px; }
+.short .level-no { font-size: 28px; width: 42px; height: 42px; }
+.short .level-t { font-size: 20px; }
+.short .level-d { font-size: 12px; }
+.short .level .portrait { width: 48px !important; height: 48px !important; }
+.short .level-seal { right: 86px; font-size: 17px; }
   /* The faces carry an inline width from faceEl(); max-width clamps it and height stays automatic. */
-  .cell .face { max-width: 84px; }
-  .unlock .face { max-width: 104px; }
-  .grid, .pool { gap: 7px; }
-}
+.short .cell .face { max-width: 84px; }
+.short .unlock .face { max-width: 104px; }
+.short .grid, .short .pool { gap: 7px; }
+
+/* Under ~360px of usable height — an in-app browser such as WeChat, which keeps a navigation bar and
+   a toolbar over the page. The title screen and the menu both have to give up the corner logo. */
+.tiny .logo.small { display: none; }
+.tiny .logo-main { font-size: 74px; }
+.tiny .logo-dot { font-size: 30px; }
+.tiny .logo-sub { font-size: 32px; }
+.tiny .tagline { margin-top: 8px; font-size: 13px; letter-spacing: 0.22em; }
+.tiny .press { margin-top: 16px; font-size: 13px; }
+.tiny .credit { font-size: 10px; bottom: calc(6px + var(--sab)); }
+.tiny .menu-item { padding: 4px 14px 4px 16px; }
+.tiny .menu-t { font-size: 18px; }
+.tiny .menu-s { display: none; }
+.tiny .menu { gap: 4px; }
+.tiny .top { padding-top: calc(5px + var(--sat)); padding-bottom: 5px; }
+.tiny .top-title { font-size: 19px; }
+.tiny .endturn { width: 62px; height: 62px; }
+.tiny .endturn-t { font-size: 13px; }
+.tiny .endturn-s { display: none; }
+.tiny .incense { display: none; }
+.tiny .detail { width: 168px; font-size: 11px; }
+.tiny .banner.win .banner-title, .tiny .banner.lose .banner-title { font-size: clamp(56px, 14vw, 110px); }
+.tiny .result-big { font-size: clamp(48px, 12vw, 96px); }
+.tiny .dlg-box { min-height: 64px; padding: 9px 14px; }
+.tiny .dlg-text { font-size: 13px; line-height: 1.5; }
+.tiny .dlg-name { font-size: 16px; }
+.tiny .dlg-pic { display: none; }
+.tiny .cell .face { max-width: 72px; }
 
 /* iPad in landscape and half-width desktop windows: the side panels are the problem, not the height. */
 @media (max-width: 1100px) {

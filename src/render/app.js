@@ -147,10 +147,22 @@ export function createApp(canvas) {
     fps: 60,
   };
 
+  // In-app browsers (WeChat on iOS above all) park a native toolbar over the layout viewport, so
+  // window.innerHeight and the vh unit both overstate what the player can actually see — the canvas
+  // ends up shorter than the page and the UI anchors land under the toolbar. visualViewport is the
+  // only measure that tracks the visible area, and everything else derives from it: the drawing
+  // buffer, the --vw/--vh the stylesheet lays out against, and the size classes the compact UI uses.
+  const root = document.documentElement;
   function resize() {
-    const w = Math.max(1, Math.round(window.innerWidth)), h = Math.max(1, Math.round(window.innerHeight));
+    const vv = window.visualViewport;
+    const w = Math.max(1, Math.round(vv?.width || window.innerWidth));
+    const h = Math.max(1, Math.round(vv?.height || window.innerHeight));
     if (w === api.size.w && h === api.size.h) return;
     api.size = { w, h };
+    root.style.setProperty('--vw', `${w}px`);
+    root.style.setProperty('--vh', `${h}px`);
+    root.classList.toggle('short', h <= 560);
+    root.classList.toggle('tiny', h <= 360);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -159,8 +171,7 @@ export function createApp(canvas) {
     post.uniforms.res.value.set(w * pr, h * pr);
     api.onResize?.(w, h);
   }
-  // iOS reports the new size a beat after the event — on rotation, and every time the Safari address
-  // bar slides away — so settle on the next frame rather than trusting the first measurement.
+  // iOS reports the new size a beat after the event, on rotation and whenever a toolbar slides.
   let pendingResize = 0;
   const queueResize = () => {
     cancelAnimationFrame(pendingResize);
@@ -168,8 +179,13 @@ export function createApp(canvas) {
   };
   window.addEventListener('resize', queueResize);
   window.addEventListener('orientationchange', queueResize);
+  window.addEventListener('pageshow', queueResize);
+  document.addEventListener('visibilitychange', queueResize);
   window.visualViewport?.addEventListener('resize', queueResize);
+  window.visualViewport?.addEventListener('scroll', queueResize);
   resize();
+  // Some in-app browsers settle their chrome well after load without firing anything we can hook.
+  for (const ms of [120, 400, 1000, 2500]) setTimeout(resize, ms);
 
   let last = performance.now();
   function loop(now) {
