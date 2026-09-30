@@ -13,7 +13,9 @@ import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
 import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
-import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, REWARD_PRACTICE, DECK_SIZE, MAX_COPIES } from '../data/story.js';
+import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, DECK_SIZE, MAX_COPIES } from '../data/story.js';
+import { GUARDIAN } from '../data/guardian.js';
+import { RULES } from '../rules/engine.js';
 
 const MENU_CAM = { pos: new THREE.Vector3(0, 2.2, 9), look: new THREE.Vector3(0, 3.2, -30) };
 
@@ -130,6 +132,11 @@ export async function boot(params, fontsReady) {
     return mainMenu();
   }
 
+  const guardianSub = () => {
+    const r = save.guardianRank(), name = r.name.replace(/\u3000/g, '');
+    return r.level ? `${name} · ${r.level} / ${r.max} 重 · 气血 ${RULES.HERO_HP + save.boon().hp}` : '修行 · 永久强化主将';
+  };
+
   function mainMenu() {
     setStage('menu'); menuCam(); hideViewer();
     audio.music('menu');
@@ -141,14 +148,17 @@ export async function boot(params, fontsReady) {
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
+      ['守护者', guardianSub(), () => guardianScreen()],
       ['牌组编成', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
       ['设　　置', '音量 · 速度 · 计时', () => settingsModal()],
       ['帮　　助', '玩法 · 操作 · 屏幕', () => helpModal()],
     ];
     screen.append(
       h('div.logo.small', h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' })),
-      h('div.menu', items.map(([t, sub, fn], i) => h('button.menu-item', { style: { animationDelay: `${i * 70}ms` }, onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); } },
-        h('span.menu-t', { text: t }), h('span.menu-s', { text: sub })))),
+      // --n 让 CSS 把可用高度按条目数分配，加减菜单项不用再手调字号（见 game.css）。
+      h('div.menu', { style: { '--n': String(items.length) } },
+        items.map(([t, sub, fn], i) => h('button.menu-item', { style: { animationDelay: `${i * 70}ms` }, onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); } },
+          h('span.menu-t', { text: t }), h('span.menu-s', { text: sub })))),
       h('div.frag.corner', { title: '文脉碎片' }, h('span.frag-ico'), h('span.frag-n', { text: String(save.data.fragments) })),
       h('div.stats', { text: `战绩 ${save.data.stats.wins} 胜 ${save.data.stats.losses} 负` }),
     );
@@ -243,7 +253,8 @@ export async function boot(params, fontsReady) {
     for (;;) {
       const res = await fight(L, battleCfg(L));
       const first = res.won && !save.isDone(L.id);
-      const reward = { fragments: res.won ? (first ? L.reward.fragments : REWARD_PRACTICE.win) : REWARD_PRACTICE.loss, unlock: [] };
+      const R = practiceReward(L.ai);      // 重打按关卡本身的难度给，前期的关卡刷不出后期的量
+      const reward = { fragments: res.won ? (first ? L.reward.fragments : R.win) : R.loss, unlock: [] };
       if (first) {
         for (const id of L.reward.unlock) if (save.unlock(id)) { reward.unlock.push(id); const out = save.autoInsert(id); if (out) (reward.swapped ??= []).push([id, out]); }
         save.complete(L.id);
@@ -289,17 +300,21 @@ export async function boot(params, fontsReady) {
     audio.music('menu');
     const body = frame('自由对战', { back: mainMenu });
     let level = 'normal';
-    const diff = h('div.seg', [['easy', '入门'], ['normal', '寻常'], ['hard', '宗师']].map(([k, t]) => h('button' + (k === level ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); level = k; diff.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); } })));
+    const payout = h('span.dim');
+    const showPayout = () => { const R = practiceReward(level); payout.textContent = `胜利 +${R.win} 碎片 · 失败 +${R.loss}`; };
+    showPayout();
+    const diff = h('div.seg', [['easy', '入门'], ['normal', '寻常'], ['hard', '宗师']].map(([k, t]) => h('button' + (k === level ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); level = k; showPayout(); diff.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); } })));
     const prob = deckProblem(save.data.deck);
     if (prob) body.append(h('div.warn', { text: `当前牌组不可用：${prob}` }));
-    body.append(h('div.row', h('span', { text: '难度：' }), diff, h('span.dim', { text: `胜利 +${REWARD_PRACTICE.win} 碎片 · 失败 +${REWARD_PRACTICE.loss}` })),
+    body.append(h('div.row', h('span', { text: '难度：' }), diff, payout),
       h('div.opps', PRACTICE.map((P, i) => h('div.opp', { onclick: async () => {
         if (prob) { audio.sfx('error'); toast('请先在「牌组编成」中组好 20 张牌'); return; }
         audio.sfx('click');
         const L = { ...P, ai: level, playerFirst: Math.random() < 0.5 };
         for (;;) {
           const res = await fight(L, battleCfg(L, { title: P.title }));
-          const reward = { fragments: res.forfeited ? 0 : res.won ? REWARD_PRACTICE.win : REWARD_PRACTICE.loss, unlock: [] };
+          const R = practiceReward(L.ai);
+          const reward = { fragments: res.forfeited ? 0 : res.won ? R.win : R.loss, unlock: [] };
           save.data.fragments += reward.fragments; save.write();
           const nx = await resultScreen(res, reward, { retry: true });
           if (nx !== 'retry') break;
@@ -356,6 +371,63 @@ export async function boot(params, fontsReady) {
     draw();
     pickCard(sel ?? all[0]);
     if (!sel) sel = all[0];
+  }
+
+  // ── guardian cultivation ──
+  function guardianScreen() {
+    setStage('menu'); menuCam(); hideViewer();
+    audio.music('menu');
+    const body = frame('守护者 · 修行', { back: () => mainMenu() });
+    const rows = h('div.gd-rows');
+    const boon = () => save.boon();
+
+    function draw() {
+      clear(rows);
+      for (const t of GUARDIAN) {
+        const lv = save.guardianLevel(t.k);
+        const cost = save.guardianCost(t.k);
+        const pips = h('div.gd-pips', Array.from({ length: t.max }, (_, i) => h('i' + (i < lv ? '.on' : ''))));
+        const now = lv ? t.text(lv) : '尚未修行';
+        const next = cost === null ? null : t.text(lv + 1);
+        rows.append(h('div.gd-row' + (cost === null ? '.maxed' : ''),
+          h('div.gd-head', h('span.gd-name', { text: t.name }), h('span.gd-sub', { text: t.sub }), pips),
+          h('div.gd-now', { text: now }),
+          next ? h('div.gd-next', { text: `下一级：${next}` }) : h('div.gd-next', { text: '已至圆满' }),
+          h('div.gd-lore', { text: t.lore }),
+          cost === null
+            ? h('div.maxed', { text: '圆满' })
+            : btn(`修行 · ${cost} 碎片`, async () => {
+              if (!save.upgradeGuardian(t.k)) { audio.sfx('error'); toast(`碎片不足（需要 ${cost}）`); return; }
+              audio.sfx('upgrade');
+              fx.burst(app.camera.localToWorld(new THREE.Vector3(0, 0.2, -3.4)), { color: '#9ad6a0', size: 3.4, life: 0.9 });
+              await banner('修行有成', `${t.name.replace(/\u3000/g, '')} · ${t.text(save.guardianLevel(t.k))}`, { cls: 'res', ms: 1300 });
+              guardianScreen();
+            }, save.canGuardian(t.k) ? 'primary' : 'disabled'),
+        ));
+      }
+    }
+
+    const b = boon();
+    const sign = (n, s) => (n ? s + n : '0');      // 没点的时候写「0」，别写成「-0」
+    const summary = h('div.gd-sum', [
+      [String(RULES.HERO_HP + b.hp), '气血上限'],
+      [sign(b.armor, '-'), '受伤减免'],
+      [sign(b.regen, '+'), '每回合回复'],
+      [sign(b.mana, '+'), '首回合灵力'],
+      [String(RULES.HAND_FIRST + b.hand), '先手起手牌'],
+      [String(RULES.MAX_HAND + b.handCap), '手牌上限'],
+    ].map(([v, label]) => h('div.gd-stat', h('b', { text: v }), h('span', { text: label }))));
+
+    const rank = save.guardianRank();
+    body.append(h('div.gd',
+      h('div.gd-left', portraitEl('guardian', 190, 3),
+        h('div.gd-title', h('span', { text: '守护者' }), h('i.gd-rank', { text: rank.name })),
+        h('div.gd-flavor', { text: '碎片既能养卡，也能养人。' }),
+        h('div.gd-bar', h('i', { style: { width: `${(rank.level / rank.max) * 100}%` } })),
+        h('div.gd-prog', { text: rank.next ? `修行 ${rank.level} / ${rank.max} 重 · 再 ${rank.next.need} 重入「${rank.next.name.replace(/\u3000/g, '')}」` : `修行 ${rank.max} 重 · 已至圆满` }),
+        summary),
+      rows));
+    draw();
   }
 
   // ── deck builder ──
@@ -468,6 +540,8 @@ export async function boot(params, fontsReady) {
         '每回合最多攻击 2 次。对方有【守护】灵将时必须先击破它，否则可以直取主将。',
         '五行相克：金克木、木克土、土克水、水克火、火克金，克制时伤害 ×1.3，目标会闪红光。',
         '在卡牌图鉴里用文脉碎片升阶，升到珍品会解锁卡牌自带的技能。',
+        '碎片也能在「守护者」里修行，六条路永久强化主将：气血上限、受伤减免、每回合回复、首回合灵力、起手牌、手牌上限。',
+        '碎片来自故事关首通、自由对战和重打关卡；难度越高给得越多，宗师一局抵入门四局。',
       )),
       操作: () => h('div.help-pane', bullets(
         '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',

@@ -393,4 +393,11 @@ export const PRACTICE = [
 
 PRACTICE.push(...LATE_PRACTICE);
 
-export const REWARD_PRACTICE = { win: 5, loss: 1 };
+// 自由对战与故事关重打的碎片奖励，按 AI 难度分档——宗师一局约等于入门四局。
+// 这也是守护者修行的主要碎片来源（src/data/guardian.js 点满约 1800）。
+export const REWARD_PRACTICE = {
+  easy: { win: 3, loss: 1 },
+  normal: { win: 6, loss: 2 },
+  hard: { win: 12, loss: 3 },
+};
+export const practiceReward = (ai) => REWARD_PRACTICE[ai] ?? REWARD_PRACTICE.normal;

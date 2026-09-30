@@ -12,7 +12,8 @@ export function h(tag, attrs = {}, ...kids) {
   if (cls.length) e.className = cls.join(' ');
   for (const [k, v] of Object.entries(attrs ?? {})) {
     if (v == null || v === false) continue;
-    if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    // 自定义属性（--x）走不了 style 对象赋值，必须 setProperty。
+    if (k === 'style' && typeof v === 'object') for (const [p, val] of Object.entries(v)) { if (p.startsWith('--')) e.style.setProperty(p, val); else e.style[p] = val; }
     else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
     else if (k === 'html') e.innerHTML = v;
     else if (k === 'text') e.textContent = v;

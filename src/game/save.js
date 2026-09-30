@@ -1,6 +1,7 @@
 // Progress save (localStorage). Everything is validated on load so a hand-edited or stale save can never break the game.
 import { CARDS, UPGRADE_COST, PLAYER_CARD_IDS } from '../data/cards.js';
 import { STARTER_CARDS, STARTER_DECK, DECK_SIZE, MAX_COPIES, LEVELS } from '../data/story.js';
+import { GUARDIAN, guardianCost, boonOf, guardianRank } from '../data/guardian.js';
 
 const KEY = 'wenmai_save_v1';
 
@@ -10,6 +11,7 @@ export function defaultSave() {
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
+    guardian: {},                     // 修行 key → 等级（见 data/guardian.js）
     deck: [...STARTER_DECK],
     done: [],                         // completed level ids
     seenPrologue: false,              // chapter 1 prologue (kept as its own flag for older saves)
@@ -27,6 +29,7 @@ function validate(raw) {
   d.fragments = Math.floor(num(raw.fragments, 0, 1e6, 0));
   if (Array.isArray(raw.owned)) d.owned = [...new Set([...STARTER_CARDS, ...raw.owned.filter((id) => PLAYER_CARD_IDS.includes(id))])];
   if (raw.grades && typeof raw.grades === 'object') for (const [id, g] of Object.entries(raw.grades)) if (CARDS[id] && d.owned.includes(id)) d.grades[id] = Math.floor(num(g, 0, 2, 0));
+  if (raw.guardian && typeof raw.guardian === 'object') for (const t of GUARDIAN) d.guardian[t.k] = Math.floor(num(raw.guardian[t.k], 0, t.max, 0));
   if (Array.isArray(raw.deck)) {
     const deck = raw.deck.filter((id) => d.owned.includes(id));
     if (deckProblem(deck) === null) d.deck = deck;
@@ -103,6 +106,22 @@ export function createSave() {
       api.write();
       return true;
     },
+    guardianLevel(k) { return data.guardian[k] ?? 0; },
+    guardianCost(k) { return guardianCost(k, api.guardianLevel(k)); },
+    canGuardian(k) { const c = api.guardianCost(k); return c !== null && data.fragments >= c; },
+    upgradeGuardian(k) {
+      if (!api.canGuardian(k)) return false;
+      data.fragments -= api.guardianCost(k);
+      data.guardian[k] = api.guardianLevel(k) + 1;
+      api.write();
+      return true;
+    },
+    /** 引擎认识的加成结构，直接塞进 createGame 的 player 里。 */
+    boon() { return boonOf(data.guardian); },
+    /** 修行是否已经全部点满。 */
+    guardianMaxed() { return GUARDIAN.every((t) => api.guardianLevel(t.k) >= t.max); },
+    /** 六条路加起来的境界，给主菜单和修行页显示用。 */
+    guardianRank() { return guardianRank(data.guardian); },
     /** Put a newly unlocked card into the deck in place of the cheapest duplicate of the same type. Returns the replaced id. */
     autoInsert(id) {
       const r = insertCard(data.deck, id);

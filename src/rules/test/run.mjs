@@ -1,8 +1,9 @@
 // Headless rules tests: `npm test`. Each test builds a small position by hand and checks one rule from the design docs.
-import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, costOf, bondState, heroReduction, RULES } from '../engine.js';
+import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, costOf, bondState, heroReduction, damageHero, RULES } from '../engine.js';
 import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
-import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE } from '../../data/story.js';
+import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
+import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward } from '../../data/story.js';
 import { insertCard, deckProblem } from '../../game/save.js';
 
 let pass = 0, fail = 0;
@@ -33,6 +34,71 @@ test('opening: first player 4 cards + 2 mana and no draw, second 5 cards', () =>
   eq(s.players[1].mana, 1, 'second mana on turn 1'); eq(s.players[1].hand.length, 6, 'second draws');
   act(s, { type: 'end' });
   eq(s.players[0].mana, 2, 'first mana turn 2'); eq(s.players[0].hand.length, 5, 'first draws on turn 2');
+});
+test('守护者修行：气血、起手、首回合灵力、每回合回复都按 boon 生效', () => {
+  const boon = { hp: 6, hand: 2, mana: 1, regen: 1 };
+  const s = createGame({ seed: 1, first: 0, players: [{ deck: filler, boon }, { deck: filler }] });
+  eq(s.players[0].maxHp, RULES.HERO_HP + 6, 'max hp');
+  eq(s.players[0].hand.length, RULES.HAND_FIRST + 2, 'opening hand');
+  eq(s.players[1].hand.length, RULES.HAND_SECOND, 'opponent unchanged');
+  eq(s.players[0].mana, 3, 'turn 1 mana = 1 base + 1 first-player + 1 boon');
+  s.players[0].hp = 10;
+  act(s, { type: 'end' });                       // 对手回合
+  act(s, { type: 'end' });                       // 回到自己，回合开始回 1
+  eq(s.players[0].hp, 11, 'regen at turn start');
+  eq(s.players[0].maxMana, 2, 'boon mana is first turn only');
+});
+test('守护者修行：回复不会超过气血上限，没有 boon 时一切照旧', () => {
+  const s = createGame({ seed: 1, first: 0, players: [{ deck: filler, boon: { regen: 3 } }, { deck: filler }] });
+  eq(s.players[0].maxHp, RULES.HERO_HP, 'no hp boon');
+  act(s, { type: 'end' }); act(s, { type: 'end' });
+  eq(s.players[0].hp, RULES.HERO_HP, 'capped at max');
+  const plain = createGame({ seed: 1, first: 0, players: [{ deck: filler }, { deck: filler }] });
+  eq(plain.players[0].boon.hp, 0, 'missing boon defaults to zero');
+  eq(plain.players[0].hand.length, RULES.HAND_FIRST, 'opening hand unchanged');
+});
+test('守护者「磐石」：减伤并入取最高的规则，2 点以下的伤害照打', () => {
+  const s = blank();
+  s.players[0].boon.armor = 2;
+  eq(heroReduction(s, 0), 2, 'armor counts as a reduction');
+  damageHero(s, 0, 6);
+  eq(s.players[0].hp, RULES.HERO_HP - 4, '6 - 2');
+  damageHero(s, 0, 2);
+  eq(s.players[0].hp, RULES.HERO_HP - 6, 'small hits are not reduced');
+});
+test('守护者「持盈」：手牌上限随之抬高', () => {
+  const s = blank();
+  s.players[0].boon.handCap = 2;
+  for (let k = 0; k < 12; k++) hand(s, 0, 'ZL-001');
+  act(s, { type: 'end' });
+  eq(s.players[0].hand.length, RULES.MAX_HAND + 2);
+});
+test('守护者修行：等级表算出来的加成和引擎字段对得上', () => {
+  const maxed = Object.fromEntries(GUARDIAN.map((t) => [t.k, t.max]));
+  const b = boonOf(maxed);
+  eq(b.hp, 28, 'hp'); eq(b.armor, 3, 'armor'); eq(b.regen, 5, 'regen');
+  eq(b.mana, 4, 'mana'); eq(b.hand, 3, 'hand'); eq(b.handCap, 3, 'handCap');
+  eq(RULES.HERO_HP + b.hp, 48, '点满后的气血上限');
+  eq(boonOf({ hp: 99 }).hp, 28, 'levels are clamped to the track max');
+  eq(boonOf({}).hp, 0, 'empty table means no boon');
+  const s = createGame({ seed: 1, first: 0, players: [{ deck: filler, boon: b }, { deck: filler }] });
+  eq(s.players[0].maxHp, 48, '引擎收下的就是这个数');
+  for (const t of GUARDIAN) ok(t.cost.length === t.max, `${t.k} 的费用表要和等级数一致`);
+});
+test('守护者境界：总重数决定称呼，点满即圆满', () => {
+  const none = guardianRank({});
+  eq(none.level, 0, '一重没修'); eq(none.max, GUARDIAN_MAX, '上限是六条路之和');
+  ok(none.next && none.next.need > 0, '还有下一境');
+  const full = guardianRank(Object.fromEntries(GUARDIAN.map((t) => [t.k, t.max])));
+  eq(full.level, GUARDIAN_MAX, '全点满');
+  eq(full.next, null, '圆满之后没有下一境');
+  // 境界只能往上走，不能中途掉回去。
+  let last = -1;
+  for (let n = 0; n <= GUARDIAN_MAX; n++) {
+    const r = guardianRank({ hp: Math.min(7, n), armor: Math.min(3, Math.max(0, n - 7)), regen: Math.min(5, Math.max(0, n - 10)) });
+    ok(r.level >= last, '重数单调不减'); last = r.level;
+    ok(r.next === null || r.next.need >= 1, `第 ${r.level} 重的进阶差值要是正数`);
+  }
 });
 test('mana caps at 10', () => {
   const s = createGame({ seed: 1, first: 0, players: [{ deck: filler }, { deck: filler }] });
@@ -411,6 +477,14 @@ test('every card has the required fields', () => {
     if (c.type === 'general') ok(c.atk >= 0 && c.def >= 0 && c.hp > 0, `${c.id} stats`);
     if (!c.zhuo) ok(c.quote && c.source && c.flavor, `${c.id} citation`);
   }
+});
+test('碎片奖励随难度递增，未知难度落回寻常', () => {
+  const [e, n, hd] = ['easy', 'normal', 'hard'].map(practiceReward);
+  ok(e.win < n.win && n.win < hd.win, 'win 要一档比一档高');
+  ok(e.loss <= n.loss && n.loss <= hd.loss, 'loss 不能倒挂');
+  for (const R of [e, n, hd]) ok(R.loss < R.win, '输了拿的必须比赢了少');
+  eq(practiceReward(undefined).win, n.win, '故事关没写 ai 时按寻常算');
+  for (const L of LEVELS) ok(['easy', 'normal', 'hard'].includes(L.ai), `${L.id} 的难度要在表里，不然重打只能按寻常给`);
 });
 test('decks reference real cards and are 20 long', () => {
   eq(STARTER_DECK.length, DECK_SIZE);

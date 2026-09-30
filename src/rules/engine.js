@@ -31,15 +31,25 @@ function resetInst(s, u) { // a card leaving play forgets everything that happen
   return fresh;
 }
 
+/** 守护者修行带来的永久加成（src/data/guardian.js 算好后传进来）。缺省全 0。 */
+function boonOf(raw) {
+  const n = (v, hi) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(hi, Math.floor(v))) : 0);
+  return { hp: n(raw?.hp, 40), armor: n(raw?.armor, 5), regen: n(raw?.regen, 6),
+    mana: n(raw?.mana, 6), hand: n(raw?.hand, 4), handCap: n(raw?.handCap, 5) };
+}
+
 /**
- * cfg.players[i] = { name, deck: [cardId], grades: {cardId: 0|1|2}, hp, passive, ordered }
+ * cfg.players[i] = { name, deck: [cardId], grades: {cardId: 0|1|2}, hp, passive, ordered,
+ *                    boon: {hp, hand, mana, regen} }
  * cfg.first = 0|1 (who moves first), cfg.seed
  */
 export function createGame(cfg) {
   const s = { rng: (cfg.seed ?? 1) >>> 0, uidc: 0, turn: 0, active: cfg.first ?? 0, first: cfg.first ?? 0,
     over: false, winner: -1, ev: [], players: [] };
   cfg.players.forEach((pc, i) => {
-    const P = { i, name: pc.name ?? `P${i}`, passive: pc.passive ?? null, hp: pc.hp ?? RULES.HERO_HP, maxHp: pc.hp ?? RULES.HERO_HP,
+    const boon = boonOf(pc.boon);
+    const hp = (pc.hp ?? RULES.HERO_HP) + boon.hp;
+    const P = { i, name: pc.name ?? `P${i}`, passive: pc.passive ?? null, boon, hp, maxHp: hp,
       heroSt: [], mana: 0, maxMana: 0, turns: 0, attacksUsed: 0,
       deck: [], hand: [], board: [], wenmai: [], discard: [],
       res: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 }, resCd: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 },
@@ -52,8 +62,8 @@ export function createGame(cfg) {
     s.players.push(P);
   });
   const f = s.first, o = 1 - f;
-  for (let k = 0; k < RULES.HAND_FIRST; k++) drawCard(s, f, true);
-  for (let k = 0; k < RULES.HAND_SECOND; k++) drawCard(s, o, true);
+  for (let k = 0; k < RULES.HAND_FIRST + s.players[f].boon.hand; k++) drawCard(s, f, true);
+  for (let k = 0; k < RULES.HAND_SECOND + s.players[o].boon.hand; k++) drawCard(s, o, true);
   startTurn(s);
   return s;
 }
@@ -161,6 +171,7 @@ export function heroReduction(s, i) {
   if (P.res.metal > 0) r = Math.max(r, 1);
   if (onBoard(P, 'LJ-009')) r = Math.max(r, 1);
   if (bondState(s, i).zhensha >= 2) r = Math.max(r, 1);
+  if (P.boon.armor > 0) r = Math.max(r, P.boon.armor);   // 守护者「磐石」
   return r;   // defensive effects never stack: the highest wins (CORE_LOOP §八)
 }
 
@@ -885,7 +896,7 @@ function startTurn(s) {
   const i = s.active, P = s.players[i];
   s.turn++;
   P.turns++;
-  P.maxMana = Math.min(RULES.MAX_MANA, P.turns + (i === s.first && P.turns === 1 ? 1 : 0));
+  P.maxMana = Math.min(RULES.MAX_MANA, P.turns + (i === s.first && P.turns === 1 ? 1 : 0) + (P.turns === 1 ? P.boon.mana : 0));
   P.mana = P.maxMana;
   P.attacksUsed = 0; P.talismansThisTurn = 0; P.resTurn = [];
   emit(s, { t: 'turn', p: i, turn: s.turn, mana: P.mana, maxMana: P.maxMana });
@@ -910,6 +921,7 @@ function startTurn(s) {
     if (P.res.wood > 0) drawCard(s, i);
   }
   // turn-start triggers
+  if (P.boon.regen) healHero(s, i, P.boon.regen);
   for (const w of [...P.wenmai]) {
     if (w.id === 'WM-001') healHero(s, i, 1);
     if (w.id === 'WM-004') {
@@ -952,7 +964,7 @@ function startTurn(s) {
 function endTurn(s) {
   const i = s.active, P = s.players[i];
   emit(s, { t: 'endTurn', p: i });
-  while (P.hand.length > RULES.MAX_HAND) {
+  while (P.hand.length > RULES.MAX_HAND + P.boon.handCap) {
     const u = P.hand.pop();
     P.discard.push(u);
     emit(s, { t: 'discard', p: i, uid: u.uid, id: u.id, why: 'handLimit' });

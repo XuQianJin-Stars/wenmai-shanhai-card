@@ -50,16 +50,18 @@ button { font: inherit; color: inherit; }
 
 /* main menu */
 .menu-screen { background: linear-gradient(90deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.3) 38%, rgba(0,0,0,0) 60%); }
-/* 上下都钉住、内容居中，条目尺寸跟着视口高度缩：菜单增减条目都落在角标题和战绩之间。
-   矮窗口下会收到下限，高窗口下就是原来的 32px 标题、12px 内边距。 */
-.menu { position: absolute; left: calc(7vw + var(--sal)); top: 25%; bottom: calc(9% + var(--sab));
-  display: flex; flex-direction: column; justify-content: center; gap: clamp(4px, calc(1.2 * var(--u)), 10px); }
+/* 上下都钉住、内容居中。--n 是条目数（boot.js 设的），--slot 就是每条能分到的高度，
+   字号和内边距都按 slot 算——所以增减菜单项不用再手调数值，矮屏也不会顶穿。 */
+.menu { --n: 6; --gap: clamp(4px, calc(1.2 * var(--u)), 10px);
+  --slot: calc((66 * var(--u) - (var(--n) - 1) * var(--gap)) / var(--n));
+  position: absolute; left: calc(7vw + var(--sal)); top: 25%; bottom: calc(9% + var(--sab));
+  display: flex; flex-direction: column; justify-content: center; gap: var(--gap); }
 .menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 300px;
-  padding: clamp(5px, calc(1.3 * var(--u)), 12px) 22px clamp(5px, calc(1.3 * var(--u)), 12px) 26px;
+  padding: clamp(4px, calc(0.14 * var(--slot)), 12px) 22px clamp(4px, calc(0.14 * var(--slot)), 12px) 26px;
   background: linear-gradient(90deg, rgba(20, 18, 15, 0.8), rgba(20, 18, 15, 0.15)); border: 0; border-left: 3px solid rgba(200, 160, 74, 0.5);
   animation: slideIn .5s ease both; transition: all .2s; text-align: left; }
-.menu-t { font-family: var(--brush); font-size: clamp(21px, calc(4.2 * var(--u)), 32px); color: var(--paper); letter-spacing: 0.2em; }
-.menu-s { font-size: clamp(10px, calc(1.8 * var(--u)), 13px); color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
+.menu-t { font-family: var(--brush); font-size: clamp(18px, calc(0.44 * var(--slot)), 32px); color: var(--paper); letter-spacing: 0.2em; }
+.menu-s { font-size: clamp(9px, calc(0.19 * var(--slot)), 13px); color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
 .stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(5% + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
 @keyframes slideIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 
@@ -125,6 +127,39 @@ button { font: inherit; color: inherit; }
 .info-quote { margin: 8px 0 4px; padding: 6px 10px; border-left: 2px solid rgba(120, 90, 50, 0.6); font-size: 12px; opacity: 0.85; }
 .info-quote cite { display: block; font-style: normal; font-size: 11px; opacity: 0.7; margin-top: 2px; }
 .info-flavor { font-family: var(--brush); font-size: 17px; opacity: 0.8; }
+
+/* guardian cultivation */
+.gd { display: flex; gap: 22px; height: 100%; min-height: 0; }
+.gd-left { flex: none; align-self: flex-start; width: 240px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: rgba(20, 18, 15, 0.8); border: 1px solid rgba(200, 160, 74, 0.4); padding: 16px 14px; border-radius: 3px; }
+.gd-title { display: flex; align-items: center; gap: 8px; font-family: var(--brush); font-size: 30px; color: var(--paper); letter-spacing: 0.2em; }
+/* 境界印：六条路的总重数折出来的称呼，朱印压在名字旁边 */
+.gd-rank { font-family: var(--brush); font-size: 15px; font-style: normal; letter-spacing: 0.02em; color: var(--paper);
+  background: var(--cinnabar); padding: 2px 7px 3px; border-radius: 2px; box-shadow: 0 0 10px rgba(178, 58, 47, 0.5); }
+.gd-flavor { font-size: 12px; color: rgba(240, 228, 204, 0.55); text-align: center; }
+.gd-bar { width: 100%; height: 3px; margin-top: 4px; background: rgba(243, 236, 221, 0.12); border-radius: 2px; overflow: hidden; }
+.gd-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+.gd-prog { font-size: 11px; color: rgba(240, 228, 204, 0.5); text-align: center; }
+.gd-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: 8px; }
+.gd-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; background: rgba(243, 236, 221, 0.07); border-radius: 3px; }
+.gd-stat b { font-family: var(--brush); font-size: 26px; color: var(--gold2); line-height: 1; }
+.gd-stat span { font-size: 11px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.05em; }
+.gd-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; align-content: start; overflow: auto; }
+.gd-row { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-left: 3px solid rgba(200, 160, 74, 0.5);
+  background: linear-gradient(90deg, rgba(20, 18, 15, 0.82), rgba(20, 18, 15, 0.4)); }
+.gd-row.maxed { border-left-color: var(--jade); }
+.gd-head { display: flex; align-items: baseline; gap: 10px; }
+.gd-name { font-family: var(--brush); font-size: 24px; color: var(--paper); letter-spacing: 0.1em; }
+.gd-sub { font-size: 12px; color: rgba(240, 228, 204, 0.55); flex: 1; min-width: 0; }
+/* 最长的一条有 7 级，点数得能挤进标题那行，所以不换行、不被压扁。 */
+.gd-pips { margin-left: auto; display: flex; gap: 3px; flex: none; }
+.gd-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgba(200, 160, 74, 0.6); }
+.gd-pips i.on { background: var(--gold); box-shadow: 0 0 6px rgba(255, 220, 140, 0.6); }
+.gd-now { font-size: 14px; color: var(--gold2); }
+.gd-next { font-size: 12px; color: rgba(240, 228, 204, 0.6); }
+.gd-lore { font-family: var(--brush); font-size: 15px; color: rgba(240, 228, 204, 0.42); margin-bottom: 4px; }
+.gd-row .btn { align-self: flex-start; }
+.gd-row .maxed { align-self: flex-start; font-size: 13px; color: var(--jade); letter-spacing: 0.1em; }
 
 /* deck builder */
 .deckb { display: flex; gap: 18px; height: 100%; }
@@ -307,9 +342,9 @@ button { font: inherit; color: inherit; }
 .short .top-title { font-size: 22px; }
 .short .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
 .short .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; justify-content: flex-end; }
-.short .menu-item { min-width: 190px; padding: 6px 16px 6px 18px; }
-.short .menu-t { font-size: 21px; letter-spacing: 0.12em; }
-.short .menu-s { font-size: 10px; }
+/* 只收窄和收紧字距，纵向尺寸仍交给 --slot，这样条目数变了也不用改这里。 */
+.short .menu-item { min-width: 190px; padding-right: 16px; padding-left: 18px; }
+.short .menu-t { letter-spacing: 0.12em; }
 .short .stats { display: none; }
 .short .logo.small .logo-main { font-size: 46px; }
 .short .logo.small .logo-sub { font-size: 22px; }
@@ -365,8 +400,7 @@ button { font: inherit; color: inherit; }
 .tiny .tagline { margin-top: 8px; font-size: 13px; letter-spacing: 0.22em; }
 .tiny .press { margin-top: 16px; font-size: 13px; }
 .tiny .credit { font-size: 10px; bottom: calc(6px + var(--sab)); }
-.tiny .menu-item { padding: 4px 14px 4px 16px; }
-.tiny .menu-t { font-size: 18px; }
+.tiny .menu-item { padding-right: 14px; padding-left: 16px; }
 .tiny .menu-s { display: none; }
 .tiny .menu { gap: 4px; }
 .tiny .top { padding-top: calc(5px + var(--sat)); padding-bottom: 5px; }
@@ -383,6 +417,25 @@ button { font: inherit; color: inherit; }
 .tiny .dlg-name { font-size: 16px; }
 .tiny .dlg-pic { display: none; }
 .tiny .cell .face { max-width: 72px; }
+/* 守护者：手机横屏下把画像和说明收一收，六条修行要一屏能看完。 */
+.short .gd { gap: 12px; }
+.short .gd-left { width: 152px; padding: 10px; gap: 3px; }
+.short .gd-left .portrait { width: 84px !important; height: 84px !important; }
+.short .gd-title { font-size: 20px; gap: 6px; }
+.short .gd-rank { font-size: 12px; padding: 1px 5px 2px; }
+.short .gd-flavor { display: none; }
+.short .gd-prog { font-size: 9px; }
+.short .gd-sum { gap: 5px; margin-top: 5px; }
+.short .gd-stat { padding: 4px 2px; }
+.short .gd-stat b { font-size: 19px; }
+.short .gd-stat span { font-size: 9px; }
+.short .gd-rows { grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: 8px; }
+.short .gd-row { padding: 8px 12px; gap: 2px; }
+.short .gd-name { font-size: 19px; }
+.short .gd-sub { font-size: 10px; }
+.short .gd-now { font-size: 12px; }
+.short .gd-next { font-size: 11px; }
+.short .gd-lore { display: none; }
 
 /* iPad in landscape and half-width desktop windows: the side panels are the problem, not the height. */
 @media (max-width: 1100px) {
