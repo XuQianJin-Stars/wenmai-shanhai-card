@@ -1,0 +1,284 @@
+// Declarative card effects for chapters 4–10 and the boss passives.
+//
+// Chapters 1–3 are wired directly into engine.js with bespoke switch cases (they came first and the
+// tests pin their exact behaviour). Everything after that is written here instead: the engine builds a
+// context `c` of primitives and calls the hook, so a card is a few lines of data rather than a new branch
+// in five different switches.
+//
+// Hooks: play (talisman/wenmai resolves) · summon (general arrives) · skill (珍品 active) · turn (owner's
+// turn starts, for board units and wenmai) · endTurn (owner's turn ends) · afterAttack (this unit attacked)
+// · onHit (this unit connected, c.T = victim) · whenHit (this unit was attacked, c.T = attacker)
+// · onDeath (a friendly general died, c.T = the dead unit) · auraSelf ({atk, def} added to this unit).
+//
+// The context (see ctxFor in engine.js) gives: s i u T P O · foe() mine() rnd(list) strongest(list)
+// weakest(list) hurt() · dmg(t,n) dmgHero(n) heal(t,n) healHero(n) · draw(n) mana(n) · neg(t,k,turns,v)
+// buff(t,k,turns,v) cleanse(t) immune(t,turns) dodge(t) · recover(fn) summonFrom(fn) discardPile(fn)
+// · wenmaiCount() elCount(el) fx(kind, extra) log.
+
+export const FX = {
+  // ───────── 第四章 · 先秦诸子（稷下学宫） ─────────
+  'LJ-018': {   // 孔子·杏坛  弘道
+    summon: (c) => { c.fx('tan'); for (const u of c.mine()) if (u !== c.u) c.buff(u, 'defUp', 99, 1); },
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.cleanse(u); },
+  },
+  'LJ-019': {   // 老子·上善若水
+    summon: (c) => { c.fx('water'); const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 3); },
+    skill: (c) => { for (const u of c.mine()) c.dodge(u); },
+  },
+  'LJ-020': {   // 庄子·逍遥  鲲鹏
+    summon: (c) => { c.fx('kun'); c.draw(1); },
+    afterAttack: (c) => { if (c.u.hp > 0) c.buff(c.u, 'atkUp', 1, 2); },
+    skill: (c) => { const t = c.T; c.dmg(t, 3); if (t.hp > 0) c.neg(t, 'seal', 2, 0); },
+  },
+  'LJ-021': {   // 墨子·兼爱  守城
+    whenHit: (c) => { const o = c.rnd(c.mine().filter((x) => x !== c.u && x.hp < x.maxHp)); if (o) c.heal(o, 2); },
+    skill: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 2, 2); c.healHero(2); },
+  },
+  'WM-012': {   // 竹简·诗三百
+    turn: (c) => { if (c.up) c.draw(1); else if (c.s.turn % 2 === 0) c.draw(1); },
+    play: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 99, 1); },
+  },
+  'ZL-019': { onDeath: (c) => c.dmgHero(1) },                                   // 断简残灵
+  'ZL-020': { summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 2); } },
+  'ZL-021': { onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'seal', 1, 0); } },     // 诡辩之影
+  'ZL-022': { turn: (c) => c.healHero(2) },                                      // 佚书壁影
+
+  // ───────── 第五章 · 楚辞山鬼（云梦泽） ─────────
+  'LJ-022': {   // 屈原·求索
+    summon: (c) => { c.fx('qiusuo'); c.draw(1); c.mana(1); },
+    skill: (c) => { for (const t of c.foe()) c.dmg(t, 2); c.draw(1); },
+  },
+  'LJ-023': {   // 山鬼·薜荔
+    summon: (c) => { c.dodge(c.u); },
+    afterAttack: (c) => { if (c.u.hp > 0 && !c.has(c.u, 'dodge')) c.dodge(c.u); },
+    skill: (c) => { c.dmg(c.T, 3); c.neg(c.T, 'atkDown', 2, 2); },
+  },
+  'LJ-024': {   // 湘君·洞庭
+    turn: (c) => { const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); },
+    skill: (c) => { c.cleanse(c.T); c.heal(c.T, 4); c.immune(c.T, 2); },
+  },
+  'LJ-025': {   // 国殇·魂魄毅
+    onDeath: (c) => { c.buff(c.u, 'atkUp', 99, 1); },
+    skill: (c) => { c.dmg(c.T, 4); c.dmg(c.u, 2); },
+  },
+  'WM-013': {   // 九歌·湘夫人
+    play: (c) => { c.draw(1); },
+    turn: (c) => { for (const u of c.mine()) if (c.el(u) === 'water') c.buff(u, 'atkUp', 1, 1); if (c.up) c.healHero(1); },
+  },
+  'ZL-023': { onDeath: (c) => { const t = c.rnd(c.foe()); if (t) c.neg(t, 'atkDown', 1, 1); } },
+  'ZL-024': { summon: (c) => { for (const t of c.foe()) c.dmg(t, 1); } },
+  'ZL-025': { whenHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'bleed', 2, 1); } },
+  'ZL-026': { turn: (c) => { const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); } },
+
+  // ───────── 第六章 · 秦汉气象（未央宫） ─────────
+  'LJ-026': {   // 司马迁·史记
+    summon: (c) => { c.fx('shiji'); c.recover((d) => d.type === 'wenmai' || d.type === 'general'); },
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.buff(u, 'atkUp', 2, 1); },
+  },
+  'LJ-027': {   // 张骞·凿空
+    summon: (c) => { c.fx('road'); c.draw(1); c.mana(1); },
+    afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('zaokong')) c.draw(1); },
+    skill: (c) => { c.mana(2); c.draw(1); },
+  },
+  'LJ-028': {   // 蔡伦·造纸
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); },
+    skill: (c) => { c.draw(1); c.costDown('talisman'); c.costDown('wenmai'); },
+  },
+  'LJ-029': {   // 无名戍卒·十五从军征
+    summon: (c) => { for (const u of c.mine()) if (u !== c.u) c.buff(u, 'defUp', 99, 1); },
+    onDeath: (c) => { c.buff(c.u, 'defUp', 99, 1); },
+  },
+  'WM-014': {   // 太史公书
+    turn: (c) => { if (c.s.turn % 2 === 0 || c.up) c.recover((d) => d.cost <= 4); },
+  },
+  'ZL-027': { onHit: (c) => { if (c.T.hp > 0 && c.T.def > 0) { c.T.def -= 1; c.mark(c.T, 'def', -1); } } },
+  'ZL-028': { summon: (c) => { const t = c.rnd(c.foe()); if (t) c.neg(t, 'stun', 1, 0); } },
+  'ZL-029': { turn: (c) => { for (const u of c.foe()) c.dmg(u, 1); } },
+  'ZL-030': { whenHit: (c) => c.dmg(c.T, 2) },
+
+  // ───────── 第七章 · 魏晋风骨（兰亭） ─────────
+  'LJ-030': {   // 王羲之·兰亭
+    play: (c) => {},
+    summon: (c) => { c.fx('lanting'); c.draw(1); for (const u of c.mine()) c.buff(u, 'defUp', 2, 1); },
+    skill: (c) => { c.draw(2); c.costDown('any'); c.costDown('any'); },
+  },
+  'LJ-031': {   // 陶渊明·东篱
+    turn: (c) => { c.healHero(2); },
+    skill: (c) => { c.healHero(4); for (const u of c.mine()) c.heal(u, 2); },
+  },
+  'LJ-032': {   // 嵇康·广陵散
+    summon: (c) => { c.fx('guangling'); for (const t of c.foe()) c.neg(t, 'atkDown', 2, 1); },
+    skill: (c) => { for (const t of c.foe()) { c.dmg(t, 2); if (t.hp > 0) c.neg(t, 'seal', 1, 0); } },
+  },
+  'LJ-033': {   // 顾恺之·传神
+    summon: (c) => { const t = c.strongest(c.mine().filter((x) => x !== c.u)); if (t) { c.buff(t, 'atkUp', 99, 2); c.buff(t, 'defUp', 99, 1); } },
+    skill: (c) => { c.summonFrom((d) => d.type === 'general' && d.cost <= 5); },
+  },
+  'WM-015': {   // 世说新语
+    turn: (c) => { if (c.handSize() < 5) c.draw(1); else c.mana(1); },
+  },
+  'ZL-031': { onDeath: (c) => c.draw ? null : null },                            // 空谈之影（纯白板身材）
+  'ZL-032': { summon: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 1, 1); } },
+  'ZL-033': { onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'stun', 1, 0); } },
+  'ZL-034': { turn: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 1, 1); } },
+
+  // ───────── 第八章 · 敦煌丝路（莫高窟） ─────────
+  'LJ-034': {   // 玄奘·取经
+    summon: (c) => { c.fx('road'); c.draw(2); },
+    turn: (c) => { if (c.oncePerTurn('xuanzang')) c.healHero(1); },
+    skill: (c) => { c.recover(() => true); c.recover(() => true); c.healHero(3); },
+  },
+  'LJ-035': {   // 飞天·反弹琵琶
+    summon: (c) => { c.dodge(c.u); c.fx('feitian'); },
+    afterAttack: (c) => { if (c.u.hp > 0) c.buff(c.u, 'atkUp', 1, 2); },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'atkUp', 2, 2); c.dodge(u); } },
+  },
+  'LJ-036': {   // 乐僔·凿窟
+    summon: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 99, 1); },
+    turn: (c) => { const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'defUp', 2, 2); c.cleanse(u); } },
+  },
+  'LJ-037': {   // 藏经洞画工
+    play: (c) => {},
+    summon: (c) => { c.draw(1); c.costDown('wenmai'); },
+    skill: (c) => { c.recover((d) => d.type === 'wenmai'); c.draw(1); },
+  },
+  'WM-016': {   // 莫高窟壁画
+    turn: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 1, 1); if (c.up) c.healHero(1); },
+    play: (c) => { c.draw(1); },
+  },
+  'ZL-035': { onDeath: (c) => c.dmgHero(1) },
+  'ZL-036': { summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'seal', 2, 0); } },
+  'ZL-037': { onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'bleed', 2, 1); } },
+  'ZL-038': { turn: (c) => { c.healHero(1); for (const u of c.mine()) c.heal(u, 1); } },
+
+  // ───────── 第九章 · 明清市井（江南） ─────────
+  'LJ-038': {   // 曹雪芹·石头记
+    summon: (c) => { c.fx('dream'); c.draw(2); },
+    onDeath: (c) => { c.draw(1); },
+    skill: (c) => { c.draw(2); c.healHero(3); },
+  },
+  'LJ-039': {   // 吴承恩·齐天
+    afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('wucheng')) c.mana(1); },
+    skill: (c) => { c.dmg(c.T, 4); if (c.T.hp > 0) c.neg(c.T, 'stun', 1, 0); },
+  },
+  'LJ-040': {   // 李时珍·本草
+    turn: (c) => { c.healHero(1); const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); },
+    skill: (c) => { c.heal(c.T, 5); c.cleanse(c.T); c.immune(c.T, 2); },
+  },
+  'LJ-041': {   // 徐霞客·游记
+    summon: (c) => { c.draw(1); c.mana(1); },
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); },
+    skill: (c) => { c.draw(2); c.mana(2); },
+  },
+  'WM-017': {   // 永乐大典
+    turn: (c) => { c.recover((d) => d.cost <= (c.up ? 5 : 3)); },
+  },
+  'ZL-039': { onDeath: (c) => { const t = c.rnd(c.foe()); if (t) c.dmg(t, 2); } },
+  'ZL-040': { summon: (c) => { for (const t of c.foe()) c.neg(t, 'defDown', 2, 1); } },
+  'ZL-041': { onHit: (c) => { if (c.T.hp > 0 && c.T.atk > 0) { c.T.atk -= 1; c.mark(c.T, 'atk', -1); } } },
+  'ZL-042': { turn: (c) => { c.healHero(2); } },
+
+  // ───────── 第十章 · 天工星汉（观星台 · 终章） ─────────
+  'LJ-042': {   // 张衡·浑天
+    summon: (c) => { c.fx('sky'); c.draw(1); for (const u of c.mine()) c.buff(u, 'defUp', 99, 1); },
+    skill: (c) => { for (const t of c.foe()) { c.dmg(t, 2); if (t.hp > 0) c.neg(t, 'stun', 1, 0); } },
+  },
+  'LJ-043': {   // 祖冲之·密率
+    turn: (c) => { c.mana(1); },
+    skill: (c) => { c.draw(3); },
+  },
+  'LJ-044': {   // 李冰·都江堰
+    summon: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 99, 2); },
+    whenHit: (c) => { if (c.T.hp > 0) c.dmg(c.T, 2); },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'defUp', 2, 2); c.heal(u, 2); } c.healHero(3); },
+  },
+  'LJ-045': {   // 宋应星·天工开物
+    summon: (c) => { c.draw(2); c.mana(1); },
+    turn: (c) => { if (c.oncePerTurn('songyx')) c.costDown('any'); },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'atkUp', 2, 2); c.buff(u, 'defUp', 2, 1); } c.draw(1); },
+  },
+  'WM-018': {   // 九章算术
+    turn: (c) => { c.mana(1); if (c.up) c.draw(1); },
+    play: (c) => { c.draw(1); },
+  },
+  'ZL-043': { onDeath: (c) => c.dmgHero(2) },
+  'ZL-044': { summon: (c) => { for (const t of c.foe()) c.dmg(t, 2); } },
+  'ZL-045': { onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'seal', 1, 0); } },
+  'ZL-046': { turn: (c) => { c.healHero(2); for (const u of c.mine()) c.buff(u, 'atkUp', 1, 1); } },
+
+  // ───────── 第十一章 · 海丝远航（泉州港） ─────────
+  'LJ-046': {   // 郑和·宝船
+    summon: (c) => { c.fx('sail'); c.draw(2); c.mana(1); },
+    skill: (c) => { for (const t of c.foe()) c.dmg(t, 2); for (const u of c.mine()) c.buff(u, 'defUp', 2, 2); },
+  },
+  'LJ-047': {   // 妈祖·天妃
+    turn: (c) => { c.healHero(1); const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); },
+    skill: (c) => { for (const u of c.mine()) { c.cleanse(u); c.heal(u, 2); } },
+  },
+  'LJ-048': {   // 马欢·瀛涯
+    summon: (c) => { c.draw(1); },
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); },
+    skill: (c) => { c.draw(2); c.costDown('any'); },
+  },
+  'LJ-049': {   // 窑工·青花
+    summon: (c) => { c.fx('kiln'); for (const u of c.mine()) { u.atk += 1; c.mark(u, 'atk', 1); } },
+    skill: (c) => { const t = c.T; c.dmg(t, 4); if (t.hp <= 0) c.draw(1); },
+  },
+  'WM-019': {   // 针路·指南针
+    play: (c) => { c.draw(1); },
+    turn: (c) => { c.mana(1); if (c.up) c.draw(1); },
+  },
+  'ZL-047': { onDeath: (c) => c.dmgHero(1) },
+  'ZL-048': { summon: (c) => { for (const t of c.foe()) c.dmg(t, 1); } },
+  'ZL-049': { onHit: (c) => { if (c.T.hp > 0 && c.T.def > 0) { c.T.def -= 1; c.mark(c.T, 'def', -1); } } },
+  'ZL-050': { turn: (c) => c.healHero(2) },
+
+  // ───────── 第十二章 · 归藏传灯（藏书楼 · 终章） ─────────
+  'LJ-050': {   // 范钦·天一阁
+    summon: (c) => { c.fx('tianyi'); for (const u of c.mine()) { u.def += 2; c.mark(u, 'def', 2); } },
+    onDeath: (c) => { c.u.def += 1; c.mark(c.u, 'def', 1); },
+    skill: (c) => { for (const u of c.mine()) { c.buff(u, 'defUp', 2, 2); c.immune(u, 2); } },
+  },
+  'LJ-051': {   // 朱熹·白鹿洞
+    summon: (c) => { c.draw(1); },
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); },
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.buff(u, 'atkUp', 2, 1); },
+  },
+  'LJ-052': {   // 郑樵·校雠
+    summon: (c) => { c.fx('catalog'); c.recover(() => true); },
+    skill: (c) => { c.recover(() => true); c.recover(() => true); c.costDown('any'); },
+  },
+  'LJ-053': {   // 贞人·灼甲
+    summon: (c) => { c.fx('oracle'); c.draw(1); const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 1); },
+    skill: (c) => { c.dmg(c.T, 3); if (c.T.hp > 0) c.neg(c.T, 'seal', 2, 0); },
+  },
+  'WM-020': {   // 雕版·书坊
+    turn: (c) => { c.recover((d) => d.cost <= (c.up ? 5 : 3)); if (c.up) c.draw(1); },
+  },
+  'ZL-051': { onHit: (c) => { if (c.T.hp > 0 && c.T.atk > 0) { c.T.atk -= 1; c.mark(c.T, 'atk', -1); } } },
+  'ZL-052': { turn: (c) => c.healHero(2) },
+  'ZL-053': { onDeath: (c) => c.dmgHero(1) },
+  'ZL-054': { summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'seal', 2, 0); } },
+};
+
+/**
+ * Boss passives. Each fires at the start of the owner's turn when `turns % every === 0`.
+ * chip/info text lives in battle.js (PASSIVE_ZH).
+ */
+export const PASSIVES = {
+  // chapters 1–3 keep their original behaviour, now expressed here so every boss goes through one path
+  chaos: { every: 3, run: (c) => { c.fx('chaos'); for (const u of c.foe()) if (u.def > 0) { u.def -= 1; c.mark(u, 'def', -1); } for (const u of c.foe()) c.dmg(u, 1); } },
+  nishang: { every: 3, run: (c) => { c.fx('nishang'); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 2); c.healHero(3); } },
+  juexiang: { every: 3, run: (c) => { c.fx('juexiang'); for (const u of c.foe()) c.neg(u, 'seal', 1, 0); c.mana(1); } },
+  // chapters 4–10
+  biantong: { every: 3, run: (c) => { c.fx('biantong'); c.draw(2); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 1); } },
+  zhaohun: { every: 3, run: (c) => { c.fx('zhaohun'); c.summonFrom((d) => d.type === 'general' && d.cost <= 4); c.healHero(2); } },
+  fenshu: { every: 3, run: (c) => { c.fx('fenshu'); for (const u of c.foe()) c.dmg(u, 1); c.burnHand(1); } },
+  qingtan: { every: 3, run: (c) => { c.fx('qingtan'); for (const u of c.foe()) c.neg(u, 'seal', 1, 0); c.draw(1); } },
+  liusha: { every: 3, run: (c) => { c.fx('liusha'); for (const u of c.foe()) { c.dmg(u, 1); if (u.hp > 0 && u.def > 0) { u.def -= 1; c.mark(u, 'def', -1); } } c.healHero(2); } },
+  jinhui: { every: 3, run: (c) => { c.fx("jinhui"); c.draw(2); c.mana(1); for (const u of c.foe()) c.neg(u, 'defDown', 1, 1); } },
+  wangchuan: { every: 2, run: (c) => { c.fx('wangchuan'); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 1); c.healHero(2); c.draw(1); } },
+  chenzhou: { every: 3, run: (c) => { c.fx('chenzhou'); for (const u of c.foe()) { c.dmg(u, 1); c.neg(u, 'atkDown', 1, 1); } c.draw(1); c.healHero(2); } },
+  wuren: { every: 3, run: (c) => { c.fx('wuren'); c.burnHand(1); for (const u of c.foe()) c.neg(u, 'atkDown', 1, 1); c.healHero(1); } },
+};

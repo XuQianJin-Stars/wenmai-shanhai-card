@@ -1,0 +1,24 @@
+:root {
+  --bg: #0e0f0d; --ink: #1a1a1a; --paper: #f5f0e8; --paper2: #e9e0cc; --gold: #c8a04a; --gold2: #e8d49a;
+  --cinnabar: #b8322a; --jade: #4a8c5c; --blue: #2a4a7a;
+  --brush: 'Ma Shan Zheng', 'STKaiti', 'Kaiti SC', 'KaiTi', serif;
+  --serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  color-scheme: dark;
+}
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none; }
+canvas#c { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; outline: none; }
+#ui { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-family: var(--serif); color: var(--paper); }
+
+#load { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 48%, #1f1d18 0%, var(--bg) 70%); transition: opacity 1.2s ease; }
+#load.done { opacity: 0; }
+#load .wrap { display: grid; justify-items: center; gap: 20px; transform: translateY(-2vh); }
+#load .title { font-family: var(--brush); font-size: min(110px, 20vw); color: var(--paper2); letter-spacing: 0.1em; line-height: 1; opacity: 0.92; }
+#load .sub { font-family: var(--serif); font-size: 16px; letter-spacing: 0.9em; color: rgba(233, 224, 204, 0.55); margin-right: -0.9em; }
+#load svg { width: min(360px, 70vw); height: 24px; overflow: visible; }
+#load .stroke { fill: none; stroke: var(--paper2); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0.985;
+  transition: stroke-dashoffset 0.5s cubic-bezier(.3,.7,.2,1); filter: url(#brush); opacity: 0.85; }
+#load .track { fill: none; stroke: rgba(233, 224, 204, 0.07); stroke-width: 2; }
+#load .seal { width: 28px; height: 28px; border: 2px solid var(--cinnabar); color: var(--cinnabar); font-family: var(--brush);
+  font-size: 17px; display: grid; place-items: center; border-radius: 3px; opacity: 0.85; }
+#load .label { font-size: 12px; letter-spacing: 0.3em; color: rgba(233, 224, 204, 0.4); min-height: 1em; }
