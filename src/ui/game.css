@@ -147,7 +147,9 @@ button { font: inherit; color: inherit; }
 .gd-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; align-content: start; overflow: auto; }
 .gd-row { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-left: 3px solid rgba(200, 160, 74, 0.5);
   background: linear-gradient(90deg, rgba(20, 18, 15, 0.82), rgba(20, 18, 15, 0.4)); }
-.gd-row.maxed { border-left-color: var(--jade); }
+/* 点满的那条单独标个类名，不要叫 .maxed——图鉴那边有个全局 .maxed 带 margin-top，
+   撞上以后整张卡会在格子里往下掉 14px，跟旁边一列对不齐。 */
+.gd-row.full { border-left-color: var(--jade); }
 .gd-head { display: flex; align-items: baseline; gap: 10px; }
 .gd-name { font-family: var(--brush); font-size: 24px; color: var(--paper); letter-spacing: 0.1em; }
 .gd-sub { font-size: 12px; color: rgba(240, 228, 204, 0.55); flex: 1; min-width: 0; }
@@ -159,7 +161,7 @@ button { font: inherit; color: inherit; }
 .gd-next { font-size: 12px; color: rgba(240, 228, 204, 0.6); }
 .gd-lore { font-family: var(--brush); font-size: 15px; color: rgba(240, 228, 204, 0.42); margin-bottom: 4px; }
 .gd-row .btn { align-self: flex-start; }
-.gd-row .maxed { align-self: flex-start; font-size: 13px; color: var(--jade); letter-spacing: 0.1em; }
+.gd-full { align-self: flex-start; margin-top: 2px; font-family: var(--brush); font-size: 15px; color: var(--jade); letter-spacing: 0.15em; }
 
 /* deck builder */
 .deckb { display: flex; gap: 18px; height: 100%; }

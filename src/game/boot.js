@@ -389,13 +389,13 @@ export async function boot(params, fontsReady) {
         const pips = h('div.gd-pips', Array.from({ length: t.max }, (_, i) => h('i' + (i < lv ? '.on' : ''))));
         const now = lv ? t.text(lv) : '尚未修行';
         const next = cost === null ? null : t.text(lv + 1);
-        rows.append(h('div.gd-row' + (cost === null ? '.maxed' : ''),
+        rows.append(h('div.gd-row' + (cost === null ? '.full' : ''),
           h('div.gd-head', h('span.gd-name', { text: t.name }), h('span.gd-sub', { text: t.sub }), pips),
           h('div.gd-now', { text: now }),
           next ? h('div.gd-next', { text: `下一级：${next}` }) : h('div.gd-next', { text: '已至圆满' }),
           h('div.gd-lore', { text: t.lore }),
           cost === null
-            ? h('div.maxed', { text: '圆满' })
+            ? h('div.gd-full', { text: '圆满' })
             : btn(`修行 · ${cost} 碎片`, async () => {
               if (!save.upgradeGuardian(t.k)) { audio.sfx('error'); toast(`碎片不足（需要 ${cost}）`); return; }
               audio.sfx('upgrade');
