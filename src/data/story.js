@@ -48,7 +48,7 @@ export const PROLOGUE = {
 
 export const LEVELS = [
   {
-    id: 'ch1-1', title: '第一关 · 混沌余烬', scene: 'kunlun', variant: 'edge',
+    id: 'shenhua-1', title: '第一关 · 混沌余烬', scene: 'kunlun', variant: 'edge',
     desc: '昆仑墟边缘，文脉晶石台地。教学关：认识三类卡牌。',
     enemy: { name: '迷雾小灵', hp: 12, portrait: 'mist', deck: [
       'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-001', 'ZL-002', 'ZL-002', 'ZL-001', 'ZL-002',
@@ -73,7 +73,7 @@ export const LEVELS = [
     ],
   },
   {
-    id: 'ch1-2', title: '第二关 · 遗落的名字', scene: 'kunlun', variant: 'stele',
+    id: 'shenhua-2', title: '第二关 · 遗落的名字', scene: 'kunlun', variant: 'stele',
     desc: '昆仑墟中心台地，残缺的记名碑。浊灵会腐蚀灵将的防御。',
     enemy: { name: '蚀名浊灵', hp: 18, portrait: 'shade', deck: [
       'ZL-001', 'ZL-001', 'ZL-001', 'ZL-002', 'ZL-002', 'ZL-002', 'ZL-003', 'ZL-003', 'ZL-004', 'ZL-004',
@@ -97,7 +97,7 @@ export const LEVELS = [
     ],
   },
   {
-    id: 'ch1-3', title: '第三关 · 开天之痛', scene: 'kunlun', variant: 'summit',
+    id: 'shenhua-3', title: '第三关 · 开天之痛', scene: 'kunlun', variant: 'summit',
     desc: '昆仑墟最高台，贯穿虚空的古老裂缝。首领：沉迹怨灵——每 3 回合施放「混沌之压」。',
     music: 'boss',
     enemy: { name: '沉迹怨灵', hp: 26, portrait: 'husk', passive: 'chaos', deck: [
@@ -129,14 +129,15 @@ export const LEVELS = [
 // ───────────────────────────── 第二章 · 唐宋古风篇 ─────────────────────────────
 // Scene: LORE_BIBLE §2.2 长安城. Quoted verse is real and attributed in-line; everything else is original.
 export const PROLOGUE2 = {
-  id: 'prologue2', title: '第二章 序 · 长安月', scene: 'study',
+  id: 'prologue7', title: '第七章 序 · 长安月', scene: 'study',
   lines: [
-    { who: '旁白', text: '昆仑墟的晨光之后，书斋里多了一卷新展开的典籍。' },
+    { who: '旁白', text: '洞窟里的颜色安顿下来之后，书斋里多了一卷新展开的典籍。' },
     { who: '', text: '（书页上的字一行行亮起，又一行行暗下去。那是诗——许多许多诗，大半只剩开头半句。）', stage: 'glow' },
     { who: '女娲之灵', text: '你认得这些字吗？' },
     { who: '守护者', text: '……"长安一片月"。后面是什么？' },
     { who: '女娲之灵', text: '"万户捣衣声。"李白写的。你看，连你也只记得半句。' },
-    { who: '女娲之灵', text: '文脉顺着时间往下流。流到唐朝，它最盛——整座城的人都在写诗、唱曲、跳舞。' },
+    { who: '玄奘之灵', text: '我就是从那座城出发的。走的时候是夜里，城门没开，我翻出去的。' },
+    { who: '女娲之灵', text: '沙里的洞是往外走的人留下的，长安是他们出发和回来的地方。文脉流到唐朝，最盛——整座城的人都在写诗、唱曲、跳舞。' },
     { who: '女娲之灵', text: '可越盛的东西，一旦被忘，碎得就越彻底。那些只剩半句的诗，正在长安城里游荡。' },
     { who: '守护者', text: '它们也会变成浊灵？' },
     { who: '女娲之灵', text: '已经变了。去朱雀大街看看吧——天快黑了，灯要亮了。' },
@@ -146,13 +147,13 @@ export const PROLOGUE2 = {
 
 LEVELS.push(
   {
-    id: 'ch2-1', chapter: 2, title: '第一关 · 朱雀残句', scene: 'changan', variant: 'street',
+    id: 'tangsong-1', chapter: 7, title: '第一关 · 朱雀残句', scene: 'changan', variant: 'street',
     desc: '黄昏的朱雀大街，飘着只剩半句的诗。残句墨魅被击散时会溅伤主将。',
-    enemy: { name: '残句墨魅', hp: 20, portrait: 'inkling', deck: [
+    enemy: { name: '残句墨魅', hp: 30, portrait: 'inkling', deck: [
       'ZL-007', 'ZL-007', 'ZL-007', 'ZL-007', 'ZL-007', 'ZL-007', 'ZL-002', 'ZL-002', 'ZL-002', 'ZL-008',
       'ZL-008', 'ZL-008', 'ZL-009', 'ZL-009', 'ZL-003', 'ZL-003', 'ZL-012', 'ZL-012', 'ZL-012', 'FL-006'] },
     ai: 'normal', playerFirst: true,
-    reward: { fragments: 20, unlock: ['LJ-010', 'LJ-013'] },
+    reward: { fragments: 35, unlock: ['LJ-010', 'LJ-013'] },
     pre: [
       { who: '', text: '（守护者走上朱雀大街。灯笼一盏盏亮起，空气里漂着金色的字，像夏夜的萤火。）' },
       { who: '守护者', text: '这些字……在飞。' },
@@ -172,13 +173,13 @@ LEVELS.push(
     ],
   },
   {
-    id: 'ch2-2', chapter: 2, title: '第二关 · 雁塔题名', scene: 'changan', variant: 'pagoda',
+    id: 'tangsong-2', chapter: 7, title: '第二关 · 雁塔题名', scene: 'changan', variant: 'pagoda',
     desc: '大雁塔下，历代进士的题名正在褪色。失名举子层层守护，碑影不断为主将续命。',
-    enemy: { name: '褪色题名', hp: 22, portrait: 'nameplate', deck: [
+    enemy: { name: '褪色题名', hp: 34, portrait: 'nameplate', deck: [
       'ZL-008', 'ZL-008', 'ZL-008', 'ZL-010', 'ZL-010', 'ZL-007', 'ZL-007', 'ZL-007', 'ZL-009', 'ZL-009',
       'ZL-003', 'ZL-003', 'ZL-004', 'ZL-004', 'ZL-012', 'ZL-012', 'ZL-002', 'ZL-002', 'FL-005', 'FL-001'] },
     ai: 'hard', playerFirst: true,
-    reward: { fragments: 25, unlock: ['LJ-011', 'WM-008', 'QW-017'] },
+    reward: { fragments: 40, unlock: ['LJ-011', 'WM-008', 'QW-017'] },
     pre: [
       { who: '', text: '（大雁塔在暮色里静立。塔砖上刻满了名字，一层叠着一层，大多已模糊得认不出笔画。）' },
       { who: '李白之灵', text: '新科进士登塔题名，是长安最风光的事。孟郊考了半辈子，中了以后写："春风得意马蹄疾，一日看尽长安花。"' },
@@ -198,15 +199,15 @@ LEVELS.push(
     ],
   },
   {
-    id: 'ch2-3', chapter: 2, title: '第三关 · 霓裳断魂', scene: 'changan', variant: 'palace',
+    id: 'tangsong-3', chapter: 7, title: '第三关 · 霓裳断魂', scene: 'changan', variant: 'palace',
     desc: '夜色里的梨园旧台。首领：霓裳断魂——每 3 回合奏响「曲终」，削弱我方灵将并回复自身。',
     music: 'nishang',
-    enemy: { name: '霓裳断魂', hp: 30, portrait: 'nishang', passive: 'nishang', deck: [
+    enemy: { name: '霓裳断魂', hp: 26, portrait: 'nishang', passive: 'nishang', deck: [
       'ZL-011', 'ZL-011', 'ZL-011', 'ZL-009', 'ZL-009', 'ZL-010', 'ZL-010', 'ZL-008', 'ZL-008', 'ZL-005',
       'ZL-012', 'ZL-012', 'ZL-012', 'ZL-003', 'ZL-003', 'ZL-007', 'ZL-007', 'FL-003', 'FL-004', 'FL-006'],
       grades: { 'FL-003': 1, 'FL-004': 1 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 35, unlock: ['LJ-012', 'WM-009', 'QW-008'] },
+    reward: { fragments: 60, unlock: ['LJ-012', 'WM-009', 'QW-008'] },
     pre: [
       { who: '', text: '（梨园空无一人。月光落在旧戏台上，台板缝里长出了草。）' },
       { who: '杜甫之灵', text: '这里曾聚着天下最好的乐工。后世说"梨园弟子"，就是从这儿来的。' },
@@ -235,13 +236,14 @@ LEVELS.push(
 // ───────────────────────────── 第三章 · 非遗薪传篇 ─────────────────────────────
 // Scene: LORE_BIBLE §2.3 古戏台（活态文脉）. Quoted lines are real and attributed; the rest is original.
 export const PROLOGUE3 = {
-  id: 'prologue3', title: '第三章 序 · 散场之后', scene: 'study',
+  id: 'prologue11', title: '第十一章 序 · 散场之后', scene: 'study',
   lines: [
-    { who: '旁白', text: '长安的月落下去之后，书斋里安静了很久。' },
+    { who: '旁白', text: '观星台的炉火熄了。书斋里安静了很久。' },
     { who: '', text: '（这一次，铜镜里没有光。镜面蒙着一层灰，像很久没人擦过。）', stage: 'glow' },
     { who: '守护者', text: '镜子……坏了？' },
     { who: '女娲之灵', text: '没坏。是那边太暗了。' },
-    { who: '女娲之灵', text: '昆仑的神话有人讲，长安的诗有人背。可还有一种文脉，不写在书上——它在手上，在嗓子里，在师父递给徒弟的那一下。' },
+    { who: '女娲之灵', text: '我们一路看下来，神话有人讲，诗有人背，工序有人画成图。这些都落在纸上，纸在，它们就在。' },
+    { who: '女娲之灵', text: '可还有一种文脉，从来没落到纸上——它在手上，在嗓子里，在师父递给徒弟的那一下。' },
     { who: '苏轼之灵', text: '皮影、剪纸、刺绣、戏文。这些东西不靠典籍活着，靠人活着。' },
     { who: '守护者', text: '那没有人了呢？' },
     { who: '女娲之灵', text: '……那就断了。不是慢慢褪色，是某一天，最后一个会的人走了，它就没有了。' },
@@ -252,13 +254,13 @@ export const PROLOGUE3 = {
 
 LEVELS.push(
   {
-    id: 'ch3-1', chapter: 3, title: '第一关 · 灯影残戏', scene: 'stage', variant: 'shadow',
+    id: 'feiyi-1', chapter: 11, title: '第一关 · 灯影残戏', scene: 'stage', variant: 'shadow',
     desc: '皮影棚里，白幕后的影人还在演一出没人看的戏。断线偶人攻击后会伤到自己。',
-    enemy: { name: '断线偶人', hp: 24, portrait: 'puppet', deck: [
+    enemy: { name: '断线偶人', hp: 34, portrait: 'puppet', deck: [
       'ZL-013', 'ZL-013', 'ZL-013', 'ZL-013', 'ZL-014', 'ZL-014', 'ZL-014', 'ZL-015', 'ZL-015', 'ZL-017',
       'ZL-017', 'ZL-018', 'ZL-018', 'ZL-002', 'ZL-002', 'ZL-008', 'ZL-008', 'ZL-009', 'FL-002', 'FL-006'] },
     ai: 'normal', playerFirst: true,
-    reward: { fragments: 25, unlock: ['LJ-014', 'LJ-017'] },
+    reward: { fragments: 50, unlock: ['LJ-014', 'LJ-017'] },
     pre: [
       { who: '', text: '（守护者走进一座低矮的棚子。一盏油灯，一方白幕，幕后的影人自己在动。）' },
       { who: '守护者', text: '没有人在操纵它们。' },
@@ -280,13 +282,13 @@ LEVELS.push(
     ],
   },
   {
-    id: 'ch3-2', chapter: 3, title: '第二关 · 满堂空座', scene: 'stage',
+    id: 'feiyi-2', chapter: 11, title: '第二关 · 满堂空座', scene: 'stage',
     desc: '夜里的古戏台，台下坐满了看不清的影子。空衣戏影守在台口，回合结束时为同伴续命。',
-    enemy: { name: '空衣戏影', hp: 28, portrait: 'robeGhost', deck: [
+    enemy: { name: '空衣戏影', hp: 40, portrait: 'robeGhost', deck: [
       'ZL-016', 'ZL-014', 'ZL-014', 'ZL-014', 'ZL-015', 'ZL-015', 'ZL-017', 'ZL-017', 'ZL-013', 'ZL-013',
       'ZL-013', 'ZL-018', 'ZL-018', 'ZL-010', 'ZL-007', 'ZL-009', 'ZL-004', 'FL-003', 'FL-004', 'FL-001'] },
     ai: 'hard', playerFirst: true,
-    reward: { fragments: 30, unlock: ['LJ-015', 'WM-011'] },
+    reward: { fragments: 55, unlock: ['LJ-015', 'WM-011'] },
     pre: [
       { who: '', text: '（戏台前的空地上坐满了人影，看不清面目，一动不动。台上的戏服自己立着，无风而颤。）' },
       { who: '守护者', text: '这些观众……是真的吗？' },
@@ -306,15 +308,15 @@ LEVELS.push(
     ],
   },
   {
-    id: 'ch3-3', chapter: 3, title: '第三关 · 空台绝响', scene: 'stage', variant: 'dawn',
+    id: 'feiyi-3', chapter: 11, title: '第三关 · 空台绝响', scene: 'stage', variant: 'dawn',
     desc: '天亮前的空台。首领：空台绝响——每 3 回合「散场」，封印我方全部技能并让自身多得 1 点灵力。',
     music: 'juexiang',
-    enemy: { name: '空台绝响', hp: 28, portrait: 'juexiang', passive: 'juexiang', deck: [
+    enemy: { name: '空台绝响', hp: 40, portrait: 'juexiang', passive: 'juexiang', deck: [
       'ZL-016', 'ZL-017', 'ZL-017', 'ZL-015', 'ZL-015', 'ZL-014', 'ZL-014', 'ZL-007', 'ZL-007', 'ZL-013',
       'ZL-010', 'ZL-018', 'ZL-018', 'ZL-013', 'ZL-013', 'ZL-011', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
       grades: { 'FL-003': 1 } },
     ai: 'hard', playerFirst: false,
-    reward: { fragments: 40, unlock: ['LJ-016', 'WM-010', 'QW-003'] },
+    reward: { fragments: 75, unlock: ['LJ-016', 'WM-010', 'QW-003'] },
     pre: [
       { who: '', text: '（天快亮了。戏台空着，锣鼓架翻倒在一旁，台口积着厚厚一层灰。）' },
       { who: '', text: '（灰自己动起来，聚成一个人形——像班主，像伶人，又像一整座戏台站了起来。）' },
@@ -349,8 +351,11 @@ export const SPEAKER_ART = {
   ...LATE_SPEAKERS,
 };
 
-// chapters 4–10 live in storyLate.js; their levels join the same flat LEVELS list
+// 神话之后的各章住在 storyLate.js，汇进同一张扁平的 LEVELS 表。
 for (const C of LATE_CHAPTERS) for (const L of C.levels) LEVELS.push({ ...L, chapter: C.n });
+// 章节是按朝代编年排的，而声明顺序是当初写的顺序，两者早就不一致了。
+// 进度门禁（save.levelOpen）吃的是 LEVELS 的下标，所以这里必须按章号重排一次。
+LEVELS.sort((a, b) => (a.chapter ?? 1) - (b.chapter ?? 1));
 
 const DIGITS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 /** 1 → 一, 10 → 十, 12 → 十二, 21 → 二十一. Chapter counts have outgrown a hand-written list twice now. */
@@ -360,12 +365,14 @@ const chapter = (n, short, prologue, desc) => ({
   levels: LEVELS.filter((L) => (L.chapter ?? 1) === n),
 });
 
+// 章节顺序 = 中国神话 → 朝代编年 → 传承 → 终章。想插一章进去，改这里的章号即可，
+// 关卡 id 用的是朝代拼音（shenhua-1 / xianqin-1 …）而不是章号，重排不会动到存档。
 export const CHAPTERS = [
   chapter(1, '上古神话篇', PROLOGUE, '书斋之中，泛黄典籍里溢出一缕金光。'),
-  chapter(2, '唐宋古风篇', PROLOGUE2, '典籍里的诗只剩半句，铜镜映出黄昏的长安。'),
-  chapter(3, '非遗薪传篇', PROLOGUE3, '铜镜蒙尘。有一种文脉不写在书上，只活在人手里。'),
+  chapter(7, '唐宋古风篇', PROLOGUE2, '典籍里的诗只剩半句，铜镜映出黄昏的长安。'),
+  chapter(11, '非遗薪传篇', PROLOGUE3, '铜镜蒙尘。有一种文脉不写在书上，只活在人手里。'),
   ...LATE_CHAPTERS.map((C) => chapter(C.n, C.short, C.prologue, C.desc)),
-];
+].sort((a, b) => a.n - b.n);
 /** Closing banner for a chapter's last 'end' cue. */
 export const chapterEnd = (n) => {
   const C = CHAPTERS.find((x) => x.n === n) ?? CHAPTERS[0], next = CHAPTERS.find((x) => x.n === n + 1);
@@ -374,19 +381,19 @@ export const chapterEnd = (n) => {
 
 // 自由对战 opponents: one per scene (SCENE_DESIGN_v1: 昆仑墟 / 古戏台 / 书斋)
 export const PRACTICE = [
-  { id: 'p-kunlun', title: '昆仑墟 · 创世之试', scene: 'kunlun', variant: 'summit', enemy: { name: '昆仑守山人', hp: 20, portrait: 'giant',
+  { id: 'p-kunlun', title: '昆仑墟 · 创世之试', scene: 'kunlun', variant: 'summit', enemy: { name: '昆仑守山人', hp: 40, portrait: 'giant',
     deck: ['LJ-001', 'LJ-004', 'LJ-002', 'LJ-009', 'LJ-007', 'LJ-007', 'LJ-008', 'LJ-008', 'LJ-006', 'LJ-006',
       'WM-001', 'WM-002', 'ZL-001', 'FL-003', 'FL-005', 'FL-005', 'FL-001', 'FL-002', 'FL-002', 'LJ-009'] } },
-  { id: 'p-stage', title: '古戏台 · 八仙献艺', scene: 'stage', enemy: { name: '戏台班主', hp: 20, portrait: 'swordsman',
+  { id: 'p-stage', title: '古戏台 · 八仙献艺', scene: 'stage', enemy: { name: '戏台班主', hp: 40, portrait: 'swordsman',
     deck: ['LJ-005', 'LJ-005', 'LJ-006', 'LJ-006', 'LJ-003', 'LJ-003', 'LJ-007', 'LJ-007', 'LJ-009', 'WM-003',
       'WM-003', 'WM-004', 'WM-007', 'FL-002', 'FL-002', 'FL-004', 'FL-001', 'FL-006', 'LJ-008', 'FL-003'] } },
-  { id: 'p-study', title: '书斋 · 五行符阵', scene: 'study', enemy: { name: '书斋老道', hp: 20, portrait: 'judge',
+  { id: 'p-study', title: '书斋 · 五行符阵', scene: 'study', enemy: { name: '书斋老道', hp: 40, portrait: 'judge',
     deck: ['FL-001', 'FL-002', 'FL-003', 'FL-004', 'FL-005', 'FL-006', 'LJ-003', 'FL-003', 'FL-004', 'LJ-008',
       'LJ-004', 'LJ-004', 'LJ-009', 'LJ-007', 'LJ-007', 'LJ-008', 'WM-005', 'WM-005', 'LJ-006', 'WM-002'] } },
-  { id: 'p-changan', title: '长安 · 诗酒夜宴', scene: 'changan', variant: 'street', enemy: { name: '酒肆诗客', hp: 20, portrait: 'poet',
+  { id: 'p-changan', title: '长安 · 诗酒夜宴', scene: 'changan', variant: 'street', enemy: { name: '酒肆诗客', hp: 40, portrait: 'poet',
     deck: ['LJ-010', 'LJ-011', 'LJ-011', 'LJ-012', 'LJ-013', 'LJ-013', 'LJ-007', 'LJ-007', 'LJ-008', 'LJ-004',
       'LJ-006', 'WM-009', 'WM-005', 'FL-001', 'FL-002', 'FL-003', 'FL-004', 'FL-006', 'FL-006', 'LJ-009'] } },
-  { id: 'p-liyuan', title: '古戏台 · 梨园绝唱', scene: 'stage', variant: 'dawn', enemy: { name: '末代班主', hp: 20, portrait: 'juexiang',
+  { id: 'p-liyuan', title: '古戏台 · 梨园绝唱', scene: 'stage', variant: 'dawn', enemy: { name: '末代班主', hp: 40, portrait: 'juexiang',
     deck: ['LJ-014', 'LJ-014', 'LJ-015', 'LJ-017', 'LJ-017', 'LJ-016', 'LJ-006', 'LJ-006', 'LJ-013', 'LJ-009',
       'WM-010', 'WM-011', 'WM-004', 'WM-007', 'FL-001', 'FL-003', 'FL-003', 'FL-005', 'FL-006', 'LJ-008'] } },
 ];

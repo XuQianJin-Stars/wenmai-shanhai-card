@@ -44,7 +44,7 @@ const t0 = Date.now();
   for (const [k, v] of Object.entries(table)) console.log(`  ${k.padEnd(10)} ${v.w}-${v.l}  (${(100 * v.w / (v.w + v.l)).toFixed(0)}%)`);
 }
 // 2) story levels: starter deck (normal AI playing for the human) vs each level's configured AI.
-//    The boss is also measured with the deck a player realistically has by then (ch1-1/ch1-2 unlocks + 25 fragments spent).
+//    The boss is also measured with the deck a player realistically has by then (shenhua-1/shenhua-2 unlocks + 25 fragments spent).
 const PROGRESSED = { deck: STARTER_DECK.map((id, i) => (id === 'FL-002' ? 'LJ-001' : id === 'LJ-007' && i === 0 ? 'LJ-002' : id === 'WM-001' ? 'FL-005' : id)),
   grades: { 'LJ-004': 1, 'LJ-006': 1 } };
 // Chapter 2 is measured with the deck the player has by then: every earlier unlock auto-inserted (as the game does) plus
@@ -70,7 +70,7 @@ const progressAt = (upTo) => {
   return { deck, grades };
 };
 const late = LEVELS.filter((L) => L.chapter > 1).map((L) => ({ ...L, deckOverride: progressAt(L.id) }));
-for (const L of [...LEVELS.filter((L) => !L.chapter), { ...LEVELS[2], id: 'ch1-3+', title: '首领关（带解锁与升阶）', progressed: true }, ...late]) {
+for (const L of [...LEVELS.filter((L) => !L.chapter), { ...LEVELS[2], id: 'shenhua-3+', title: '首领关（带解锁与升阶）', progressed: true }, ...late]) {
   let wins = 0, games = 0, turns = 0;
   const n = Math.max(20, Math.floor(N / 4));
   for (let g = 0; g < n; g++) {

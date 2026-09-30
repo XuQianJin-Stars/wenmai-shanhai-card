@@ -1,5 +1,5 @@
 // Boot + screen flow: title → main menu → 故事模式 / 自由对战 / 卡牌图鉴·升阶 / 牌组编成 / 设置.
-// URL switches for testing: ?battle=ch1-1|p-stage  &auto=1 (AI plays both sides)  &screen=collection|deck|story|practice
+// URL switches for testing: ?battle=shenhua-1|p-stage  &auto=1 (AI plays both sides)  &screen=collection|deck|story|practice
 //   &speed=2  &reset=1 (fresh save)  &unlock=1 (all cards, 999 fragments)
 import * as THREE from 'three';
 import { createApp } from '../render/app.js';

@@ -7,7 +7,7 @@ const KEY = 'wenmai_save_v1';
 
 export function defaultSave() {
   return {
-    v: 1,
+    v: 2,                              // 2 = 关卡 id 改成朝代拼音之后（见 migrateLevelId）
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
@@ -22,6 +22,13 @@ export function defaultSave() {
   };
 }
 
+// v1 的关卡 id 是 chN-M，章号一按朝代重排就全对不上了，所以改成了朝代拼音。
+// 这两张表只在读到 v1 存档时用一次——新存档已经是新编号，再翻一遍就翻错了。
+const OLD_CH = { 1: 'shenhua', 2: 'tangsong', 3: 'feiyi', 4: 'xianqin', 5: 'chuci', 6: 'qinhan',
+  7: 'weijin', 8: 'dunhuang', 9: 'shijing', 10: 'tiangong', 11: 'haisi', 12: 'guizang' };
+const OLD_N = { 1: 1, 2: 7, 3: 11, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 9, 10: 10, 11: 8, 12: 12 };
+const migrateLevelId = (id) => (typeof id === 'string' ? id.replace(/^ch(\d+)-(\d+)$/, (m, c, k) => (OLD_CH[c] ? `${OLD_CH[c]}-${k}` : m)) : id);
+
 function validate(raw) {
   const d = defaultSave();
   if (!raw || typeof raw !== 'object') return d;
@@ -34,11 +41,14 @@ function validate(raw) {
     const deck = raw.deck.filter((id) => d.owned.includes(id));
     if (deckProblem(deck) === null) d.deck = deck;
   }
-  if (Array.isArray(raw.done)) d.done = raw.done.filter((id) => LEVELS.some((l) => l.id === id));
+  const old = !(raw.v >= 2);
+  if (Array.isArray(raw.done)) d.done = raw.done.map((id) => (old ? migrateLevelId(id) : id)).filter((id) => LEVELS.some((l) => l.id === id));
   d.seenPrologue = !!raw.seenPrologue;
-  const pro = new Set(Array.isArray(raw.seenPro) ? raw.seenPro.filter((n) => Number.isInteger(n) && n >= 2 && n <= 99) : []);
-  if (raw.seenPrologue2) pro.add(2);   // saves written before the prologue flags were generalised
-  if (raw.seenPrologue3) pro.add(3);
+  const chNo = (n) => (old ? OLD_N[n] ?? n : n);
+  const pro = new Set(Array.isArray(raw.seenPro)
+    ? raw.seenPro.filter((n) => Number.isInteger(n) && n >= 2 && n <= 99).map(chNo) : []);
+  if (raw.seenPrologue2) pro.add(chNo(2));   // saves written before the prologue flags were generalised
+  if (raw.seenPrologue3) pro.add(chNo(3));
   d.seenPro = [...pro].sort((a, b) => a - b);
   if (Array.isArray(raw.seenBonds)) d.seenBonds = raw.seenBonds.filter((x) => typeof x === 'string');
   if (raw.stats) for (const k of ['wins', 'losses', 'games']) d.stats[k] = Math.floor(num(raw.stats[k], 0, 1e7, 0));
