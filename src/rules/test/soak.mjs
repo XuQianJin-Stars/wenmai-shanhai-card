@@ -43,12 +43,11 @@ const t0 = Date.now();
     `avg ${(turns / games).toFixed(1)} turns (≈${(turns / games / 2).toFixed(1)} each), unfinished ${draws}, deck-outs ${deckouts}`);
   for (const [k, v] of Object.entries(table)) console.log(`  ${k.padEnd(10)} ${v.w}-${v.l}  (${(100 * v.w / (v.w + v.l)).toFixed(0)}%)`);
 }
-// 2) story levels: starter deck (normal AI playing for the human) vs each level's configured AI.
-//    The boss is also measured with the deck a player realistically has by then (shenhua-1/shenhua-2 unlocks + 25 fragments spent).
-const PROGRESSED = { deck: STARTER_DECK.map((id, i) => (id === 'FL-002' ? 'LJ-001' : id === 'LJ-007' && i === 0 ? 'LJ-002' : id === 'WM-001' ? 'FL-005' : id)),
-  grades: { 'LJ-004': 1, 'LJ-006': 1 } };
-// Chapter 2 is measured with the deck the player has by then: every earlier unlock auto-inserted (as the game does) plus
-// the upgrades ~50 fragments buy. Each level gets the unlocks of the levels before it.
+// 2) story levels：每一关都用「玩家走到这里时手上真实会有的牌」来打（见 progressAt）。
+//
+//    这里曾经把第一章排除在外——第一章的关卡没有 chapter 字段，正好漏过了筛子，
+//    于是 shenhua-3 是拿起手牌组、零解锁、零升阶去打第一个首领，跑出 32% 的假警报。
+//    现在一视同仁：progressAt 对第一关返回的就是纯起手牌组，行为不变，后面的关才对得上。
 /**
  * The deck and upgrades a player realistically holds when they reach `upTo`: every earlier reward
  * auto-inserted exactly as the game does, and the fragments those levels paid out spent on upgrades
@@ -69,15 +68,14 @@ const progressAt = (upTo) => {
   }
   return { deck, grades };
 };
-const late = LEVELS.filter((L) => L.chapter > 1).map((L) => ({ ...L, deckOverride: progressAt(L.id) }));
-for (const L of [...LEVELS.filter((L) => !L.chapter), { ...LEVELS[2], id: 'shenhua-3+', title: '首领关（带解锁与升阶）', progressed: true }, ...late]) {
+for (const L of LEVELS.map((L) => ({ ...L, deckOverride: progressAt(L.id) }))) {
   let wins = 0, games = 0, turns = 0;
   const n = Math.max(20, Math.floor(N / 4));
   for (let g = 0; g < n; g++) {
     try {
       const first = L.playerFirst ? 0 : 1;
       const r = run({ first, players: [
-        L.deckOverride ?? (L.progressed ? PROGRESSED : null) ?? { deck: L.playerDeck ?? STARTER_DECK, ordered: !!L.ordered },
+        L.playerDeck ? { deck: L.playerDeck, ordered: !!L.ordered } : L.deckOverride,
         { deck: L.enemy.deck, hp: L.enemy.hp, passive: L.enemy.passive, grades: L.enemy.grades },
       ] }, ['normal', L.ai], 5000 + g);
       games++; turns += r.turns; if (r.winner === 0) wins++;
