@@ -16,10 +16,11 @@ import { createAI } from '../rules/ai.js';
 import { card, EL, BONDS, RESONANCES, EL_KEYS } from '../data/cards.js';
 import { TUTORIAL_HINTS } from '../data/story.js';
 import { CardMesh, CARD_H } from '../render/cardMesh.js';
+import { framingScale } from '../render/camfit.js';
 import { statsOf } from '../render/cardFace.js';
 import { HeroMesh, DeckStack } from '../render/hero.js';
 import { tween, wait, ease } from '../render/tween.js';
-import { h, clear, cardInfo, faceEl, banner, toast, modal, STATUS_ZH } from './ui.js';
+import { h, clear, cardInfo, faceEl, banner, toast, modal, touch, STATUS_ZH } from './ui.js';
 import { SIGNATURE, murkSignature } from './cardvfx.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -49,6 +50,24 @@ const ST_TEXT = { stun: ['眩晕', '#8fb4ff'], seal: ['封印', '#d8a070'], blee
   atkUp: ['勇武', '#ffb080'], atkDown: ['削弱', '#b0b0b0'], defDown: ['破防', '#b0b0b0'], dodge: ['潜行', '#a8d0f0'], reflect: ['反伤', '#ffe08a'] };
 const NEG_ST = new Set(['stun', 'seal', 'bleed', 'atkDown', 'defDown']);
 export const BATTLE_CAM = { pos: V(0, 10.1, 7.7), look: V(0, 0, 0.62) };
+const CAM_DIR = BATTLE_CAM.pos.clone().sub(BATTLE_CAM.look).normalize();
+const CAM_D = BATTLE_CAM.pos.distanceTo(BATTLE_CAM.look);
+// What has to stay on screen: both 文脉 rows, both hero plates with their HP badges, both deck piles,
+// and a full row of five generals. Heights differ per point, so a bounding box would over-reserve the
+// corners and push the board away even on 16:9.
+const CAM_PTS = [
+  V(-2.9, 1.5, BOARD_Z[0]), V(2.9, 1.5, BOARD_Z[0]), V(-2.9, 1.5, BOARD_Z[1]), V(2.9, 1.5, BOARD_Z[1]),
+  V(-4.95, 0.35, WM_Z[0]), V(-4.95, 0.35, WM_Z[1]), V(-1.6, 0.35, WM_Z[0]), V(-1.6, 0.35, WM_Z[1]),
+  V(4.0, 2.0, HERO_P[0].z), V(4.0, 2.0, HERO_P[1].z),
+  V(5.95, 0.3, DECK_P[0].z), V(5.95, 0.3, DECK_P[1].z),
+];
+
+/** Distance the battle camera has to sit back to frame the board at `aspect`, in world units. */
+const camDistance = (fov, aspect) =>
+  CAM_D * framingScale({ look: BATTLE_CAM.look, dir: CAM_DIR, fov, aspect, points: CAM_PTS });
+/** Where the battle camera belongs for the current viewport. Also used to pose the pre-battle screens. */
+export const battleCamPos = (camera) =>
+  BATTLE_CAM.look.clone().addScaledVector(CAM_DIR, camDistance(camera.fov, camera.aspect));
 
 /**
  * ctx: { app, fx, audio, save, root (DOM layer) }
@@ -58,6 +77,7 @@ export const BATTLE_CAM = { pos: V(0, 10.1, 7.7), look: V(0, 0, 0.62) };
 export function startBattle(ctx, cfg) {
   const { app, fx, audio, save } = ctx;
   const { scene, camera } = app;
+  const camBase = BATTLE_CAM.pos.clone();
   const settings = save.data.settings;
   const S = () => settings.speed || 1;
   const W = (t) => wait(t / S());
@@ -119,7 +139,7 @@ export function startBattle(ctx, cfg) {
   let turnResolve = null, finished = false, paused = false, forfeited = false;
   let timeLeft = 0, timerOn = false;
   const TURN_TIME = 30;
-  let shake = 0;
+  let shake = 0, introRunning = false;
   const overrideHp = new Map();
 
   const log = (text, cls = '') => {
@@ -168,6 +188,14 @@ export function startBattle(ctx, cfg) {
   }
 
   // ── layout ──
+  // Widest gap between hand cards that still keeps the outermost ones on screen. The fan sits at a
+  // fixed depth in camera space, so the room it has scales with the viewport aspect — at 16:9 and
+  // wider this never binds, on a 4:3 iPad it packs the cards tighter instead of letting them slide off.
+  function handSpread(n) {
+    if (n < 2) return 0.5;
+    const halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * HAND_D * camera.aspect;
+    return Math.max(0.16, (2 * (halfW - 0.3)) / (n - 1));
+  }
   function layoutHand(p, dur = 0.3) {
     const list = s.players[p].hand.filter((u) => meshes.has(u.uid) && u.uid !== drag?.uid);
     const n = list.length;
@@ -178,7 +206,7 @@ export function startBattle(ctx, cfg) {
       setShadow(m, false);
       const off = k - (n - 1) / 2;
       if (p === 0) {
-        const sp = Math.min(0.5, 3.3 / Math.max(1, n));
+        const sp = Math.min(0.5, 3.3 / Math.max(1, n), handSpread(n));
         const up = u.uid === hoverUid || u.uid === selHand;
         moveTo(m, {
           pos: V(off * sp, up ? -0.6 : -0.98 - Math.abs(off) * 0.012, -HAND_D + k * 0.004 + (up ? 0.35 : 0)),
@@ -945,30 +973,34 @@ export function startBattle(ctx, cfg) {
   const isTarget = (o) => o && pending && targetsOf(pending).includes(o.uid ?? o.hero);
 
   let detailTimer = 0, detailFor = null;
+  function renderDetail(o) {
+    clear(detail);
+    if (o.hero) {
+      const i = +o.hero[1], P = s.players[i];
+      detail.append(h('div.info', h('div.info-head', h('span.info-name', { text: P.name }), h('span.info-tags', { text: '主将' })),
+        h('div.info-meta', { text: `生命 ${P.hp}/${P.maxHp}　手牌 ${P.hand.length}　牌库 ${P.deck.length}　文脉 ${P.wenmai.length}/6` }),
+        h('div.info-text', { text: heroReduction(s, i) ? `每次受伤减免 ${heroReduction(s, i)}（单次至少 2 点）` : '单次受伤至少 2 点。牌库耗尽而需抽牌时判负。' }),
+        PASSIVE_ZH[P.passive]
+          ? h('div.info-skill', h('b', { text: `【${PASSIVE_ZH[P.passive].name}】` }), ` 每 ${PASSIVE_ZH[P.passive].every} 个自身回合：${PASSIVE_ZH[P.passive].foe}`) : null));
+    } else {
+      const f = findAny(s, o.uid);
+      if (!f) return;
+      const u = f.u;
+      const live = f.zone === 'board' ? unitView(s, u) : null;
+      detail.append(faceEl(u.id, u.grade, { w: 200 }), cardInfo(u.id, u.grade, { live, cost: f.zone === 'hand' && f.P.i === 0 ? costOf(s, 0, u) : null }));
+    }
+    detail.classList.add('show');
+  }
   function showDetail(o) {
     const key = o ? o.uid ?? o.hero : null;
     if (key === detailFor) return;
     detailFor = key;
     clearTimeout(detailTimer);
     if (!o) { detail.classList.remove('show'); return; }
-    detailTimer = setTimeout(() => {
-      clear(detail);
-      if (o.hero) {
-        const i = +o.hero[1], P = s.players[i];
-        detail.append(h('div.info', h('div.info-head', h('span.info-name', { text: P.name }), h('span.info-tags', { text: '主将' })),
-          h('div.info-meta', { text: `生命 ${P.hp}/${P.maxHp}　手牌 ${P.hand.length}　牌库 ${P.deck.length}　文脉 ${P.wenmai.length}/6` }),
-          h('div.info-text', { text: heroReduction(s, i) ? `每次受伤减免 ${heroReduction(s, i)}（单次至少 2 点）` : '单次受伤至少 2 点。牌库耗尽而需抽牌时判负。' }),
-          PASSIVE_ZH[P.passive]
-            ? h('div.info-skill', h('b', { text: `【${PASSIVE_ZH[P.passive].name}】` }), ` 每 ${PASSIVE_ZH[P.passive].every} 个自身回合：${PASSIVE_ZH[P.passive].foe}`) : null));
-      } else {
-        const f = findAny(s, o.uid);
-        if (!f) return;
-        const u = f.u;
-        const live = f.zone === 'board' ? unitView(s, u) : null;
-        detail.append(faceEl(u.id, u.grade, { w: 200 }), cardInfo(u.id, u.grade, { live, cost: f.zone === 'hand' && f.P.i === 0 ? costOf(s, 0, u) : null }));
-      }
-      detail.classList.add('show');
-    }, o.zone === 'hand' ? 350 : 200);
+    // The delay stops the panel flickering as a cursor crosses the board. A tap has already committed
+    // to one card, so waiting there just feels broken.
+    if (touch()) renderDetail(o);
+    else detailTimer = setTimeout(() => renderDetail(o), o.zone === 'hand' ? 350 : 200);
   }
 
   function onMove(ev) {
@@ -1009,6 +1041,8 @@ export function startBattle(ctx, cfg) {
     if (ev.button === 2) { cancelSelect(); return; }
     if (mode === 'busy' || s.active !== 0 || cfg.autoplay) return;
     const o = pick();
+    // Without hover there is no other way to read a card, so a tap doubles as an inspect.
+    if (touch()) showDetail(o);
     if (mode === 'target') {
       if (isTarget(o)) {
         const a = { type: pending.kind, uid: pending.uid, target: o.uid ?? o.hero };
@@ -1088,8 +1122,21 @@ export function startBattle(ctx, cfg) {
   window.addEventListener('keydown', onKey);
   canvasEl.addEventListener('contextmenu', noCtx);
 
+  // ── viewport ──
+  // Narrow windows (iPad in landscape, a split-screen desktop window) crop the board, so the camera
+  // backs off. The hand lives in camera space and is fanned to a fixed width, so it needs its own fit.
+  function refit() {
+    camBase.copy(battleCamPos(camera));
+    if (!introRunning && shake <= 0) camera.position.copy(camBase);
+    camera.lookAt(BATTLE_CAM.look);
+    layoutHand(0, 0);
+    layoutHand(1, 0);
+  }
+  const prevResize = app.onResize;
+  app.onResize = (w, hh) => { prevResize?.(w, hh); if (!finished) refit(); };
+  refit();
+
   // ── per-frame ──
-  const camBase = BATTLE_CAM.pos.clone();
   const offFrame = app.onFrame((dt, t) => {
     for (const m of meshes.values()) {
       m.tick(dt, t);
@@ -1157,13 +1204,12 @@ export function startBattle(ctx, cfg) {
     });
   }
 
-  let introRunning = false;
   async function intro() {
     introRunning = true;
-    camera.position.set(0, 16, 14);
+    const from = BATTLE_CAM.look.clone().addScaledVector(CAM_DIR, camBase.distanceTo(BATTLE_CAM.look) * 1.5);
+    camera.position.copy(from);
     camera.lookAt(BATTLE_CAM.look);
-    const from = camera.position.clone();
-    await tween(1.4, (k) => { camera.position.lerpVectors(from, BATTLE_CAM.pos, k); camera.lookAt(BATTLE_CAM.look); }, { ease: ease.inOut });
+    await tween(1.4, (k) => { camera.position.lerpVectors(from, camBase, k); camera.lookAt(BATTLE_CAM.look); }, { ease: ease.inOut });
     introRunning = false;
     await banner(cfg.title ?? '对局开始', s.first === 0 ? '我方先手' : '对手先手', { cls: 'title', ms: 1300 });
   }
@@ -1211,6 +1257,7 @@ export function startBattle(ctx, cfg) {
   function dispose() {
     finished = true;
     offFrame();
+    app.onResize = prevResize;
     canvasEl.removeEventListener('pointermove', onMove);
     canvasEl.removeEventListener('pointerdown', onDown);
     window.removeEventListener('pointerup', onUp);

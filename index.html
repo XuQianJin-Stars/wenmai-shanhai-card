@@ -2,10 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>文脉 · 山海卡</title>
 <link rel="icon" href="data:,">
 <meta name="description" content="文脉·山海卡 — 中国神话 3D 卡牌对战，新中式水墨风，浏览器即玩。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="文脉·山海卡">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600;900&display=swap" rel="stylesheet">
@@ -25,6 +29,11 @@
   </svg>
   <div class="label" id="loadLabel"></div>
   <div class="seal">守</div>
+</div></div>
+<div id="rotate" aria-hidden="true"><div>
+  <div class="glyph">屏</div>
+  <div class="t">请横屏游玩</div>
+  <div class="s">牌桌需要横向的画面</div>
 </div></div>
 <script>
   window.__load = function (p, label) {

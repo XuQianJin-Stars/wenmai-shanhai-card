@@ -5,9 +5,26 @@
   --serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
   color-scheme: dark;
 }
-html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none; }
-canvas#c { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; outline: none; }
-#ui { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-family: var(--serif); color: var(--paper); }
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; user-select: none; -webkit-user-select: none;
+  /* iOS: no rubber-band scroll behind the canvas, no long-press callout, no grey tap flash. */
+  overscroll-behavior: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+body { position: fixed; inset: 0; }
+canvas#c { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; outline: none; }
+#ui { position: fixed; inset: 0; pointer-events: none; z-index: 2; font-family: var(--serif); color: var(--paper);
+  /* iPhone notch and home indicator; the meta viewport asks for the full screen with viewport-fit=cover. */
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }
+#ui, .modal, .dialogue { touch-action: manipulation; }
+
+/* Portrait on a phone or tablet: the board is 16:9-shaped and the cards become unreadable. */
+#rotate { position: fixed; inset: 0; z-index: 60; display: none; place-items: center; background: #0e0d0b; text-align: center;
+  font-family: var(--serif); color: var(--paper2); }
+#rotate .glyph { font-family: var(--brush); font-size: 72px; color: var(--cinnabar); border: 3px solid var(--cinnabar);
+  width: 104px; height: 68px; line-height: 68px; margin: 0 auto 22px; border-radius: 6px; animation: tipOver 2.6s ease-in-out infinite; }
+#rotate .t { font-family: var(--brush); font-size: 30px; letter-spacing: 0.2em; }
+#rotate .s { font-size: 13px; letter-spacing: 0.2em; margin-top: 8px; color: rgba(240, 228, 204, 0.5); }
+@keyframes tipOver { 0%, 40% { transform: rotate(90deg); } 70%, 100% { transform: none; } }
+@media (orientation: portrait) and (pointer: coarse) { #rotate { display: grid; } }
 
 #load { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none;
   background: radial-gradient(ellipse at 50% 48%, #1f1d18 0%, var(--bg) 70%); transition: opacity 1.2s ease; }

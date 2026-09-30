@@ -148,7 +148,8 @@ export function createApp(canvas) {
   };
 
   function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    const w = Math.max(1, Math.round(window.innerWidth)), h = Math.max(1, Math.round(window.innerHeight));
+    if (w === api.size.w && h === api.size.h) return;
     api.size = { w, h };
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
@@ -158,7 +159,16 @@ export function createApp(canvas) {
     post.uniforms.res.value.set(w * pr, h * pr);
     api.onResize?.(w, h);
   }
-  window.addEventListener('resize', resize);
+  // iOS reports the new size a beat after the event — on rotation, and every time the Safari address
+  // bar slides away — so settle on the next frame rather than trusting the first measurement.
+  let pendingResize = 0;
+  const queueResize = () => {
+    cancelAnimationFrame(pendingResize);
+    pendingResize = requestAnimationFrame(() => { resize(); setTimeout(resize, 220); });
+  };
+  window.addEventListener('resize', queueResize);
+  window.addEventListener('orientationchange', queueResize);
+  window.visualViewport?.addEventListener('resize', queueResize);
   resize();
 
   let last = performance.now();

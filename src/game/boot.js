@@ -9,7 +9,7 @@ import { CardMesh } from '../render/cardMesh.js';
 import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
 import { createSave, deckProblem } from './save.js';
-import { startBattle, BATTLE_CAM } from './battle.js';
+import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
 import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade } from './ui.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, REWARD_PRACTICE, DECK_SIZE, MAX_COPIES } from '../data/story.js';
@@ -58,7 +58,7 @@ export async function boot(params, fontsReady) {
     stageKey = key;
   }
   function menuCam() { app.camera.position.copy(MENU_CAM.pos); app.camera.lookAt(MENU_CAM.look); }
-  function battleCam() { app.camera.position.copy(BATTLE_CAM.pos); app.camera.lookAt(BATTLE_CAM.look); }
+  function battleCam() { app.camera.position.copy(battleCamPos(app.camera)); app.camera.lookAt(BATTLE_CAM.look); }
   async function transition(fn) {
     await fade(curtain, true, 380);
     await fn();

@@ -23,6 +23,13 @@ export function h(tag, attrs = {}, ...kids) {
 }
 export const clear = (e) => { while (e.firstChild) e.firstChild.remove(); return e; };
 
+/**
+ * True when the primary pointer can't hover — a phone or a tablet. Checked per call rather than
+ * cached because an iPad gains a fine pointer the moment a trackpad or Pencil is paired.
+ */
+const coarse = matchMedia('(pointer: coarse)');
+export const touch = () => coarse.matches;
+
 /** A <canvas> element showing a card face (copied from the texture cache). */
 export function faceEl(id, grade = 0, { w = 256, cls = '' } = {}) {
   const src = faceCanvas(id, grade);
