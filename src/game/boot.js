@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { createApp } from '../render/app.js';
 import { buildScene, disposeScene } from '../render/scenes.js';
 import { createFx } from '../render/fx.js';
-import { CardMesh } from '../render/cardMesh.js';
+import { CardMesh, CARD_W, CARD_H } from '../render/cardMesh.js';
 import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
 import { createSave, deckProblem } from './save.js';
@@ -16,6 +16,7 @@ import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../d
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, DECK_SIZE, MAX_COPIES } from '../data/story.js';
 import { GUARDIAN } from '../data/guardian.js';
 import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
+import { RELIC_IMAGES } from '../data/relicImages.js';
 import { RULES } from '../rules/engine.js';
 
 const MENU_CAM = { pos: new THREE.Vector3(0, 2.2, 9), look: new THREE.Vector3(0, 3.2, -30) };
@@ -49,7 +50,7 @@ export async function boot(params, fontsReady) {
   window.addEventListener('keydown', unlock);
 
   // ── stage (3D environment) ──
-  let stage = null, stageKey = '', viewer = null;
+  let stage = null, stageKey = '', viewer = null, viewerLamp = null;
   const tickers = app.onFrame((dt, t) => { for (const f of stage?.userData.tickers ?? []) f(dt, t); viewer?.userData.tick?.(dt, t); });
   void tickers;
   function setStage(kind, variant) {
@@ -75,9 +76,19 @@ export async function boot(params, fontsReady) {
     hideViewer();
     const m = new CardMesh(id, grade);
     m.position.copy(pos); m.scale.setScalar(0.01);
-    m.setGlow('#ffd88a', 0.8);
+    m.setGlow('#ffd88a', 0.45);
+    m.setSheen(true);
     app.camera.add(m);
     viewer = m;
+    // 灯挂在相机上、不跟卡一起转。侧上方一盏主光，清漆高光才会在翻面上走；
+    // 近点光会在画面中间烧出一块，看起来像贴了层膜。
+    dropLamp();
+    viewerLamp = new THREE.Group();
+    const fill = new THREE.HemisphereLight(0xfff4e6, 0x6a5a48, 0.82);
+    const key = new THREE.PointLight(0xfff1d2, 2.2, 10, 2);
+    key.position.copy(pos).add(new THREE.Vector3(1.05, 0.72, 1.25));
+    viewerLamp.add(fill, key);
+    app.camera.add(viewerLamp);
     let drag = null, vy = 0;
     m.userData.tick = (dt, t) => {
       m.tick(dt, t);
@@ -87,14 +98,51 @@ export async function boot(params, fontsReady) {
     tween(0.6, (k) => m.scale.setScalar(scale * k), { ease: ease.back });
     return m;
   }
+  /**
+   * 按一块 DOM 空当把 3D 预览卡摆进去。纸底是不透明的，浮卡画在 canvas 上，
+   * 所以空当必须透明——详情栏顶上留一个 .side-face 洞，卡在洞里转。
+   * 坐标跟画布同一套：app.size 走 visualViewport，iPad 底下那条工具栏骗不到。
+   */
+  function slotFromRect(el, { z = -3.2, max = 0.86 } = {}) {
+    const box = el?.getBoundingClientRect();
+    if (!box || box.width < 40 || box.height < 40) return null;
+    const vv = window.visualViewport;
+    const vw = app.size?.w || vv?.width || innerWidth;
+    const vh = app.size?.h || vv?.height || innerHeight;
+    const ox = vv?.offsetLeft ?? 0, oy = vv?.offsetTop ?? 0;
+    const halfH = Math.abs(z) * Math.tan((app.camera.fov * Math.PI) / 360);
+    const halfW = halfH * app.camera.aspect;
+    const x = ((box.left + box.width / 2 - ox) / vw - 0.5) * halfW * 2;
+    const y = (0.5 - (box.top + box.height / 2 - oy) / vh) * halfH * 2;
+    const scale = Math.min(max, (box.width / vw) * halfW * 2 / CARD_W, (box.height / vh) * halfH * 2 / CARD_H);
+    return { pos: new THREE.Vector3(x, y, z), scale };
+  }
+
+  function placeViewer(id, grade, hole) {
+    const slot = slotFromRect(hole ?? document.querySelector('.coll .side-face'));
+    if (slot) showViewer(id, grade, slot); else hideViewer();
+  }
+
+  function dropLamp() {
+    if (!viewerLamp) return;
+    viewerLamp.traverse((o) => { if (o.isLight) o.dispose(); });
+    app.camera.remove(viewerLamp);
+    viewerLamp = null;
+  }
   function hideViewer() {
+    dropLamp();
     if (!viewer) return;
     const m = viewer; viewer = null;
     tween(0.25, (k) => m.scale.multiplyScalar(1 - k * 0.5)).then(() => { app.camera.remove(m); m.dispose(); });
   }
 
   // ── common chrome ──
+  // 每次换屏都把上一屏挂的窗口级监听（目前只有图鉴的 resize）一并撤掉，省得越积越多。
+  let screenAbort = null;
+  const onScreen = (type, fn) => window.addEventListener(type, fn, { signal: screenAbort.signal });
+
   function frame(title, { back = null, extra = null } = {}) {
+    screenAbort?.abort(); screenAbort = new AbortController();
     clear(screen);
     screen.className = 'screen show';
     const top = h('div.top',
@@ -177,10 +225,20 @@ export async function boot(params, fontsReady) {
     const openChs = CHAPTERS.filter(chapterOpen);
     const C = CHAPTERS.find((x) => x.n === n && chapterOpen(x)) ?? openChs.at(-1);
     storyTab = C.n;
-    const tabs = h('div.tabs.ch-tabs', CHAPTERS.map((x) => h('button.tab' + (x === C ? '.on' : '') + (chapterOpen(x) ? '' : '.locked'), {
-      text: x.num, title: x.title,
-      onclick: () => { if (!chapterOpen(x)) { audio.sfx('error'); toast(`通关「${CHAPTERS[x.n - 2].short}」后开启`); return; } audio.sfx('click'); storyMap(x.n); } })));
-    const body = frame(`故事模式 · ${C.title}`, { back: mainMenu, extra: tabs });
+    const at = CHAPTERS.indexOf(C);
+    const goCh = (x) => {
+      if (!x) return;
+      if (!chapterOpen(x)) { audio.sfx('error'); toast(`通关「${CHAPTERS[x.n - 2].short}」后开启`); return; }
+      audio.sfx('click'); storyMap(x.n);
+    };
+    const prev = CHAPTERS[at - 1], nextCh = CHAPTERS[at + 1];
+    const tabs = h('div.tabs.ch-tabs',
+      h('button.tab.ch-step' + (prev ? '' : '.locked'), { text: '上一页', title: prev ? `上一页 · ${prev.title}` : '已经是第一章', onclick: () => goCh(prev) }),
+      ...CHAPTERS.map((x) => h('button.tab' + (x === C ? '.on' : '') + (chapterOpen(x) ? '' : '.locked'), {
+        text: x.num, title: x.title,
+        onclick: () => goCh(x) })),
+      h('button.tab.ch-step' + (nextCh ? '' : '.locked'), { text: '下一页', title: nextCh ? (chapterOpen(nextCh) ? `下一页 · ${nextCh.title}` : `通关「${C.short}」后开启`) : '已经是最后一章', onclick: () => goCh(nextCh) }));
+    const body = frame(`故事模式 · ${C.title}`, { back: mainMenu });
     const list = h('div.levels');
     const seen = seenOf(C);
     list.append(h('div.level' + (seen ? '.done' : ''), { onclick: () => { audio.sfx('click'); runPrologue(true, C); } },
@@ -199,7 +257,7 @@ export async function boot(params, fontsReady) {
     if (next && !chapterOpen(next)) list.append(h('div.level.locked', h('div.level-no', { text: '续' }), h('div.level-main', h('div.level-t', { text: next.title }), h('div.level-d', { text: `通关「${C.levels.at(-1).title.split(' · ')[1]}」后开启` })),
       portraitEl(next.levels.at(-1).enemy.portrait, 84, next.n + 40)));
     if (!next) list.append(h('div.level.locked', h('div.level-no', { text: '续' }), h('div.level-main', h('div.level-t', { text: '文脉未完' }), h('div.level-d', { text: '更多篇章，筹备之中' }))));
-    body.append(list);
+    body.append(h('div.story-map', list, tabs));
   }
 
   const portraits = Object.fromEntries(Object.entries(SPEAKER_ART).map(([who, motif], k) => [who, () => portraitEl(motif, 96, 7 + k)]));
@@ -352,15 +410,16 @@ export async function boot(params, fontsReady) {
     function pickCard(id) {
       clear(side);
       const d = CARDS[id], owned = d.zhuo || save.owns(id), g = save.grade(id);
-      showViewer(id, owned ? g : 0, { pos: new THREE.Vector3(0.3, 0.02, -3.2), scale: 0.78 });
-      side.append(cardInfo(id, owned ? g : 0));
-      if (d.lore) side.append(h('div.lore', h('b', { text: '典故　' }), d.lore));
-      for (const r of RELICS_BY_CARD[id] ?? []) side.append(relicCard(r));
-      if (!owned) side.append(h('div.warn', { text: '尚未解锁：通关故事关卡获得。' }));
+      const hole = h('div.side-face');
+      const paper = h('div.side-paper');
+      paper.append(cardInfo(id, owned ? g : 0));
+      if (d.lore) paper.append(h('div.lore', h('b', { text: '典故　' }), d.lore));
+      for (const r of RELICS_BY_CARD[id] ?? []) paper.append(relicCard(r));
+      if (!owned) paper.append(h('div.warn', { text: '尚未解锁：通关故事关卡获得。' }));
       else if (!d.zhuo) {
         const cost = save.upgradeCost(id);
-        if (cost == null) side.append(h('div.maxed', { text: '已臻极品' }));
-        else side.append(h('div.upgrade', h('div', { text: `升阶至「${GRADE_ZH[g + 1]}」：消耗 ${cost} 文脉碎片（全属性提升${d.skill && g === 0 ? '，解锁主动技能' : d.up && g === 0 ? '，解锁珍品效果' : ''}）` }),
+        if (cost == null) paper.append(h('div.maxed', { text: '已臻极品' }));
+        else paper.append(h('div.upgrade', h('div', { text: `升阶至「${GRADE_ZH[g + 1]}」：消耗 ${cost} 文脉碎片（全属性提升${d.skill && g === 0 ? '，解锁主动技能' : d.up && g === 0 ? '，解锁珍品效果' : ''}）` }),
           btn(`升阶 · ${cost} 碎片`, async () => {
             if (!save.upgrade(id)) { audio.sfx('error'); toast(`碎片不足（需要 ${cost}）`); return; }
             audio.sfx('upgrade');
@@ -369,8 +428,20 @@ export async function boot(params, fontsReady) {
             collection(id);
           }, save.canUpgrade(id) ? 'primary' : 'disabled')));
       }
+      side.append(hole, paper);
+      // 洞的尺寸要等进文档才量得准，下一帧再摆 3D 卡。
+      requestAnimationFrame(() => placeViewer(id, owned ? g : 0, hole));
     }
     body.append(h('div.coll', h('div.coll-left', tabs, grid), side));
+    // 空当宽度是量出来的，窗口一变 / iPad 转屏 / 分屏都不作数了，得重新摆。
+    let t = 0;
+    const relayout = () => {
+      clearTimeout(t);
+      t = setTimeout(() => { if (sel) pickCard(sel); }, 150);
+    };
+    onScreen('resize', relayout);
+    onScreen('orientationchange', relayout);
+    window.visualViewport?.addEventListener('resize', relayout, { signal: screenAbort.signal });
     draw();
     pickCard(sel ?? all[0]);
     if (!sel) sel = all[0];
@@ -386,14 +457,27 @@ export async function boot(params, fontsReady) {
     return n ? `已录 ${n}/${relicTotal} 件 · 按朝代` : '通关章节解锁真实文物';
   };
 
-  /** 一条文物：卡牌详情和文物志共用这一块。 */
+  /**
+   * 一条文物：卡牌详情和文物志共用这一块。
+   *
+   * 照片来自 Wikimedia Commons，署名行是 CC-BY / CC-BY-SA 要求的，不能省。
+   * 没有照片的条目（目前只有葡萄花鸟纹银香囊）就只出文字，不留空框。
+   * 馆方官网只作外链——文物本身在公有领域，拍它的照片不是。
+   */
   function relicCard(r) {
+    const img = RELIC_IMAGES[r.id];
     return h('div.relic',
+      img ? h('figure.relic-fig',
+        h('img', { src: img.src, alt: r.name, loading: 'lazy', decoding: 'async' }),
+        h('figcaption',
+          h('a', { href: img.page, target: '_blank', rel: 'noopener' }, `${img.author} / ${img.license}`),
+          ' · Wikimedia Commons')) : null,
       h('div.relic-head', h('i.relic-tag', { text: '文物' }), h('b', { text: r.name }), h('span', { text: r.era })),
       h('div.relic-meta', { text: r.found }),
       h('div.relic-meta', { text: `现藏　${r.where}` }),
       r.spec ? h('div.relic-spec', { text: r.spec }) : null,
-      h('div.relic-note', { text: r.note }));
+      h('div.relic-note', { text: r.note }),
+      img?.official ? h('a.relic-link', { href: img.official, target: '_blank', rel: 'noopener', text: '官方藏品页 ↗' }) : null);
   }
 
   function relicScreen() {

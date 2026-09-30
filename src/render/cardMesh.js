@@ -30,6 +30,7 @@ const G = {
   edge: new THREE.ExtrudeGeometry(shape, { depth: CARD_T, bevelEnabled: false, curveSegments: 6 }),
   glow: planeFromShape(roundedShape(CARD_W * 1.2, CARD_H * 1.14, 0.16), CARD_W * 1.2, CARD_H * 1.14),
 };
+G.face.computeVertexNormals();
 G.edge.translate(0, 0, -CARD_T / 2);
 
 const texCache = new Map();
@@ -83,7 +84,7 @@ function addBurn(mat) {
         gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(3.0, 1.2, 0.25), e);
       }`);
   };
-  mat.customProgramCacheKey = () => 'burn';
+  mat.customProgramCacheKey = () => `burn:${mat.type}`;
 }
 
 export class CardMesh extends THREE.Group {
@@ -121,6 +122,24 @@ export class CardMesh extends THREE.Group {
   setGlow(color, strength = 1) {
     if (color != null) this.glowMat.uniforms.color.value.set(color);
     this.glowTarget = color == null ? 0 : strength;
+  }
+  /**
+   * 图鉴预览：纸面覆一层清漆（clearcoat），高光走真正的灯，不在 UV 上画条。
+   * 战场上的卡不走这条，免得满场反光。
+   */
+  setSheen(on) {
+    if (!on || this.faceMat.isMeshPhysicalMaterial) return;
+    const map = this.faceMat.map;
+    this.faceMat.dispose();
+    this.faceMat = new THREE.MeshPhysicalMaterial({
+      map,
+      roughness: 0.7,
+      metalness: 0,
+      clearcoat: 0.78,
+      clearcoatRoughness: 0.32,
+    });
+    addBurn(this.faceMat);
+    this.front.material = this.faceMat;
   }
   set burn(v) { this.faceMat.userData.burn.value = v; }
   get burn() { return this.faceMat.userData.burn.value; }
