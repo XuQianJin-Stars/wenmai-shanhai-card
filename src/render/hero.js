@@ -50,29 +50,37 @@ const CUSTOM_PORTRAITS = {
 
 const artCache = new Map();
 const artListeners = new Map(); // motif → Set<callback>
+const artLoaded = new Set();
 function portrait(motif, onReady = null) {
   let c = artCache.get(motif);
   if (!c) {
     c = canvas(420, 420);
     paintArt(c.getContext('2d'), 420, 420, motif, { seed: 31 });
     artCache.set(motif, c);
-    // try load custom image
     const custom = CUSTOM_PORTRAITS[motif];
     if (custom) {
       const url = typeof custom === 'function' ? custom() : custom;
       const img = new Image();
+      const finish = () => {
+        artLoaded.add(motif);
+        // 先抄出来再清空。回调里如果又登记，不能在同一次遍历里被叫到，否则会无限重画。
+        const fns = [...(artListeners.get(motif) ?? [])];
+        artListeners.set(motif, new Set());
+        for (const fn of fns) fn();
+      };
       img.onload = () => {
         const ctx = c.getContext('2d');
         ctx.clearRect(0, 0, 420, 420);
         const s = Math.max(420 / img.width, 420 / img.height);
         const dw = img.width * s, dh = img.height * s;
         ctx.drawImage(img, (420 - dw) / 2, (420 - dh) / 2, dw, dh);
-        artListeners.get(motif)?.forEach(fn => fn());
+        finish();
       };
+      img.onerror = () => finish();
       img.src = url;
-    }
+    } else artLoaded.add(motif);
   }
-  if (onReady) {
+  if (onReady && !artLoaded.has(motif)) {
     if (!artListeners.has(motif)) artListeners.set(motif, new Set());
     artListeners.get(motif).add(onReady);
   }
@@ -101,6 +109,8 @@ export class HeroMesh extends THREE.Group {
     this.glowTarget = 0;
     this.key = '';
     this.set({ hp: 20, maxHp: 20 });
+    // 绘稿到位后只重画这一次。不能写在 _draw 里，每次重画都会再登记一个回调。
+    portrait(this.motif, () => { this.key = ''; this._draw(); });
   }
   placeRing(parent) { parent.add(this.ring); this.ring.position.set(this.position.x, 0.03, this.position.z + 0.2); }
   setGlow(color, k = 1) { if (color != null) this.ringMat.color.set(color); this.glowTarget = color == null ? 0 : k; }
@@ -125,7 +135,7 @@ export class HeroMesh extends THREE.Group {
     ctx.save();
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
     ctx.fillStyle = '#efe6d2'; ctx.fillRect(0, 0, W, 600);
-    ctx.drawImage(portrait(this.motif, () => { this.key = ''; this._draw(); }), cx - R, cy - R, R * 2, R * 2);
+    ctx.drawImage(portrait(this.motif), cx - R, cy - R, R * 2, R * 2);
     const g = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(30,20,10,0.35)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, 600);
