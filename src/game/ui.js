@@ -1,7 +1,7 @@
 // DOM layer: small element helper, card detail panel, banners, toasts, story dialogue box, modals.
 // Visual rules: docs/art/UI_VISUAL.md (xuan paper, ink, cinnabar seal, 40 chars/s brush reveal).
 import { card, EL, TYPE_ZH, GRADE_ZH, BONDS, GRADE_BONUS } from '../data/cards.js';
-import { faceCanvas, artCanvas } from '../render/cardFace.js';
+import { faceCanvas, artCanvas, onCustomArtLoad } from '../render/cardFace.js';
 import { canvas } from '../render/ink.js';
 import { paintArt } from '../render/cardArt.js';
 
@@ -34,12 +34,18 @@ export const touch = () => coarse.matches;
 /** A <canvas> element showing a card face (copied from the texture cache). */
 export function faceEl(id, grade = 0, { w = 256, cls = '' } = {}) {
   const src = faceCanvas(id, grade);
-  const c = h('canvas.face' + (cls ? '.' + cls : ''));
+  const c = h('canvas.face' + (cls ? '.' + cls : ''), { 'data-card-id': id, 'data-card-grade': String(grade) });
   c.width = src.width; c.height = src.height;
   c.getContext('2d').drawImage(src, 0, 0);
   c.style.width = `${w}px`;
   return c;
 }
+onCustomArtLoad((id) => {
+  for (const el of document.querySelectorAll(`canvas.face[data-card-id="${CSS.escape(id)}"]`)) {
+    const src = faceCanvas(id, Number(el.dataset.cardGrade || 0));
+    el.getContext('2d').drawImage(src, 0, 0);
+  }
+});
 export function portraitEl(motif, size = 120, seed = 5) {
   const c = canvas(size * 2, size * 2);
   paintArt(c.getContext('2d'), size * 2, size * 2, motif, { seed });

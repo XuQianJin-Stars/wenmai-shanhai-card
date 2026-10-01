@@ -2,7 +2,7 @@
 // talismans (docs/tech_art/SHADERS/card_material.md), and for generals on the board a stats plate + status icons.
 import * as THREE from 'three';
 import { card, EL } from '../data/cards.js';
-import { faceCanvas, backCanvas, drawStats, FACE_W, FACE_H } from './cardFace.js';
+import { faceCanvas, backCanvas, drawStats, FACE_W, FACE_H, onCustomArtLoad } from './cardFace.js';
 import { canvas, roundRect, FONT_SERIF, FONT_BRUSH } from './ink.js';
 
 export const CARD_W = 1, CARD_H = FACE_H / FACE_W, CARD_T = 0.014;
@@ -46,6 +46,18 @@ function tex(key, make) {
 }
 export const faceTexture = (id, grade) => tex(`f:${id}:${grade}`, () => faceCanvas(id, grade));
 export const backTexture = () => tex('back', () => backCanvas());
+// The texture keeps the canvas it was born with. When the painting arrives later, copy onto that canvas.
+onCustomArtLoad((id) => {
+  for (const [key, t] of texCache) {
+    if (!key.startsWith(`f:${id}:`)) continue;
+    const grade = Number(key.slice(`f:${id}:`.length));
+    const fresh = faceCanvas(id, grade);
+    const ctx = t.image.getContext('2d');
+    ctx.clearRect(0, 0, t.image.width, t.image.height);
+    ctx.drawImage(fresh, 0, 0);
+    t.needsUpdate = true;
+  }
+});
 
 const edgeMat = new THREE.MeshStandardMaterial({ color: 0xb89a5a, roughness: 0.5, metalness: 0.4 });
 const backMat = () => new THREE.MeshStandardMaterial({ map: backTexture(), roughness: 0.6, metalness: 0.1 });
