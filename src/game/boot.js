@@ -242,13 +242,68 @@ export async function boot(params, fontsReady) {
       audio.sfx('click'); storyMap(x.n);
     };
     const prev = CHAPTERS[at - 1], nextCh = CHAPTERS[at + 1];
-    const tabs = h('div.tabs.ch-tabs',
-      h('button.tab.ch-step' + (prev ? '' : '.locked'), { text: '上一页', title: prev ? `上一页 · ${prev.title}` : '已经是第一章', onclick: () => goCh(prev) }),
-      ...CHAPTERS.map((x) => h('button.tab' + (x === C ? '.on' : '') + (chapterOpen(x) ? '' : '.locked'), {
-        text: x.num, title: x.title,
-        onclick: () => goCh(x) })),
-      h('button.tab.ch-step' + (nextCh ? '' : '.locked'), { text: '下一页', title: nextCh ? (chapterOpen(nextCh) ? `下一页 · ${nextCh.title}` : `通关「${C.short}」后开启`) : '已经是最后一章', onclick: () => goCh(nextCh) }));
+    const tabs = h('div.tabs.ch-tabs');
+    const stepBtn = (text, target, title) => h('button.tab.ch-step' + (target ? '' : '.locked'), {
+      text, title, onclick: () => goCh(target) });
+    const chapterBtn = (x) => h('button.tab' + (x === C ? '.on' : '') + (chapterOpen(x) ? '' : '.locked'), {
+      text: x.num, title: x.title, onclick: () => goCh(x) });
+    // 竖条高度只够放下若干章。放不下的收成中间的省略号，不出现滚动条。
+    const railItems = (slots) => {
+      const n = CHAPTERS.length;
+      if (n <= slots) return CHAPTERS.map((ch) => ({ kind: 'ch', ch }));
+      let gapBefore = true, gapAfter = true, start = 0, end = n;
+      for (let pass = 0; pass < 3; pass++) {
+        const inner = Math.max(1, slots - (gapBefore ? 1 : 0) - (gapAfter ? 1 : 0));
+        start = at - Math.floor((inner - 1) / 2);
+        start = Math.max(0, Math.min(start, n - inner));
+        end = start + inner;
+        const nextBefore = start > 0, nextAfter = end < n;
+        if (nextBefore === gapBefore && nextAfter === gapAfter) break;
+        gapBefore = nextBefore; gapAfter = nextAfter;
+      }
+      const items = [];
+      if (start > 0) items.push({ kind: 'gap', from: 0, to: start - 1 });
+      for (let i = start; i < end; i++) items.push({ kind: 'ch', ch: CHAPTERS[i] });
+      if (end < n) items.push({ kind: 'gap', from: end, to: n - 1 });
+      return items;
+    };
+    const jumpGap = (from, to) => {
+      const mid = Math.floor((from + to) / 2);
+      let best = null, bestD = Infinity;
+      for (let i = from; i <= to; i++) {
+        if (!chapterOpen(CHAPTERS[i])) continue;
+        const d = Math.abs(i - mid);
+        if (d < bestD) { best = CHAPTERS[i]; bestD = d; }
+      }
+      if (!best) { audio.sfx('error'); toast('这些章节还没开启'); return; }
+      goCh(best);
+    };
+    let railTries = 0;
+    const fillRail = () => {
+      const avail = tabs.clientHeight;
+      if (avail < 48) { if (railTries++ < 6) requestAnimationFrame(fillRail); return; }
+      railTries = 0;
+      clear(tabs);
+      const probeStep = stepBtn('上一页', prev, '');
+      const probeTab = h('button.tab', { text: '二十' });
+      tabs.append(probeStep, probeTab);
+      const stepH = probeStep.offsetHeight || 1;
+      const rowH = probeTab.offsetHeight || 1;
+      const slots = Math.max(1, Math.floor((avail - stepH * 2) / rowH));
+      clear(tabs);
+      tabs.append(stepBtn('上一页', prev, prev ? `上一页 · ${prev.title}` : '已经是第一章'));
+      for (const item of railItems(slots)) {
+        if (item.kind === 'gap') {
+          const a = CHAPTERS[item.from], b = CHAPTERS[item.to];
+          tabs.append(h('button.tab.ch-gap', {
+            text: '…', title: item.from === item.to ? a.title : `${a.title} 至 ${b.title}`,
+            onclick: () => jumpGap(item.from, item.to) }));
+        } else tabs.append(chapterBtn(item.ch));
+      }
+      tabs.append(stepBtn('下一页', nextCh, nextCh ? (chapterOpen(nextCh) ? `下一页 · ${nextCh.title}` : `通关「${C.short}」后开启`) : '已经是最后一章'));
+    };
     const body = frame(`故事模式 · ${C.title}`, { back: mainMenu });
+    window.addEventListener('resize', fillRail, { signal: screenAbort.signal });
     const list = h('div.levels');
     const seen = seenOf(C);
     list.append(h('div.level' + (seen ? '.done' : ''), { onclick: () => { audio.sfx('click'); runPrologue(true, C); } },
@@ -268,6 +323,7 @@ export async function boot(params, fontsReady) {
       portraitEl(next.levels.at(-1).enemy.portrait, 84, next.n + 40)));
     if (!next) list.append(h('div.level.locked', h('div.level-no', { text: '续' }), h('div.level-main', h('div.level-t', { text: '文脉未完' }), h('div.level-d', { text: '更多篇章，筹备之中' }))));
     body.append(h('div.story-map', list, tabs));
+    fillRail();
   }
 
   const portraits = Object.fromEntries(Object.entries(SPEAKER_ART).map(([who, motif], k) => [who, () => portraitEl(motif, 96, 7 + k)]));
