@@ -100,6 +100,7 @@ export const isMarked = (u) => u.st?.some((x) => MARKED.has(x.k));
 const onBoard = (P, id) => P.board.some((u) => u.id === id);
 const inWenmai = (P, id) => P.wenmai.find((u) => u.id === id);
 const baxianCount = (P) => P.board.filter((u) => card(u.id).bonds.includes('baxian')).length;
+const fengshenCount = (P) => P.board.filter((u) => card(u.id).bonds.includes('fengshen')).length;
 
 export function bondState(s, i) {
   const P = s.players[i];
@@ -109,7 +110,7 @@ export function bondState(s, i) {
   return {
     genesis: genesis ? (inWenmai(P, 'WM-001') && inWenmai(P, 'WM-002') ? 3 : inWenmai(P, 'WM-001') || inWenmai(P, 'WM-002') ? 2 : 1) : 0,
     baxian: baxianCount(P) >= 2 ? 1 : 0,
-    fengshen: onBoard(P, 'LJ-003') ? 1 : 0,
+    fengshen: fengshenCount(P) >= 2 ? 2 : (onBoard(P, 'LJ-003') ? 1 : 0),
     zhensha: zs ? (onBoard(P, 'LJ-009') ? 2 : 1) : 0,
     feiyi: fy,
     shisheng: onBoard(P, 'LJ-010') && onBoard(P, 'LJ-011') ? (onBoard(P, 'LJ-012') ? 2 : 1) : 0,
@@ -142,6 +143,7 @@ function auraAtk(s, u, target) {
     if (w.id === 'WM-003' && d.bonds.includes('baxian')) wm += Math.min(4, baxianCount(P));
   }
   if (d.bonds.includes('baxian') && baxianCount(P) >= 2) bond += 1;
+  if (d.bonds.includes('fengshen') && fengshenCount(P) >= 2) bond += 1;
   bond += Math.max(bondOn(s, u, 'shisheng') ? 1 : 0, autoBondAura(s, u));
   if ((P.zhen?.length ?? 0) >= 2 && d.type === 'general') bond += 1;   // 两阵齐开
   wm += FX[u.id]?.auraSelf?.atk?.(s, u) ?? 0;
@@ -160,6 +162,7 @@ function auraDef(s, u) {
     if (w.id === 'WM-022') a += w.grade >= 1 ? 2 : 1;               // 千里江山图：青绿厚涂，护的是整幅
   }
   if (d.bonds.includes('baxian') && baxianCount(P) >= 2) a += 1;
+  if (d.bonds.includes('fengshen') && fengshenCount(P) >= 2) a += 1;
   a += Math.max(bondOn(s, u, 'shisheng') ? 1 : 0, autoBondAura(s, u));
   if ((P.zhen?.length ?? 0) >= 2 && d.type === 'general') a += 1;      // 两阵齐开
   a += FX[u.id]?.auraSelf?.def?.(s, u) ?? 0;
@@ -304,6 +307,7 @@ function reapDead(s) {
       // 感天动地: 关汉卿 turns a friendly death into 1 damage on the enemy hero
       if (P.board.some((x) => x.id === 'LJ-014' && x.hp > 0)) { emit(s, { t: 'fx', kind: 'snow', p: P.i }); damageHero(s, opp(P.i), 1, 'LJ-014'); }
       for (const w of [...P.board]) if (w.hp > 0) runFx('onDeath', s, P.i, w, u);
+      for (const w of [...(P.zhen ?? [])]) runFx('onDeath', s, P.i, w, u);
     }
   }
   if (any) { checkBonds(s, 0); checkBonds(s, 1); }

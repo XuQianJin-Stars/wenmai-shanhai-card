@@ -9,6 +9,7 @@ import { SONG_CARDS, SONG_BOND } from './cardsSong.js';
 import { MYTH_CARDS, MYTH_WENMAI, MYTH_BOND } from './cardsMyth.js';
 import { ERA_CARDS, ERA_BONDS } from './cardsEra.js';
 import { FORMATIONS, FORMATION_BOND } from './cardsForm.js';
+import { CAST_CARDS } from './cardsCast.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物 | formation 阵法
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
@@ -38,12 +39,12 @@ export const BONDS = {
   genesis: { name: '创世组', title: '开天绪脉', members: ['LJ-001', 'LJ-002', 'WM-001', 'WM-002'],
     text: '盘古+女娲同时在场：两者 ATK/DEF 永久 +2，主将回复 3；再有创世图或五彩石：全体灵将 HP +2；两图俱在：盘古女娲技能费用 -1。',
     line: '天地初开，鸿蒙判分。盘古以身化山川，女娲以手补苍天——创世之力，一现于此。' },
-  baxian: { name: '八仙组', title: '八仙同渡', members: ['LJ-005', 'LJ-006', 'WM-003'],
+  baxian: { name: '八仙组', title: '八仙同渡', members: ['LJ-005', 'LJ-006', 'LJ-084', 'LJ-085', 'LJ-086', 'LJ-087', 'LJ-088', 'LJ-089', 'WM-003'],
     text: '场上 ≥2 张八仙灵将：所有八仙灵将 ATK/DEF +1（持续）。',
     line: '八仙各持法器，踏海而行——蓬莱在望，诸仙神通，天下共见。' },
-  fengshen: { name: '封神组', title: '逆天斗志', members: ['LJ-003'],
-    text: '哪吒在场（孤立自激活）：哪吒攻击命中后获得 1 灵力（每回合 1 次）。',
-    line: '莲花化身，乾坤圈在手——封神之劫，哪吒逆天而行。' },
+  fengshen: { name: '封神组', title: '逆天斗志', members: ['LJ-003', 'LJ-099', 'LJ-100', 'LJ-101', 'LJ-102', 'LJ-103', 'LJ-104', 'LJ-105', 'LJ-106'],
+    text: '哪吒在场：攻击命中后获得 1 灵力（每回合 1 次）。场上有两名封神灵将：这些灵将攻击/防御 +1。',
+    line: '榜还没写完。哪吒先动了手，后面的人一个一个往西岐赶。' },
   zhensha: { name: '镇煞组', title: '驱邪入场', members: ['LJ-004', 'WM-005', 'LJ-009'],
     text: '钟馗+定心符咒：定心免疫延长至 3 回合，钟馗技能费用 -1；再有门神在场（镇煞完阵）：主将每次受伤 -1，镇煞灵将 DEF +1。',
     line: '朱砂一笔，鬼神退避——钟馗在此，百邪不侵。' },
@@ -346,6 +347,7 @@ for (const c of SONG_CARDS) add(c);          // 两宋风雅 (src/data/cardsSong
 for (const c of MYTH_CARDS) add(c);          // 人间诸神 (src/data/cardsMyth.js)
 for (const c of ERA_CARDS) add(c);           // 第十四至二十章 (src/data/cardsEra.js)
 for (const c of FORMATIONS) add(c);          // 阵法 (src/data/cardsForm.js)
+for (const c of CAST_CARDS) add(c);          // 八仙、三国、封神补全 (src/data/cardsCast.js)
 add(XIYOU_WENMAI);
 add(MYTH_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)

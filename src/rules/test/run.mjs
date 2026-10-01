@@ -710,6 +710,72 @@ test('阵法：九曲黄河阵留在阵法区，并眩晕攻击最高的敌人',
   eq(s.players[0].zhen[0].id, 'ZF-001');
   ok(foe.st.some((x) => x.k === 'stun'), '被黄河阵眩晕');
 });
+test('阵法：八阵图打出时封印敌方技能', () => {
+  const s = blank();
+  const foe = spawn(s, 1, 'LJ-003');
+  act(s, { type: 'play', uid: hand(s, 0, 'ZF-014').uid });
+  ok(foe.st.some((x) => x.k === 'seal'), '被八阵图封印');
+});
+test('阵法：长蛇阵在友方阵亡后抬起其余灵将的攻击', () => {
+  const s = blank();
+  act(s, { type: 'play', uid: hand(s, 0, 'ZF-015').uid });
+  const live = spawn(s, 0, 'LJ-004');
+  const dying = spawn(s, 0, 'LJ-005');
+  dying.hp = 1;
+  const foe = spawn(s, 1, 'LJ-003');
+  foe.sleep = false;
+  const before = atkOf(s, live);
+  act(s, { type: 'end' });
+  act(s, { type: 'attack', uid: foe.uid, target: dying.uid });
+  ok(!s.players[0].board.includes(dying), '被击破的一截离场');
+  eq(atkOf(s, live), before + 1, '首尾来救');
+});
+test('八仙：汉钟离和吕洞宾同时在场，八仙组生效', () => {
+  const s = blank();
+  const a = spawn(s, 0, 'LJ-084');
+  const b = spawn(s, 0, 'LJ-005');
+  eq(bondState(s, 0).baxian, 1);
+  eq(atkOf(s, a), a.atk + 1);
+  eq(atkOf(s, b), b.atk + 1);
+});
+test('三国：张飞进场眩晕攻击最高的敌人，赵云落地就能打', () => {
+  const s = blank();
+  const foe = spawn(s, 1, 'LJ-003');
+  act(s, { type: 'play', uid: hand(s, 0, 'LJ-090').uid });
+  ok(foe.st.some((x) => x.k === 'stun'), '万人敌');
+
+  const s2 = createGame({ seed: 1, first: 0, players: [
+    { deck: ['LJ-091', ...Array(19).fill('ZL-001')], ordered: true },
+    { deck: Array(20).fill('ZL-001'), ordered: true },
+  ] });
+  s2.players[0].mana = 10;
+  const c = s2.players[0].hand.find((u) => u.id === 'LJ-091');
+  act(s2, { type: 'play', uid: c.uid });
+  eq(s2.players[0].board[0].sleep, false, '一身是胆');
+});
+test('三国：姜维从弃牌堆复活其他三国灵将', () => {
+  const s = blank();
+  spawn(s, 0, 'LJ-090', { zone: 'discard' });
+  const foe = spawn(s, 1, 'LJ-003');
+  act(s, { type: 'play', uid: hand(s, 0, 'LJ-096').uid });
+  ok(s.players[0].board.some((u) => u.id === 'LJ-090'), '张飞回到场上');
+  ok(foe.st.some((x) => x.k === 'stun'), '复活的张飞仍然会喝');
+});
+test('封神：两名封神灵将攻击和防御 +1，哪吒单独在场仍只给灵力', () => {
+  const s = blank();
+  const n = spawn(s, 0, 'LJ-003');
+  const li = spawn(s, 0, 'LJ-099');
+  eq(bondState(s, 0).fengshen, 2);
+  eq(atkOf(s, li), li.atk + 1);
+  eq(defOf(s, n), n.def + 1);
+
+  const s2 = blank({ mana: 3 });
+  const solo = spawn(s2, 0, 'LJ-003');
+  solo.sleep = false;
+  eq(bondState(s2, 0).fengshen, 1);
+  act(s2, { type: 'attack', uid: solo.uid, target: 'H1' });
+  eq(s2.players[0].mana, 4, '哪吒单独在场仍然回 1 灵力');
+});
 test('阵法：两座齐开时灵将攻击和防御 +1', () => {
   const s = blank();
   act(s, { type: 'play', uid: hand(s, 0, 'ZF-005').uid });

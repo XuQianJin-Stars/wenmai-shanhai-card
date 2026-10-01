@@ -18,10 +18,12 @@
 
 import { XIYOU_BOND } from '../data/cardsXiyou.js';
 import { MYTH_BOND } from '../data/cardsMyth.js';
+import { SANGUO_GENERALS } from '../data/cardsEra.js';
 
 /** 取经五众的 id，《西游释厄传》要数场上有没有取经人。 */
 const XIYOU = new Set(XIYOU_BOND.xiyou.auto.generals);
 const RENJIAN = new Set(MYTH_BOND.renjian.auto.generals);
+const SANGUO = new Set(SANGUO_GENERALS);
 
 export const FX = {
   // ───────── 第四章 · 先秦诸子（稷下学宫） ─────────
@@ -350,7 +352,7 @@ export const FX = {
     onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'bleed', 2, 1); },
     skill: (c) => c.dmg(c.T, 4),
   },
-  'WM-025': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-070' || u.id === 'LJ-071')) { c.draw(1); if (c.up) c.healHero(1); } } },
+  'WM-025': { turn: (c) => { if (c.mine().some((u) => SANGUO.has(u.id))) { c.draw(1); if (c.up) c.healHero(1); } } },
   'LJ-072': {
     afterAttack: (c) => { if (c.u.hp > 0) c.dodge(c.u); },
     skill: (c) => c.dmg(c.T, c.atk(c.u)),
@@ -474,6 +476,115 @@ export const FX = {
   'ZF-013': {
     play: (c) => { for (const u of c.mine()) c.cleanse(u); },
     turn: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 1, c.up ? 2 : 1); },
+  },
+  'ZF-014': {   // 八阵图：走进去就找不到门，技能先封住
+    play: (c) => { for (const t of c.foe()) c.neg(t, 'seal', c.up ? 2 : 1, 0); },
+    turn: (c) => { if (c.handSize() < 4) c.draw(1); },
+  },
+  'ZF-015': {   // 长蛇：首尾相救。友方阵亡时，还在场上的灵将补上一截攻击
+    play: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 2, 1); },
+    onDeath: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 2, c.up ? 2 : 1); },
+  },
+  'ZF-016': {
+    play: (c) => {
+      const t = c.strongest(c.foe());
+      if (!t) return;
+      c.dmg(t, c.up ? 4 : 3);
+      if (t.hp > 0) c.neg(t, 'atkDown', 2, 2);
+    },
+    turn: (c) => { const t = c.strongest(c.foe()); if (t) c.dmg(t, 1); },
+  },
+  'ZF-017': {
+    play: (c) => { for (const t of c.foe()) c.neg(t, 'defDown', 2, 1); },
+    turn: (c) => { const t = c.weakest(c.foe()); if (t) c.dmg(t, c.up ? 3 : 2); },
+  },
+  'ZF-018': {
+    play: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 2, c.up ? 3 : 2); },
+    turn: (c) => { const t = c.rnd(c.hurt()); if (t) c.heal(t, 1); },
+  },
+
+  // ───────── 八仙、三国、封神补全（src/data/cardsCast.js） ─────────
+  'LJ-084': { summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'atkDown', 2, 2); } },
+  'LJ-085': { afterAttack: (c) => { if (c.u.hp > 0) c.heal(c.u, 1); }, skill: (c) => c.dodge(c.u) },
+  'LJ-086': {
+    turn: (c) => { const t = c.rnd(c.hurt()); if (t) c.heal(t, 2); },
+    skill: (c) => { c.heal(c.T, 3); c.cleanse(c.T); },
+  },
+  'LJ-087': {
+    summon: (c) => c.draw(1),
+    onHit: (c) => { if (c.oncePerTurn('LJ-087')) c.draw(1); },
+    skill: (c) => c.neg(c.T, 'atkDown', 2, 1),
+  },
+  'LJ-088': {
+    summon: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 99, 1); },
+    skill: (c) => { for (const u of c.mine()) c.heal(u, 2); },
+  },
+  'LJ-089': {
+    whenHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'atkDown', 1, 1); },
+    skill: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'stun', 1, 0); },
+  },
+  'LJ-090': {
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'stun', 1, 0); },
+    skill: (c) => { c.dmg(c.T, 3); if (c.T.hp > 0) c.neg(c.T, 'stun', 1, 0); },
+  },
+  'LJ-091': { skill: (c) => c.dmg(c.T, c.atk(c.u)) },
+  'LJ-092': {
+    onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'defDown', 2, 1); },
+    skill: (c) => {
+      c.dmg(c.T, 4);
+      if (c.T.hp > 0 && c.strongest(c.foe()) === c.T) c.neg(c.T, 'stun', 1, 0);
+    },
+  },
+  'LJ-093': { onHit: (c) => { if (c.T.hp > 0) c.dmg(c.T, 2); }, skill: (c) => c.dmg(c.T, 4) },
+  'LJ-094': {
+    summon: (c) => { c.draw(1); for (const u of c.mine()) if (u !== c.u) c.buff(u, 'atkUp', 99, 1); },
+    skill: (c) => {
+      if (c.mine().some((u) => u.id === 'LJ-070')) c.draw(2);
+      else { c.draw(1); c.healHero(2); }
+    },
+  },
+  'LJ-095': { summon: (c) => { c.draw(1); c.costDown('any'); }, skill: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 2, 1); } },
+  'LJ-096': {
+    summon: (c) => { const g = c.summonFrom((d) => d.bonds?.includes('sanguo') && d.id !== 'LJ-096'); if (!g) c.draw(1); },
+    skill: (c) => { c.dmg(c.T, 3); c.healHero(2); },
+  },
+  'LJ-097': {
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.dmg(t, 3); },
+    skill: (c) => { c.buff(c.u, 'atkUp', 2, 2); c.dmg(c.u, 1); },
+  },
+  'LJ-098': {
+    summon: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 2, 1); },
+    skill: (c) => { for (const t of c.foe()) c.neg(t, 'seal', 1, 0); },
+  },
+  'LJ-099': {
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'stun', 1, 0); },
+    skill: (c) => { c.neg(c.T, 'stun', 1, 0); if (c.T.hp > 0) c.neg(c.T, 'defDown', 2, 2); },
+  },
+  'LJ-100': { onHit: (c) => { if (c.T.hp > 0) c.dmg(c.T, 1); }, skill: (c) => c.dmg(c.T, 3) },
+  'LJ-101': {
+    summon: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 2, 1); },
+    skill: (c) => c.dmg(c.T, 4),
+  },
+  'LJ-102': {
+    summon: (c) => c.dodge(c.u),
+    whenHit: (c) => { if (c.u.hp > 0) c.dodge(c.u); },
+    skill: (c) => { c.dmg(c.T, 2); c.dodge(c.u); },
+  },
+  'LJ-103': {
+    summon: (c) => { const t = c.rnd(c.foe()); if (t) c.neg(t, 'stun', 1, 0); },
+    skill: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 2, 1); c.draw(1); },
+  },
+  'LJ-104': {
+    summon: (c) => { for (const t of c.foe()) c.dmg(t, 1); },
+    skill: (c) => { c.dmg(c.T, 3); if (c.T.hp > 0) c.neg(c.T, 'atkDown', 1, 2); },
+  },
+  'LJ-105': {
+    summon: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'seal', 1, 0); },
+    skill: (c) => { c.neg(c.T, 'seal', 2, 0); if (c.T.hp > 0) c.neg(c.T, 'atkDown', 2, 2); },
+  },
+  'LJ-106': {
+    summon: (c) => { for (const t of c.foe()) c.neg(t, 'defDown', 2, 1); },
+    skill: (c) => c.dmg(c.T, 5),
   },
 
   // ───────── 器物（src/data/artifacts.js） ─────────

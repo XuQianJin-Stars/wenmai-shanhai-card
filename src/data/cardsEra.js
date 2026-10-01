@@ -178,8 +178,14 @@ const bond = (key, name, title, gens, wenmai, perk, text, line) => ({
   },
 });
 
+export const SANGUO_GENERALS = [
+  'LJ-070', 'LJ-071',
+  'LJ-090', 'LJ-091', 'LJ-092', 'LJ-093',
+  'LJ-094', 'LJ-095', 'LJ-096', 'LJ-097', 'LJ-098',
+];
+
 export const ERA_BONDS = {
-  ...bond('sanguo', '三国组', '出师一表', ['LJ-070', 'LJ-071'], 'WM-025', 'draw',
+  ...bond('sanguo', '三国组', '出师一表', SANGUO_GENERALS, 'WM-025', 'draw',
     '场上两名三国灵将：攻击/防御 +1；再有《出师表》：每回合开始抽 1 张牌。',
     '一个读《左传》，一个写表。仗打完了，书还在。'),
   ...bond('nanbei', '南北朝组', '谁说女子', ['LJ-072', 'LJ-073'], 'WM-026', 'mana',
