@@ -8,7 +8,7 @@ import { createFx } from '../render/fx.js';
 import { CardMesh, CARD_W, CARD_H } from '../render/cardMesh.js';
 import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
-import { createSave, deckProblem } from './save.js';
+import { createSave, deckProblem, MAX_DECKS } from './save.js';
 import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
 import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
@@ -206,7 +206,7 @@ export async function boot(params, fontsReady) {
     const more = [
       ['文 物 志', '文物', relicSub(), () => relicScreen()],
       ['守护者', '修行', guardianSub(), () => guardianScreen()],
-      ['牌组编成', '牌组', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
+      ['牌组编成', '牌组', `${save.deckName()} · ${save.data.deck.length}/${DECK_SIZE}`, () => deckBuilder()],
       ['设　　置', '设置', '音量 · 速度 · 计时', () => settingsModal()],
       ['帮　　助', '帮助', '玩法 · 操作 · 屏幕', () => helpModal()],
     ];
@@ -306,7 +306,7 @@ export async function boot(params, fontsReady) {
       // 行数按自然高度算完再平摊余数，底边贴齐关卡列表，单行不会被拉得很高。
       for (const b of tabs.children) b.style.flexGrow = '1';
     };
-    const body = frame(`故事模式 · ${C.title}`, { back: mainMenu });
+    const body = frame(`故事模式 · ${C.title}`, { back: mainMenu, extra: deckSwitch(() => storyMap(C.n)) });
     window.addEventListener('resize', fillRail, { signal: screenAbort.signal });
     const list = h('div.levels');
     const seen = seenOf(C);
@@ -415,7 +415,7 @@ export async function boot(params, fontsReady) {
         h('div.result-reward', h('span.frag-ico'), h('span', { text: `文脉碎片 +${reward.fragments}` }), h('span.dim', { text: `（共 ${save.data.fragments}）` })),
         unlocks.length ? h('div.unlocks', unlocks) : null,
         unlocks.length ? h('div.dim', { text: reward.swapped?.length
-          ? `已自动编入牌组：${reward.swapped.map(([a, b]) => `「${card(a).name}」替换「${card(b).name}」`).join('，')}。可在「牌组编成」中调整。`
+          ? `已自动编入「${save.deckName()}」：${reward.swapped.map(([a, b]) => `「${card(a).name}」替换「${card(b).name}」`).join('，')}。可在「牌组编成」中调整。`
           : '新卡牌已加入图鉴，可在「牌组编成」中使用。' }) : null,
         h('div.result-btns',
           retry ? btn('再战一局', () => resolve('retry'), 'primary') : null,
@@ -436,7 +436,7 @@ export async function boot(params, fontsReady) {
     const diff = h('div.seg', [['easy', '入门'], ['normal', '寻常'], ['hard', '宗师']].map(([k, t]) => h('button' + (k === level ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); level = k; showPayout(); diff.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); } })));
     const prob = deckProblem(save.data.deck);
     if (prob) body.append(h('div.warn', { text: `当前牌组不可用：${prob}` }));
-    body.append(h('div.row', h('span', { text: '难度：' }), diff, payout),
+    body.append(h('div.row', h('span', { text: '出战：' }), deckSwitch(() => practice()), h('span', { text: '难度：' }), diff, payout),
       h('div.opps', PRACTICE.map((P, i) => h('div.opp', { onclick: async () => {
         if (prob) { audio.sfx('error'); toast('请先在「牌组编成」中组好 20 张牌'); return; }
         audio.sfx('click');
@@ -753,24 +753,67 @@ export async function boot(params, fontsReady) {
     draw();
   }
 
+  // 出战牌组。故事模式、自由对战都用这一排切换，不用先回编成页。
+  function deckSwitch(redraw) {
+    return h('div.seg.deck-switch', save.data.decks.map((d, i) => h('button' + (i === save.data.deckOn ? '.on' : ''), {
+      text: d.name, title: i === save.data.deckOn ? '当前出战' : '改用这套牌组出战',
+      onclick: () => {
+        if (i === save.data.deckOn) return;
+        if (!save.useDeck(i)) { audio.sfx('error'); toast('这套牌组还不能用'); return; }
+        audio.sfx('click');
+        redraw();
+      },
+    })));
+  }
+
   // ── deck builder ──
   function deckBuilder() {
     setStage('menu'); menuCam(); hideViewer();
     audio.music('menu');
     let deck = [...save.data.deck];
     const body = frame('牌组编成', { back: () => leave() });
-    const pool = h('div.pool'), list = h('div.decklist'), head = h('div.deck-head'), infoBox = h('div.deck-info');
+    const pool = h('div.pool'), list = h('div.decklist'), head = h('div.deck-head'), infoBox = h('div.deck-info'), tabs = h('div.deck-tabs');
     const count = (id) => deck.filter((x) => x === id).length;
-    async function leave() {
+    const dirty = () => JSON.stringify(deck) !== JSON.stringify(save.data.deck);
+    async function keepOrDrop() {
+      if (!dirty()) return true;
       const prob = deckProblem(deck);
-      if (JSON.stringify(deck) !== JSON.stringify(save.data.deck)) {
-        if (prob) { const ok = await modal('牌组未完成', `${prob}。离开将放弃本次修改。`, [{ label: '放弃修改', value: true }, { label: '继续编辑', value: false, primary: true }]); if (!ok) return; }
-        else save.setDeck(deck);
+      if (prob) {
+        const ok = await modal('牌组未完成', `${prob}。切换将放弃这次修改。`, [{ label: '放弃修改', value: true }, { label: '继续编辑', value: false, primary: true }]);
+        return !!ok;
       }
+      save.setDeck(deck);
+      return true;
+    }
+    async function leave() {
+      if (!(await keepOrDrop())) return;
       mainMenu();
     }
     function draw() {
-      clear(pool); clear(list); clear(head);
+      clear(pool); clear(list); clear(head); clear(tabs);
+      const seg = h('div.seg');
+      save.data.decks.forEach((d, i) => {
+        seg.append(h('button' + (i === save.data.deckOn ? '.on' : ''), {
+          text: d.name, title: i === save.data.deckOn ? '当前出战' : '改用这套出战',
+          onclick: async () => {
+            if (i === save.data.deckOn) return;
+            if (!(await keepOrDrop())) return;
+            if (!save.useDeck(i)) { audio.sfx('error'); toast('这套牌组还不能用'); return; }
+            audio.sfx('click');
+            deck = [...save.data.deck];
+            draw();
+          },
+        }));
+      });
+      tabs.append(h('span.deck-bar-l', { text: '出战' }), seg);
+      if (save.data.decks.length < MAX_DECKS) tabs.append(h('button.btn.small', { text: '新建', onclick: async () => {
+        if (!(await keepOrDrop())) return;
+        if (save.addDeck() < 0) { audio.sfx('error'); toast(`最多 ${MAX_DECKS} 套`); return; }
+        audio.sfx('click');
+        deck = [...save.data.deck];
+        toast(`已新建「${save.deckName()}」，并设为出战`);
+        draw();
+      } }));
       const prob = deckProblem(deck);
       const types = { general: 0, talisman: 0, wenmai: 0, artifact: 0, formation: 0 };
       deck.forEach((id) => types[card(id).type]++);
@@ -794,9 +837,25 @@ export async function boot(params, fontsReady) {
           h('span.cost', { text: d.cost }), h('span.nm', { text: d.name }), h('span.el', { style: { color: EL[d.el]?.color }, text: EL[d.el]?.zh ?? '' }), h('span.x', { text: `×${count(id)}` })));
       }
     }
-    body.append(h('div.deckb', h('div.deck-pool', h('div.hint2', { text: '点击卡牌加入牌组 · 点击右侧条目移除 · 每张同名卡最多 2 张' }), pool),
+    body.append(h('div.deckb', h('div.deck-pool', tabs, h('div.hint2', { text: '点上方牌组切换出战 · 点卡牌加入 · 点右侧条目移除 · 同名最多 2 张' }), pool),
       h('div.deck-side', head, list, h('div.deck-btns',
-        btn('保存牌组', () => { const p = deckProblem(deck); if (p) { audio.sfx('error'); toast(p); return; } save.setDeck(deck); toast('牌组已保存'); }, 'primary'),
+        btn('保存牌组', () => { const p = deckProblem(deck); if (p) { audio.sfx('error'); toast(p); return; } save.setDeck(deck); toast(`「${save.deckName()}」已保存`); }, 'primary'),
+        btn('改名', async () => {
+          const input = h('input.deck-rename', { type: 'text', value: save.deckName(), maxlength: '8' });
+          requestAnimationFrame(() => input.focus());
+          const ok = await modal('牌组名称', h('div', h('p', { text: '最多 8 个字。' }), input), [{ label: '确定', value: true, primary: true }, { label: '取消', value: false }]);
+          if (!ok) return;
+          if (!save.renameDeck(save.data.deckOn, input.value)) { audio.sfx('error'); toast('名字不能是空的'); return; }
+          draw();
+        }),
+        btn('删除', async () => {
+          if (save.data.decks.length <= 1) { audio.sfx('error'); toast('至少留一套牌组'); return; }
+          const ok = await modal('删除牌组', `删除「${save.deckName()}」？出战会改到剩下的一套。`, [{ label: '删除', value: true }, { label: '取消', value: false, primary: true }]);
+          if (!ok) return;
+          save.removeDeck(save.data.deckOn);
+          deck = [...save.data.deck];
+          draw();
+        }),
         btn('清空', () => { deck = []; draw(); }),
         btn('自动补全', () => {
           const owned = save.data.owned.slice().sort(() => Math.random() - 0.5);

@@ -112,6 +112,28 @@ test('存档迁移：v1 的 chN-M 和 v2 的 tangsong-* 都能落到今天的关
   eq(v3.seenPro.join(','), '8', 'v3 的章号不再动');
   eq(migrateSave({ v: 3, done: ['tangsong-1', '不存在的关'] }).done.length, 0, '认不出的关卡 id 一律丢掉');
 });
+test('多牌组：旧存档的一套牌变成牌组一，不合法的丢掉', () => {
+  const old = migrateSave({ v: 3, deck: [...STARTER_DECK] });
+  eq(old.decks.length, 1);
+  eq(old.decks[0].name, '牌组一');
+  eq(old.deckOn, 0);
+  eq(old.deck.join(' '), STARTER_DECK.join(' '));
+  const messy = migrateSave({ v: 3, deckOn: 9, decks: [
+    { name: '坏', cards: ['nope'] },
+    { name: '  乙乙乙乙乙乙乙乙乙', cards: [...STARTER_DECK] },
+    { name: '丙', cards: [...STARTER_DECK] },
+  ] });
+  eq(messy.decks.length, 2);
+  eq(messy.decks[0].name, '乙乙乙乙乙乙乙乙');
+  eq(messy.deckOn, 0, '下标超出就回到第一套');
+  const picked = migrateSave({ v: 3, deckOn: 1, decks: [
+    { name: '甲', cards: [...STARTER_DECK] },
+    { name: '乙', cards: [...STARTER_DECK] },
+  ] });
+  eq(picked.deckOn, 1);
+  eq(picked.decks[1].name, '乙');
+  eq(picked.deck.join(' '), picked.decks[1].cards.join(' '));
+});
 test('守护者境界：总重数决定称呼，点满即圆满', () => {
   const none = guardianRank({});
   eq(none.level, 0, '一重没修'); eq(none.max, GUARDIAN_MAX, '上限是六条路之和');

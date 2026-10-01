@@ -4,15 +4,20 @@ import { STARTER_CARDS, STARTER_DECK, DECK_SIZE, MAX_COPIES, LEVELS } from '../d
 import { GUARDIAN, guardianCost, boonOf, guardianRank } from '../data/guardian.js';
 
 const KEY = 'wenmai_save_v1';
+export const MAX_DECKS = 6;
+const DECK_NUM = ['一', '二', '三', '四', '五', '六'];
 
 export function defaultSave() {
+  const starter = [...STARTER_DECK];
   return {
     v: 3,                              // 3 = 唐宋拆成两章之后（见 migrateLevelId / migrateChapterNo）
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
     guardian: {},                     // 修行 key → 等级（见 data/guardian.js）
-    deck: [...STARTER_DECK],
+    decks: [{ name: '牌组一', cards: [...starter] }],
+    deckOn: 0,                        // 进战斗用的是 decks[deckOn]
+    deck: starter,
     done: [],                         // completed level ids
     seenPrologue: false,              // chapter 1 prologue (kept as its own flag for older saves)
     seenPro: [],                      // chapter numbers ≥2 whose prologue has been watched
@@ -49,10 +54,28 @@ export function migrateSave(raw) {
   if (Array.isArray(raw.owned)) d.owned = [...new Set([...STARTER_CARDS, ...raw.owned.filter((id) => PLAYER_CARD_IDS.includes(id))])];
   if (raw.grades && typeof raw.grades === 'object') for (const [id, g] of Object.entries(raw.grades)) if (CARDS[id] && d.owned.includes(id)) d.grades[id] = Math.floor(num(g, 0, 2, 0));
   if (raw.guardian && typeof raw.guardian === 'object') for (const t of GUARDIAN) d.guardian[t.k] = Math.floor(num(raw.guardian[t.k], 0, t.max, 0));
-  if (Array.isArray(raw.deck)) {
-    const deck = raw.deck.filter((id) => d.owned.includes(id));
-    if (deckProblem(deck) === null) d.deck = deck;
+  const deckName = (s, i) => {
+    const t = typeof s === 'string' ? s.trim().slice(0, 8) : '';
+    return t || `牌组${DECK_NUM[i] ?? i + 1}`;
+  };
+  const legalDeck = (arr) => {
+    if (!Array.isArray(arr)) return null;
+    const deck = arr.filter((id) => d.owned.includes(id));
+    return deckProblem(deck) === null ? deck : null;
+  };
+  const decks = [];
+  if (Array.isArray(raw.decks)) {
+    for (const slot of raw.decks.slice(0, MAX_DECKS)) {
+      if (!slot || typeof slot !== 'object') continue;
+      const cards = legalDeck(slot.cards);
+      if (!cards) continue;
+      decks.push({ name: deckName(slot.name, decks.length), cards });
+    }
   }
+  if (!decks.length) decks.push({ name: '牌组一', cards: legalDeck(raw.deck) ?? [...STARTER_DECK] });
+  d.decks = decks;
+  d.deckOn = Number.isInteger(raw.deckOn) && raw.deckOn >= 0 && raw.deckOn < decks.length ? raw.deckOn : 0;
+  d.deck = [...decks[d.deckOn].cards];
   const old = !(raw.v >= 2), preSplit = !(raw.v >= 3);
   if (Array.isArray(raw.done)) {
     d.done = raw.done
@@ -154,14 +177,61 @@ export function createSave() {
     guardianMaxed() { return GUARDIAN.every((t) => api.guardianLevel(t.k) >= t.max); },
     /** 六条路加起来的境界，给主菜单和修行页显示用。 */
     guardianRank() { return guardianRank(data.guardian); },
-    /** Put a newly unlocked card into the deck in place of the cheapest duplicate of the same type. Returns the replaced id. */
+    deckName() { return data.decks[data.deckOn]?.name ?? '牌组'; },
+    /** Put a newly unlocked card into the active deck in place of the cheapest duplicate of the same type. Returns the replaced id. */
     autoInsert(id) {
       const r = insertCard(data.deck, id);
       if (!r) return null;
       data.deck = r.deck;
+      if (data.decks[data.deckOn]) data.decks[data.deckOn].cards = [...r.deck];
       return r.out;
     },
-    setDeck(deck) { if (deckProblem(deck)) return false; data.deck = [...deck]; api.write(); return true; },
+    setDeck(deck) {
+      if (deckProblem(deck)) return false;
+      const cards = [...deck];
+      data.deck = cards;
+      if (data.decks[data.deckOn]) data.decks[data.deckOn].cards = [...cards];
+      api.write();
+      return true;
+    },
+    /** 换成另一套已经组好的牌。不合法的不能拿去打。 */
+    useDeck(i) {
+      const slot = data.decks[i];
+      if (!slot || deckProblem(slot.cards)) return false;
+      data.deckOn = i;
+      data.deck = [...slot.cards];
+      api.write();
+      return true;
+    },
+    /** 按当前出战牌组复制一套，并立刻改用它。满了返回 -1。 */
+    addDeck(cards) {
+      if (data.decks.length >= MAX_DECKS) return -1;
+      const src = cards && deckProblem(cards) === null ? cards : data.deck;
+      const i = data.decks.length;
+      data.decks.push({ name: `牌组${DECK_NUM[i] ?? i + 1}`, cards: [...src] });
+      data.deckOn = i;
+      data.deck = [...src];
+      api.write();
+      return i;
+    },
+    renameDeck(i, name) {
+      const slot = data.decks[i];
+      if (!slot) return false;
+      const t = String(name ?? '').trim().slice(0, 8);
+      if (!t) return false;
+      slot.name = t;
+      api.write();
+      return true;
+    },
+    removeDeck(i) {
+      if (data.decks.length <= 1 || !data.decks[i]) return false;
+      data.decks.splice(i, 1);
+      if (i < data.deckOn) data.deckOn--;
+      else if (data.deckOn >= data.decks.length) data.deckOn = data.decks.length - 1;
+      data.deck = [...data.decks[data.deckOn].cards];
+      api.write();
+      return true;
+    },
     sawPrologue(n) { return n === 1 ? data.seenPrologue : data.seenPro.includes(n); },
     markPrologue(n) { if (n === 1) data.seenPrologue = true; else if (!data.seenPro.includes(n)) data.seenPro.push(n); },
     complete(levelId) { if (!data.done.includes(levelId)) data.done.push(levelId); },
