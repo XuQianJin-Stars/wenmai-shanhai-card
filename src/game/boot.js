@@ -280,9 +280,11 @@ export async function boot(params, fontsReady) {
     };
     let railTries = 0;
     const fillRail = () => {
-      const avail = tabs.clientHeight;
-      if (avail < 48) { if (railTries++ < 6) requestAnimationFrame(fillRail); return; }
+      const listH = list.offsetHeight;
+      if (listH < 48) { if (railTries++ < 6) requestAnimationFrame(fillRail); return; }
       railTries = 0;
+      tabs.style.height = listH + 'px';
+      const avail = tabs.clientHeight;
       clear(tabs);
       const probeStep = stepBtn('上一页', prev, '');
       const probeTab = h('button.tab', { text: '二十' });
@@ -301,6 +303,8 @@ export async function boot(params, fontsReady) {
         } else tabs.append(chapterBtn(item.ch));
       }
       tabs.append(stepBtn('下一页', nextCh, nextCh ? (chapterOpen(nextCh) ? `下一页 · ${nextCh.title}` : `通关「${C.short}」后开启`) : '已经是最后一章'));
+      // 行数按自然高度算完再平摊余数，底边贴齐关卡列表，单行不会被拉得很高。
+      for (const b of tabs.children) b.style.flexGrow = '1';
     };
     const body = frame(`故事模式 · ${C.title}`, { back: mainMenu });
     window.addEventListener('resize', fillRail, { signal: screenAbort.signal });
