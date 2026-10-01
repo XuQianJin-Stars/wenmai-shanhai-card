@@ -6,6 +6,7 @@ import { ARTIFACTS } from './artifacts.js';
 import { RELIC_ARTIFACTS } from './cardsRelic.js';
 import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
 import { SONG_CARDS, SONG_BOND } from './cardsSong.js';
+import { MYTH_CARDS, MYTH_WENMAI, MYTH_BOND } from './cardsMyth.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
@@ -54,6 +55,7 @@ export const BONDS = {
   ...LATE_BONDS,
   ...XIYOU_BOND,
   ...SONG_BOND,
+  ...MYTH_BOND,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -123,7 +125,7 @@ add({ id: 'LJ-007', name: '烛龙·燃明', short: '烛龙', type: 'general', fa
   flavor: '它闭眼是黑夜，睁眼是白天。天地太暗的时候，就靠它撑着。',
   lore: '烛龙人面蛇身而赤，不食不寝不息，闭眼为夜、睁眼为昼，是《山海经》里最古老的神兽之一。',
   art: { motif: 'serpent', tint: '#C03A2A' } });
-add({ id: 'LJ-008', name: '嫦娥·奔月', short: '嫦娥', type: 'general', faction: '上古神话', cost: 3, atk: 3, def: 3, hp: 7, el: 'water', bonds: [],
+add({ id: 'LJ-008', name: '嫦娥·奔月', short: '嫦娥', type: 'general', faction: '上古神话', cost: 3, atk: 3, def: 3, hp: 7, el: 'water', bonds: ['sheri'],
   text: '【月辉】召唤时使敌方 ATK 最高的灵将 ATK -2，持续 1 回合。',
   skill: { name: '广寒清辉', cost: 2, target: 'friendlyGeneral', text: '我方灵将获得「潜行」：免疫下一次攻击。' },
   quote: '羿请不死之药于西王母，姮娥窃以奔月，怅然有丧，无以续之。', source: '《淮南子·览冥训》（西汉·刘安）',
@@ -337,7 +339,9 @@ ZL({ id: 'ZL-018', name: '尘封之幕', short: '落幕', type: 'talisman', cost
 for (const c of LATE_CARDS) add(c);          // chapters 4–10 (src/data/cardsLate.js)
 for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/cardsXiyou.js)
 for (const c of SONG_CARDS) add(c);          // 两宋风雅 (src/data/cardsSong.js)
+for (const c of MYTH_CARDS) add(c);          // 人间诸神 (src/data/cardsMyth.js)
 add(XIYOU_WENMAI);
+add(MYTH_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)
 for (const c of RELIC_ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 文物器物 (src/data/cardsRelic.js)
 

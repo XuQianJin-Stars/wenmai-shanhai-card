@@ -660,6 +660,59 @@ test('自动编入不会压垮费用曲线', () => {
   ok(heavy <= 5, `too many 5+ drops after every unlock: ${heavy}`);
 });
 
+test('人间诸神：杨戬天眼有增益就驱散，没有就压攻击', () => {
+  const s = blank();
+  const foe = spawn(s, 1, 'LJ-003');
+  foe.st.push({ k: 'atkUp', t: 2, v: 3 });
+  act(s, { type: 'play', uid: hand(s, 0, 'LJ-063').uid });
+  ok(!foe.st.some((x) => x.k === 'atkUp'), '增益被天眼驱散');
+
+  const s2 = blank();
+  const plain = spawn(s2, 1, 'LJ-003');
+  act(s2, { type: 'play', uid: hand(s2, 0, 'LJ-063').uid });
+  ok(plain.st.some((x) => x.k === 'atkDown'), '没有增益时改为攻击 -2');
+});
+test('人间诸神：夸父落地就能打，打完自己渴 1 点', () => {
+  const s = createGame({ seed: 1, first: 0, players: [
+    { deck: ['LJ-066', ...Array(19).fill('ZL-001')], ordered: true },
+    { deck: Array(20).fill('ZL-001'), ordered: true },
+  ] });
+  s.players[0].mana = 10;
+  const c = s.players[0].hand.find((u) => u.id === 'LJ-066');
+  act(s, { type: 'play', uid: c.uid });
+  const k = s.players[0].board[0];
+  eq(k.sleep, false, '逐日：召唤当回合可攻击');
+  ok(canAttack(s, k));
+  const hp = k.hp;
+  act(s, { type: 'attack', uid: k.uid, target: 'H1' });
+  eq(k.hp, hp - 1, '道渴');
+});
+test('人间诸神：后羿打火属性多 2 点，和嫦娥同时在场各 +1', () => {
+  const s = blank();
+  const hou = spawn(s, 0, 'LJ-064');
+  hou.sleep = false;
+  const nezha = spawn(s, 1, 'LJ-003');
+  act(s, { type: 'attack', uid: hou.uid, target: nezha.uid });
+  eq(nezha.hp, 8 - (6 - 2) - 2, '6 攻对 2 防，再加射日 2 点');
+
+  const s2 = blank();
+  const a = spawn(s2, 0, 'LJ-064');
+  const b = spawn(s2, 0, 'LJ-008');
+  eq(bondState(s2, 0).sheri, 1);
+  eq(atkOf(s2, a), 7);
+  eq(atkOf(s2, b), 4);
+});
+test('人间诸神：精卫回合开始填海，也护住己方主将', () => {
+  const s = blank();
+  spawn(s, 0, 'LJ-067');
+  s.players[0].hp = 10;
+  const foe = s.players[1].hp;
+  act(s, { type: 'end' });
+  act(s, { type: 'end' });
+  eq(s.players[1].hp, foe - 1);
+  eq(s.players[0].hp, 11);
+});
+
 // ───────── data integrity ─────────
 test('every card has the required fields', () => {
   for (const c of Object.values(CARDS)) {

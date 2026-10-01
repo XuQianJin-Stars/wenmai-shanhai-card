@@ -5,6 +5,7 @@ import { LATE_CHAPTERS, LATE_PRACTICE, LATE_SPEAKERS } from './storyLate.js';
 
 export const STARTER_CARDS = [
   'LJ-003', 'LJ-004', 'LJ-005', 'LJ-006', 'LJ-007', 'LJ-008', 'LJ-009',
+  'LJ-063', 'LJ-064', 'LJ-065', 'LJ-066', 'LJ-067', 'LJ-068', 'LJ-069', 'WM-024',
   'FL-001', 'FL-002', 'FL-003', 'FL-004', 'FL-006',
   'WM-001', 'WM-002', 'WM-003', 'WM-004', 'WM-005', 'WM-007',
 ];
@@ -398,6 +399,9 @@ export const PRACTICE = [
   { id: 'p-liyuan', title: '古戏台 · 梨园绝唱', scene: 'stage', variant: 'dawn', enemy: { name: '末代班主', hp: 40, portrait: 'juexiang',
     deck: ['LJ-014', 'LJ-014', 'LJ-015', 'LJ-017', 'LJ-017', 'LJ-016', 'LJ-006', 'LJ-006', 'LJ-013', 'LJ-009',
       'WM-010', 'WM-011', 'WM-004', 'WM-007', 'FL-001', 'FL-003', 'FL-003', 'FL-005', 'FL-006', 'LJ-008'] } },
+  { id: 'p-guankou', title: '灌江口 · 诸神夜话', scene: 'kunlun', variant: 'summit', enemy: { name: '灌口二郎', hp: 40, portrait: 'myth-erlang',
+    deck: ['LJ-063', 'LJ-063', 'LJ-064', 'LJ-064', 'LJ-065', 'LJ-066', 'LJ-066', 'LJ-067', 'LJ-067', 'LJ-068',
+      'LJ-069', 'LJ-008', 'LJ-003', 'WM-024', 'WM-024', 'FL-004', 'FL-006', 'FL-001', 'FL-003', 'LJ-068'] } },
 ];
 
 PRACTICE.push(...LATE_PRACTICE);

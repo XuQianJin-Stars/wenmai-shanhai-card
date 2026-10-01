@@ -195,6 +195,23 @@ export const SIGNATURE = {
     skill: sig([L('orbit', { color: C.paper, n: 14, r: 1.2, at: 'mine' }), L('glyphs', { glyphs: '通关文牒', color: '#f0e6cc', at: 'mine' })], { sfx: 'draw' }) },
   'WM-021': { play: sig([L('ribbon', { color: '#c8b48c', n: 3, len: 3.4 }), L('glyphs', { glyphs: '释厄', color: '#e8dcc0' })], { sfx: 'playWenmai' }) },
 
+  // ───────── 人间诸神 ─────────
+  'LJ-063': { summon: sig([L('burst', { color: '#f2e6a8', r: 1.6 }), L('glyphs', { glyphs: '天眼', color: '#ffe8b0' }), L('blades', { color: '#e8d8a0', n: 3 })], { sfx: 'playGeneral', flash: ['#fff0c0', 0.16] }),
+    skill: sig([L('blades', { color: '#e8d8a0', at: 'target', n: 6 }), L('beam', { color: '#f2e6a8', at: 'target' })], { sfx: 'attack', shake: 0.22 }) },
+  'LJ-064': { summon: sig([L('flame', { color: '#e07040', n: 9 }), L('beam', { color: '#ffd0a0', at: 'sky' })], { sfx: 'playGeneral' }),
+    skill: sig([L('beam', { color: '#ffb060', at: 'target' }), L('flame', { color: '#e85a30', at: 'target', n: 6 })], { sfx: 'attack', shake: 0.18 }) },
+  'LJ-065': { summon: sig([L('ribbon', { color: '#c8b48a', n: 2, len: 2.6 }), L('glyphs', { glyphs: '封神', color: '#e8dcc0' })], { sfx: 'buff' }),
+    skill: sig([L('orbit', { color: '#e8dcc0', n: 10, at: 'hero' }), L('glyphs', { glyphs: '渭水', color: '#f0e6cc', at: 'hero' })], { sfx: 'draw' }) },
+  'LJ-066': { summon: sig([L('flame', { color: '#e85a30', n: 8 }), L('ring', { color: '#ffb070', r: 2.4 })], { sfx: 'playGeneral', shake: 0.16 }),
+    skill: sig([L('shards', { color: '#6b4a2a', at: 'target', n: 12 }), L('beam', { color: '#e8a060', at: 'target' })], { sfx: 'attack' }) },
+  'LJ-067': { summon: sig([L('waterColumn', { color: C.sea, h: 2.2, r: 0.7 }), L('petals', { color: '#e8e0d0', n: 8 })], { sfx: 'playGeneral' }),
+    skill: sig([L('shards', { color: '#8C6040', n: 10, at: 'foeHero' }), L('rain', { color: '#8ac8f0', n: 16, at: 'hero' })], { sfx: 'attack' }) },
+  'LJ-068': { summon: sig([L('orbit', { color: '#7ad0a0', n: 8, r: 1.4 }), L('glyphs', { glyphs: '八卦', color: '#cfe8c0' })], { sfx: 'draw' }),
+    skill: sig([L('rings', { color: '#8ac8a0', n: 3, r: 2.6, at: 'mine' }), L('text', { text: '观象', color: '#d8ecd0', at: 'mine' })], { sfx: 'buff' }) },
+  'LJ-069': { summon: sig([L('waterColumn', { color: '#d8e4ee', h: 2.8, r: 0.8 }), L('ribbon', { color: '#f4f0e8', n: 3 })], { sfx: 'playGeneral' }),
+    skill: sig([L('waterColumn', { color: '#8ac8f0', at: 'foe', h: 3, r: 1.2 }), L('dome', { color: '#d8e4ee', at: 'mine', r: 2.4 })], { sfx: 'stun', shake: 0.16 }) },
+  'WM-024': { play: sig([L('petals', { color: '#c8d8b0', n: 12 }), L('glyphs', { glyphs: '山海', color: '#e0ecd4' })], { sfx: 'playWenmai' }) },
+
   // ───────── 浊灵中几个有标志性登场的 ─────────
   'ZL-005': { summon: sig([L('splash', { color: 0x181210, size: 1.8 }), L('spikes', { color: '#564a3a', n: 6, r: 1.8, h: 1.4 }), L('shards', { color: '#6a5a4a', n: 16 }), L('ring', { color: '#7a5a40', r: 2.6 })], { sfx: 'die', shake: 0.25 }) },
   'ZL-011': { summon: sig([L('splash', { color: 0x181210, size: 1.6 }), L('flame', { color: '#8a5a7a', color2: '#2a1020', h: 2.4, r: 0.6, life: 1.2 }), L('ribbon', { color: '#8878a0', n: 3 }), L('petals', { color: '#a890b8', n: 10 })], { sfx: 'mist' }) },

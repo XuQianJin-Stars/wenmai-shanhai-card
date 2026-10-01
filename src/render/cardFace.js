@@ -16,14 +16,44 @@ export const FRAME = {
 const ART = { x: 30, y: 78, w: 452, h: 318 };
 const seedOf = (id) => [...id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0;
 
+// Custom AI-generated art (古画长卷风) loaded from /card-art/{id}.png.
+// Cards not listed here fall back to procedural ink painting.
+const CUSTOM_ART_IDS = ['FL-001','FL-002','FL-003','FL-004','FL-005','FL-006','LJ-001','LJ-002','LJ-003','LJ-004','LJ-005','LJ-006','LJ-007','LJ-008','LJ-009','LJ-010','LJ-011','LJ-012','LJ-013','LJ-014','LJ-015','LJ-016','LJ-017','LJ-018','LJ-019','LJ-020','LJ-021','LJ-022','LJ-023','LJ-024','LJ-025','LJ-026','LJ-027','LJ-028','LJ-029','LJ-030','LJ-031','LJ-032','LJ-033','LJ-034','LJ-035','LJ-036','LJ-037','LJ-038','LJ-039','LJ-040','LJ-041','LJ-042','LJ-043','LJ-044','LJ-045','LJ-046','LJ-047','LJ-048','LJ-049','LJ-050','LJ-051','LJ-052','LJ-053','LJ-054','LJ-055','LJ-056','LJ-057','LJ-058','LJ-059','LJ-060','LJ-061','LJ-062','LJ-063','LJ-064','LJ-065','LJ-066','LJ-067','LJ-068','LJ-069','QW-001','QW-002','QW-003','QW-004','QW-005','QW-006','QW-007','QW-008','QW-009','QW-010','QW-011','QW-012','QW-013','QW-014','QW-015','QW-016','QW-017','QW-018','QW-019','QW-020','QW-021','QW-022','QW-023','QW-024','QW-025','QW-026','QW-027','WM-001','WM-002','WM-003','WM-004','WM-005','WM-006','WM-007','WM-008','WM-009','WM-010','WM-011','WM-012','WM-013','WM-014','WM-015','WM-016','WM-017','WM-018','WM-019','WM-020','WM-021','WM-022','WM-023','ZL-001','ZL-002','ZL-003','ZL-004','ZL-005','ZL-006','ZL-007','ZL-008','ZL-009','ZL-010','ZL-011','ZL-012','ZL-013','ZL-014','ZL-015','ZL-016','ZL-017','ZL-018','ZL-019','ZL-020','ZL-021','ZL-022','ZL-023','ZL-024','ZL-025','ZL-026','ZL-027','ZL-028','ZL-029','ZL-030','ZL-031','ZL-032','ZL-033','ZL-034','ZL-035','ZL-036','ZL-037','ZL-038','ZL-039','ZL-040','ZL-041','ZL-042','ZL-043','ZL-044','ZL-045','ZL-046','ZL-047','ZL-048','ZL-049','ZL-050','ZL-051','ZL-052','ZL-053','ZL-054','ZL-055','ZL-056','ZL-057','ZL-058','ZL-059'];
+const customArtMap = new Map(); // id → HTMLImageElement (loaded or null while loading)
+
+function preloadCustomArt() {
+  for (const id of CUSTOM_ART_IDS) {
+    const img = new Image();
+    img.onload = () => { customArtMap.set(id, img); invalidateArtCacheFor(id); };
+    img.src = `/card-art/${id}.png`;
+    customArtMap.set(id, null); // placeholder until loaded
+  }
+}
+preloadCustomArt();
+
+function invalidateArtCacheFor(id) {
+  for (const key of [...artCache.keys()]) if (key.startsWith(id + ':')) artCache.delete(key);
+  for (const key of [...faceCache.keys()]) if (key.startsWith(id + ':')) faceCache.delete(key);
+}
+
 const artCache = new Map();
 export function artCanvas(id, w = ART.w, h = ART.h) {
   const key = `${id}:${w}x${h}`;
   let c = artCache.get(key);
   if (!c) {
-    const d = card(id);
     c = canvas(w, h);
-    paintArt(c.getContext('2d'), w, h, d.art?.motif ?? 'mist', { seed: seedOf(id) });
+    const ctx = c.getContext('2d');
+    const img = customArtMap.get(id);
+    if (img) {
+      // Cover-crop the generated image to fill the art window
+      const scale = Math.max(w / img.width, h / img.height);
+      const sw = w / scale, sh = h / scale;
+      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+    } else {
+      const d = card(id);
+      paintArt(ctx, w, h, d.art?.motif ?? 'mist', { seed: seedOf(id) });
+    }
     artCache.set(key, c);
   }
   return c;

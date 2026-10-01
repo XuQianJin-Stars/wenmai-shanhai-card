@@ -17,9 +17,11 @@
 // discardPile(fn) · atk(t) wenmaiCount() elCount(el) fx(kind, extra) log.
 
 import { XIYOU_BOND } from '../data/cardsXiyou.js';
+import { MYTH_BOND } from '../data/cardsMyth.js';
 
 /** 取经五众的 id，《西游释厄传》要数场上有没有取经人。 */
 const XIYOU = new Set(XIYOU_BOND.xiyou.auto.generals);
+const RENJIAN = new Set(MYTH_BOND.renjian.auto.generals);
 
 export const FX = {
   // ───────── 第四章 · 先秦诸子（稷下学宫） ─────────
@@ -297,6 +299,46 @@ export const FX = {
   },
   'WM-021': {   // 西游释厄传
     turn: (c) => { if (c.mine().some((u) => XIYOU.has(u.id))) { c.draw(1); if (c.up) c.healHero(1); } },
+  },
+
+  // ───────── 人间诸神（src/data/cardsMyth.js） ─────────
+  // 杨戬就是二郎神。天眼先看增益：有就驱散，没有就压攻击。
+  'LJ-063': {
+    summon: (c) => {
+      const t = c.strongest(c.foe());
+      if (!t) return;
+      const had = t.st.some((x) => x.k === 'atkUp' || x.k === 'defUp' || x.k === 'reflect');
+      if (had) c.dispel(t, 6);
+      else c.neg(t, 'atkDown', 2, 2);
+    },
+    skill: (c) => c.dmg(c.T, c.atk(c.u)),
+  },
+  'LJ-064': {   // 后羿：弓是对着太阳的，所以只在打火属性时多一下
+    onHit: (c) => { if (c.T.hp > 0 && c.el(c.T) === 'fire') c.dmg(c.T, 2); },
+    skill: (c) => c.dmg(c.T, 5),
+  },
+  'LJ-065': {   // 姜子牙：榜点到的是别人，不是他自己
+    summon: (c) => { for (const u of c.mine()) if (u !== c.u) c.buff(u, 'atkUp', 99, 1); },
+    skill: (c) => { c.draw(2); c.healHero(2); },
+  },
+  'LJ-066': {   // 夸父：逐日是卡上的 rush；道渴在每次攻击之后
+    afterAttack: (c) => { if (c.u.hp > 0) c.dmg(c.u, 1); },
+    skill: (c) => { c.dmg(c.T, 4); c.dmg(c.u, 2); },
+  },
+  'LJ-067': {   // 精卫：一块石头填一点海，也护住自己这边一点
+    turn: (c) => { c.dmgHero(1); c.healHero(1); },
+    skill: (c) => { c.dmgHero(2); c.healHero(2); },
+  },
+  'LJ-068': {   // 伏羲
+    summon: (c) => { c.draw(1); c.costDown('any'); },
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.buff(u, 'defUp', 2, 2); },
+  },
+  'LJ-069': {   // 白素贞
+    whenHit: (c) => { if (c.u.hp > 0) c.heal(c.u, 2); },
+    skill: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 2, 2); for (const u of c.mine()) c.heal(u, 2); },
+  },
+  'WM-024': {   // 山海经
+    turn: (c) => { if (c.mine().some((u) => RENJIAN.has(u.id))) { c.draw(1); if (c.up) c.healHero(1); } },
   },
 
   // ───────── 器物（src/data/artifacts.js） ─────────

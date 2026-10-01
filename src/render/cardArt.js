@@ -7,6 +7,7 @@ import { gearMotifs } from './cardArtGear.js';
 import { xiyouMotifs } from './cardArtXiyou.js';
 import { relicMotifs } from './cardArtRelic.js';
 import { songMotifs } from './cardArtSong.js';
+import { mythMotifs } from './cardArtMyth.js';
 
 const GOLD = '#C8A04A', RED = '#C03A2A', CINNABAR = '#B8322A', JADE = '#4A8C5C', BLUE = '#2A4A7A', OCHRE = '#8C6040';
 
@@ -857,6 +858,7 @@ Object.assign(M, gearMotifs({ sky }));
 Object.assign(M, xiyouMotifs({ sky, figure, flame, wave, scrollFrame }));
 Object.assign(M, relicMotifs({ sky }));
 Object.assign(M, songMotifs({ sky, figure, flame, wave, eye, scrollFrame, murk }));
+Object.assign(M, mythMotifs({ sky, figure, flame, wave, scrollFrame }));
 
 export const MOTIFS = Object.keys(M);
 
