@@ -25,7 +25,7 @@ export function defaultSave() {
     stats: { wins: 0, losses: 0, games: 0 },
     quizDone: [],                      // 文脉闯关 ch key，首通过后不再给碎片
     quizDaily: { day: '', done: false },
-    settings: { master: 0.8, music: 0.7, sfx: 0.9, speed: 1, timer: true, quality: 'high', hints: true },
+    settings: { master: 0.8, music: 0.7, sfx: 0.9, speed: 1, timer: true, quality: 'high', hints: true, guardianGender: 'male' },
   };
 }
 
@@ -106,6 +106,7 @@ export function migrateSave(raw) {
     d.settings.timer = s.timer !== false;
     d.settings.hints = s.hints !== false;
     d.settings.quality = ['low', 'high'].includes(s.quality) ? s.quality : 'high';
+    d.settings.guardianGender = s.guardianGender === 'female' ? 'female' : 'male';
   }
   return d;
 }

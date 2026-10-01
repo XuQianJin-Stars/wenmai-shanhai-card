@@ -4,10 +4,78 @@ import { canvas, brush, seal, INK, FONT_BRUSH, FONT_SERIF, rgba } from './ink.js
 import { paintArt } from './cardArt.js';
 import { backTexture, CARD_W, CARD_H } from './cardMesh.js';
 
+// Custom portrait images (same map as ui.js)
+const CUSTOM_PORTRAITS = {
+  guardian: () => {
+    const g = window.__save?.data?.settings?.guardianGender || 'male';
+    return `card-art/guardian-${g}.jpg`;
+  },
+  mist: 'card-art/boss-mist.jpg',
+  shade: 'card-art/boss-shade.jpg',
+  husk: 'card-art/boss-husk.jpg',
+  inkling: 'card-art/boss-inkling.jpg',
+  nameplate: 'card-art/boss-nameplate.jpg',
+  nishang: 'card-art/boss-nishang.jpg',
+  puppet: 'card-art/boss-puppet.jpg',
+  robeGhost: 'card-art/boss-robeGhost.jpg',
+  juexiang: 'card-art/boss-juexiang.jpg',
+  giant: 'card-art/boss-giant.jpg',
+  swordsman: 'card-art/boss-swordsman.jpg',
+  judge: 'card-art/boss-judge.jpg',
+  poet: 'card-art/boss-poet.jpg',
+  brokenSlip: 'card-art/boss-brokenSlip.jpg',
+  gagMist: 'card-art/boss-gagMist.jpg',
+  sophist: 'card-art/boss-sophist.jpg',
+  marshWalker: 'card-art/boss-marshWalker.jpg',
+  banner: 'card-art/boss-banner.jpg',
+  zhaohun: 'card-art/boss-zhaohun.jpg',
+  beacon: 'card-art/boss-beacon.jpg',
+  ember: 'card-art/boss-ember.jpg',
+  fenshu: 'card-art/boss-fenshu.jpg',
+  drunkInk: 'card-art/boss-drunkInk.jpg',
+  cutString: 'card-art/boss-cutString.jpg',
+  talker: 'card-art/boss-talker.jpg',
+  quicksand: 'card-art/boss-quicksand.jpg',
+  peelFlyer: 'card-art/boss-peelFlyer.jpg',
+  sealedCave: 'card-art/boss-sealedCave.jpg',
+  bannedBook: 'card-art/boss-bannedBook.jpg',
+  lostCure: 'card-art/boss-lostCure.jpg',
+  jinhui: 'card-art/boss-jinhui.jpg',
+  deadKiln: 'card-art/boss-deadKiln.jpg',
+  lostPlan: 'card-art/boss-lostPlan.jpg',
+  wangchuan: 'card-art/boss-wangchuan.jpg',
+  shishengGhost: 'card-art/boss-shishengGhost.jpg',
+  peeledGreen: 'card-art/boss-peeledGreen.jpg',
+};
+
 const artCache = new Map();
-function portrait(motif) {
+const artListeners = new Map(); // motif → Set<callback>
+function portrait(motif, onReady = null) {
   let c = artCache.get(motif);
-  if (!c) { c = canvas(420, 420); paintArt(c.getContext('2d'), 420, 420, motif, { seed: 31 }); artCache.set(motif, c); }
+  if (!c) {
+    c = canvas(420, 420);
+    paintArt(c.getContext('2d'), 420, 420, motif, { seed: 31 });
+    artCache.set(motif, c);
+    // try load custom image
+    const custom = CUSTOM_PORTRAITS[motif];
+    if (custom) {
+      const url = typeof custom === 'function' ? custom() : custom;
+      const img = new Image();
+      img.onload = () => {
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, 420, 420);
+        const s = Math.max(420 / img.width, 420 / img.height);
+        const dw = img.width * s, dh = img.height * s;
+        ctx.drawImage(img, (420 - dw) / 2, (420 - dh) / 2, dw, dh);
+        artListeners.get(motif)?.forEach(fn => fn());
+      };
+      img.src = url;
+    }
+  }
+  if (onReady) {
+    if (!artListeners.has(motif)) artListeners.set(motif, new Set());
+    artListeners.get(motif).add(onReady);
+  }
   return c;
 }
 
@@ -41,9 +109,15 @@ export class HeroMesh extends THREE.Group {
     this.ring.visible = this.ringMat.opacity > 0.01;
   }
   set({ hp, maxHp, red = 0, armorUp = false }) {
+    this._lastSet = { hp, maxHp, red, armorUp };
     const key = `${hp}/${maxHp}/${red}`;
     if (key === this.key) return;
     this.key = key;
+    this._draw();
+  }
+  _draw() {
+    const { hp, maxHp, red } = this._lastSet;
+    this.key = `${hp}/${maxHp}/${red}`;
     const ctx = this.c.getContext('2d'), W = 512;
     ctx.clearRect(0, 0, W, 600);
     const cx = W / 2, cy = 236, R = 200;
@@ -51,7 +125,7 @@ export class HeroMesh extends THREE.Group {
     ctx.save();
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
     ctx.fillStyle = '#efe6d2'; ctx.fillRect(0, 0, W, 600);
-    ctx.drawImage(portrait(this.motif), cx - R, cy - R, R * 2, R * 2);
+    ctx.drawImage(portrait(this.motif, () => { this.key = ''; this._draw(); }), cx - R, cy - R, R * 2, R * 2);
     const g = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(30,20,10,0.35)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, 600);

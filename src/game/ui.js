@@ -46,11 +46,91 @@ onCustomArtLoad((id) => {
     el.getContext('2d').drawImage(src, 0, 0);
   }
 });
+// Custom portrait images: motif → image URL. Loaded async, drawn after procedural placeholder.
+const CUSTOM_PORTRAITS = {
+  guardian: () => {
+    const g = window.__save?.data?.settings?.guardianGender || 'male';
+    return `card-art/guardian-${g}.jpg`;
+  },
+  mist: 'card-art/boss-mist.jpg',
+  shade: 'card-art/boss-shade.jpg',
+  husk: 'card-art/boss-husk.jpg',
+  inkling: 'card-art/boss-inkling.jpg',
+  nameplate: 'card-art/boss-nameplate.jpg',
+  nishang: 'card-art/boss-nishang.jpg',
+  puppet: 'card-art/boss-puppet.jpg',
+  robeGhost: 'card-art/boss-robeGhost.jpg',
+  juexiang: 'card-art/boss-juexiang.jpg',
+  giant: 'card-art/boss-giant.jpg',
+  swordsman: 'card-art/boss-swordsman.jpg',
+  judge: 'card-art/boss-judge.jpg',
+  poet: 'card-art/boss-poet.jpg',
+  brokenSlip: 'card-art/boss-brokenSlip.jpg',
+  gagMist: 'card-art/boss-gagMist.jpg',
+  sophist: 'card-art/boss-sophist.jpg',
+  marshWalker: 'card-art/boss-marshWalker.jpg',
+  banner: 'card-art/boss-banner.jpg',
+  zhaohun: 'card-art/boss-zhaohun.jpg',
+  beacon: 'card-art/boss-beacon.jpg',
+  ember: 'card-art/boss-ember.jpg',
+  fenshu: 'card-art/boss-fenshu.jpg',
+  drunkInk: 'card-art/boss-drunkInk.jpg',
+  cutString: 'card-art/boss-cutString.jpg',
+  talker: 'card-art/boss-talker.jpg',
+  quicksand: 'card-art/boss-quicksand.jpg',
+  peelFlyer: 'card-art/boss-peelFlyer.jpg',
+  sealedCave: 'card-art/boss-sealedCave.jpg',
+  bannedBook: 'card-art/boss-bannedBook.jpg',
+  lostCure: 'card-art/boss-lostCure.jpg',
+  jinhui: 'card-art/boss-jinhui.jpg',
+  deadKiln: 'card-art/boss-deadKiln.jpg',
+  lostPlan: 'card-art/boss-lostPlan.jpg',
+  wangchuan: 'card-art/boss-wangchuan.jpg',
+  shishengGhost: 'card-art/boss-shishengGhost.jpg',
+  peeledGreen: 'card-art/boss-peeledGreen.jpg',
+};
+
 export function portraitEl(motif, size = 120, seed = 5) {
   const c = canvas(size * 2, size * 2);
   paintArt(c.getContext('2d'), size * 2, size * 2, motif, { seed });
   c.className = 'portrait';
   c.style.width = c.style.height = `${size}px`;
+  const custom = CUSTOM_PORTRAITS[motif];
+  if (custom) {
+    const url = typeof custom === 'function' ? custom() : custom;
+    const img = new Image();
+    img.onload = () => {
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+      // cover-crop to fill square
+      const s = Math.max(c.width / img.width, c.height / img.height);
+      const dw = img.width * s, dh = img.height * s;
+      ctx.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+    };
+    img.src = url;
+    // click to toggle guardian gender
+    if (motif === 'guardian') {
+      c.style.cursor = 'pointer';
+      c.title = '点击切换男女守护者';
+      c.addEventListener('click', () => {
+        const s = window.__save;
+        if (!s?.data?.settings) return;
+        s.data.settings.guardianGender = s.data.settings.guardianGender === 'male' ? 'female' : 'male';
+        s.write();
+        // redraw
+        const url = `card-art/guardian-${s.data.settings.guardianGender}.jpg`;
+        const im = new Image();
+        im.onload = () => {
+          const ctx = c.getContext('2d');
+          ctx.clearRect(0, 0, c.width, c.height);
+          const sc = Math.max(c.width / im.width, c.height / im.height);
+          const dw = im.width * sc, dh = im.height * sc;
+          ctx.drawImage(im, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+        };
+        im.src = url;
+      });
+    }
+  }
   return c;
 }
 
