@@ -341,6 +341,78 @@ export const FX = {
     turn: (c) => { if (c.mine().some((u) => RENJIAN.has(u.id))) { c.draw(1); if (c.up) c.healHero(1); } },
   },
 
+  // ───────── 第十四至二十章（src/data/cardsEra.js） ─────────
+  'LJ-070': {
+    summon: (c) => { c.draw(1); for (const u of c.mine()) if (u !== c.u) c.buff(u, 'defUp', 99, 1); },
+    skill: (c) => { c.draw(2); for (const u of c.mine()) c.buff(u, 'defUp', 2, 2); },
+  },
+  'LJ-071': {
+    onHit: (c) => { if (c.T.hp > 0) c.neg(c.T, 'bleed', 2, 1); },
+    skill: (c) => c.dmg(c.T, 4),
+  },
+  'WM-025': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-070' || u.id === 'LJ-071')) { c.draw(1); if (c.up) c.healHero(1); } } },
+  'LJ-072': {
+    afterAttack: (c) => { if (c.u.hp > 0) c.dodge(c.u); },
+    skill: (c) => c.dmg(c.T, c.atk(c.u)),
+  },
+  'LJ-073': {
+    turn: (c) => c.healHero(1),
+    skill: (c) => { for (const u of c.mine()) c.heal(u, 2); c.healHero(3); },
+  },
+  'WM-026': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-072' || u.id === 'LJ-073')) { c.mana(1); if (c.up) c.draw(1); } } },
+  'LJ-074': {
+    summon: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 2, 1); },
+    skill: (c) => { for (const t of c.foe()) c.dmg(t, 2); },
+  },
+  'LJ-075': {
+    summon: (c) => { c.draw(1); c.costDown('any'); },
+    skill: (c) => { c.recover((d) => d.type === 'wenmai'); c.draw(1); },
+  },
+  'WM-027': { turn: (c) => { for (const u of c.mine()) c.heal(u, c.up ? 2 : 1); } },
+  'LJ-076': {
+    summon: (c) => { c.mana(1); c.draw(1); },
+    skill: (c) => c.draw(3),
+  },
+  'LJ-077': {
+    afterAttack: (c) => { if (c.u.hp > 0 && c.oncePerTurn('LJ-077')) c.draw(1); },
+    skill: (c) => { c.dmg(c.T, 3); if (c.T.hp > 0) c.neg(c.T, 'seal', 2, 0); },
+  },
+  'WM-028': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-076' || u.id === 'LJ-077')) { c.mana(1); if (c.up) c.draw(1); } } },
+  'LJ-078': {
+    summon: (c) => { for (const t of c.foe()) c.dmg(t, 1); },
+    skill: (c) => { for (const t of c.foe()) { c.dmg(t, 2); if (t.hp > 0) c.neg(t, 'atkDown', 1, 1); } },
+  },
+  'LJ-079': {
+    summon: (c) => { for (const u of c.mine()) if (u !== c.u) c.buff(u, 'defUp', 99, 1); },
+    skill: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 2, 2); c.healHero(3); },
+  },
+  'WM-029': { turn: (c) => { if (c.handSize() < (c.up ? 5 : 4)) c.draw(1); } },
+  'LJ-080': {
+    summon: (c) => {
+      const t = c.strongest(c.foe());
+      if (!t) return;
+      const had = t.st.some((x) => x.k === 'atkUp' || x.k === 'defUp' || x.k === 'reflect');
+      if (had) c.dispel(t, 6);
+      else c.neg(t, 'atkDown', 2, 2);
+    },
+    skill: (c) => { c.dmg(c.T, 4); if (c.T.hp > 0) c.neg(c.T, 'seal', 1, 0); },
+  },
+  'LJ-081': {
+    summon: (c) => c.dodge(c.u),
+    afterAttack: (c) => { if (c.u.hp > 0) c.dodge(c.u); },
+    skill: (c) => { for (const u of c.mine()) c.dodge(u); },
+  },
+  'WM-030': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-080' || u.id === 'LJ-081')) { c.draw(1); if (c.up) c.mana(1); } } },
+  'LJ-082': {
+    turn: (c) => c.healHero(2),
+    skill: (c) => { c.recover(() => true); c.draw(1); },
+  },
+  'LJ-083': {
+    summon: (c) => { for (const u of c.mine()) c.cleanse(u); c.draw(1); },
+    skill: (c) => { c.draw(2); c.costDown('any'); c.costDown('any'); },
+  },
+  'WM-031': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-082' || u.id === 'LJ-083')) { c.draw(1); c.healHero(c.up ? 2 : 1); } } },
+
   // ───────── 器物（src/data/artifacts.js） ─────────
   // 器物的钩子由 runFx 挂在佩戴者身上跑，所以这里的 c.u 是那名灵将，c.up 看的是器物自己的品阶。
   // ATK/DEF/HP/守护 这些静态加成不写在这儿——它们在卡表的 gear 字段里，引擎直接读。

@@ -91,8 +91,8 @@ test('守护者修行：等级表算出来的加成和引擎字段对得上', ()
 });
 test('章节：按朝代编年一路排下来，id 前缀和章号都不重复', () => {
   const order = CHAPTERS.map((C) => C.key);
-  eq(order.join(' '), 'shenhua xianqin chuci qinhan weijin dunhuang datang liangsong haisi shijing tiangong feiyi guizang',
-    '章节顺序 = 神话 → 朝代编年 → 传承 → 终章');
+  eq(order.join(' '), 'shenhua xianqin chuci qinhan weijin dunhuang datang liangsong haisi shijing tiangong feiyi guizang sanguo nanbei wudai mengyuan wanqing minguo dangdai',
+    '章节顺序 = 神话 → 朝代编年 → 传承 → 终章 → 补上的年代');
   eq(new Set(order).size, order.length, '每章一个 id 前缀');
   eq(new Set(CHAPTERS.map((C) => C.n)).size, CHAPTERS.length, '章号不重复');
   CHAPTERS.forEach((C, i) => eq(C.n, i + 1, `第 ${i + 1} 章的章号要连着`));

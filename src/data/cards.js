@@ -7,6 +7,7 @@ import { RELIC_ARTIFACTS } from './cardsRelic.js';
 import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
 import { SONG_CARDS, SONG_BOND } from './cardsSong.js';
 import { MYTH_CARDS, MYTH_WENMAI, MYTH_BOND } from './cardsMyth.js';
+import { ERA_CARDS, ERA_BONDS } from './cardsEra.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
@@ -56,6 +57,7 @@ export const BONDS = {
   ...XIYOU_BOND,
   ...SONG_BOND,
   ...MYTH_BOND,
+  ...ERA_BONDS,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -340,6 +342,7 @@ for (const c of LATE_CARDS) add(c);          // chapters 4–10 (src/data/cardsL
 for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/cardsXiyou.js)
 for (const c of SONG_CARDS) add(c);          // 两宋风雅 (src/data/cardsSong.js)
 for (const c of MYTH_CARDS) add(c);          // 人间诸神 (src/data/cardsMyth.js)
+for (const c of ERA_CARDS) add(c);           // 第十四至二十章 (src/data/cardsEra.js)
 add(XIYOU_WENMAI);
 add(MYTH_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)

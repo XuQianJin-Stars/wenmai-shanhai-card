@@ -2,6 +2,7 @@
 // Chapters 2–3 are written here; chapters 4–10 live in storyLate.js. All of them are original text built on the
 // scene settings in docs/narrative/LORE_BIBLE.md §2 — quoted classical lines are real and named in place.
 import { LATE_CHAPTERS, LATE_PRACTICE, LATE_SPEAKERS } from './storyLate.js';
+import { ERA_CHAPTERS, ERA_PRACTICE, ERA_SPEAKERS } from './storyEra.js';
 
 export const STARTER_CARDS = [
   'LJ-003', 'LJ-004', 'LJ-005', 'LJ-006', 'LJ-007', 'LJ-008', 'LJ-009',
@@ -350,10 +351,12 @@ export const SPEAKER_ART = {
   '李白之灵': 'poet', '杜甫之灵': 'cottage', '苏轼之灵': 'river',
   '关汉卿之灵': 'snowOath', '汤显祖之灵': 'peony', '黄道婆之灵': 'loom', '魏良辅之灵': 'flute',
   ...LATE_SPEAKERS,
+  ...ERA_SPEAKERS,
 };
 
 // 神话之后的各章住在 storyLate.js，汇进同一张扁平的 LEVELS 表。
 for (const C of LATE_CHAPTERS) for (const L of C.levels) LEVELS.push({ ...L, chapter: C.n });
+for (const C of ERA_CHAPTERS) for (const L of C.levels) LEVELS.push({ ...L, chapter: C.n });
 // 章节是按朝代编年排的，而声明顺序是当初写的顺序，两者早就不一致了。
 // 进度门禁（save.levelOpen）吃的是 LEVELS 的下标，所以这里必须按章号重排一次。
 LEVELS.sort((a, b) => (a.chapter ?? 1) - (b.chapter ?? 1));
@@ -375,6 +378,7 @@ export const CHAPTERS = [
   chapter(7, '大唐气象篇', PROLOGUE2, '典籍里的诗只剩半句，铜镜映出黄昏的长安。'),
   chapter(12, '非遗薪传篇', PROLOGUE3, '铜镜蒙尘。有一种文脉不写在书上，只活在人手里。'),
   ...LATE_CHAPTERS.map((C) => chapter(C.n, C.short, C.prologue, C.desc)),
+  ...ERA_CHAPTERS.map((C) => chapter(C.n, C.short, C.prologue, C.desc)),
 ].sort((a, b) => a.n - b.n);
 /** Closing banner for a chapter's last 'end' cue. */
 export const chapterEnd = (n) => {
@@ -404,7 +408,7 @@ export const PRACTICE = [
       'LJ-069', 'LJ-008', 'LJ-003', 'WM-024', 'WM-024', 'FL-004', 'FL-006', 'FL-001', 'FL-003', 'LJ-068'] } },
 ];
 
-PRACTICE.push(...LATE_PRACTICE);
+PRACTICE.push(...LATE_PRACTICE, ...ERA_PRACTICE);
 
 // 自由对战与故事关重打的碎片奖励，按 AI 难度分档——宗师一局约等于入门四局。
 // 这也是守护者修行的主要碎片来源（src/data/guardian.js 点满约 1800）。
