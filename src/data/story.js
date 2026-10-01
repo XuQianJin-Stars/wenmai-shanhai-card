@@ -7,6 +7,8 @@ import { ERA_CHAPTERS, ERA_PRACTICE, ERA_SPEAKERS } from './storyEra.js';
 export const STARTER_CARDS = [
   'LJ-003', 'LJ-004', 'LJ-005', 'LJ-006', 'LJ-007', 'LJ-008', 'LJ-009',
   'LJ-063', 'LJ-064', 'LJ-065', 'LJ-066', 'LJ-067', 'LJ-068', 'LJ-069', 'WM-024',
+  'ZF-001', 'ZF-002', 'ZF-003', 'ZF-004', 'ZF-005', 'ZF-006',
+  'ZF-007', 'ZF-008', 'ZF-009', 'ZF-010', 'ZF-011', 'ZF-012', 'ZF-013',
   'FL-001', 'FL-002', 'FL-003', 'FL-004', 'FL-006',
   'WM-001', 'WM-002', 'WM-003', 'WM-004', 'WM-005', 'WM-007',
 ];

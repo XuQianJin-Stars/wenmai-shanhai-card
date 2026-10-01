@@ -702,6 +702,23 @@ test('人间诸神：后羿打火属性多 2 点，和嫦娥同时在场各 +1',
   eq(atkOf(s2, a), 7);
   eq(atkOf(s2, b), 4);
 });
+test('阵法：九曲黄河阵留在阵法区，并眩晕攻击最高的敌人', () => {
+  const s = blank();
+  const foe = spawn(s, 1, 'LJ-003');
+  act(s, { type: 'play', uid: hand(s, 0, 'ZF-001').uid });
+  eq(s.players[0].zhen.length, 1);
+  eq(s.players[0].zhen[0].id, 'ZF-001');
+  ok(foe.st.some((x) => x.k === 'stun'), '被黄河阵眩晕');
+});
+test('阵法：两座齐开时灵将攻击和防御 +1', () => {
+  const s = blank();
+  act(s, { type: 'play', uid: hand(s, 0, 'ZF-005').uid });
+  act(s, { type: 'play', uid: hand(s, 0, 'ZF-006').uid });
+  eq(s.players[0].zhen.length, 2);
+  const g = spawn(s, 0, 'LJ-004');
+  eq(atkOf(s, g), g.atk + 1);
+  eq(defOf(s, g), g.def + 1);
+});
 test('人间诸神：精卫回合开始填海，也护住己方主将', () => {
   const s = blank();
   spawn(s, 0, 'LJ-067');

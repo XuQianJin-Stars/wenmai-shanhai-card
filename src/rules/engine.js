@@ -7,7 +7,7 @@ import { rand, randInt, pick, shuffle } from './rng.js';
 import { FX, PASSIVES } from './cardfx.js';
 
 export const RULES = Object.freeze({
-  HERO_HP: 20, MAX_MANA: 10, MAX_HAND: 7, MAX_BOARD: 5, MAX_WENMAI: 6, MAX_ATTACKS: 2,
+  HERO_HP: 20, MAX_MANA: 10, MAX_HAND: 7, MAX_BOARD: 5, MAX_WENMAI: 6, MAX_ZHEN: 2, MAX_ATTACKS: 2,
   HAND_FIRST: 4, HAND_SECOND: 5, CTRL_CAP: 2, HERO_MIN_HIT: 2, ELEMENT_MULT: 1.3,
 });
 const NEG = new Set(['stun', 'seal', 'bleed', 'atkDown', 'defDown']);
@@ -65,7 +65,7 @@ export function createGame(cfg) {
     const hp = (pc.hp ?? RULES.HERO_HP) + boon.hp;
     const P = { i, name: pc.name ?? `P${i}`, passive: pc.passive ?? null, boon, hp, maxHp: hp,
       heroSt: [], mana: 0, maxMana: 0, turns: 0, attacksUsed: 0,
-      deck: [], hand: [], board: [], wenmai: [], discard: [],
+      deck: [], hand: [], board: [], wenmai: [], zhen: [], discard: [],
       res: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 }, resCd: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 },
       resLog: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0, total: 0 }, resTurn: [],
       barrierUsed: false, barrierTurns: 0, yinyang: 0, yinyangTurn: -1, heavenUsed: false,
@@ -89,7 +89,7 @@ export function findUnit(s, uid) {
   return null;
 }
 export function findAny(s, uid) {
-  for (const P of s.players) for (const z of ['hand', 'board', 'wenmai', 'discard', 'deck']) {
+  for (const P of s.players) for (const z of ['hand', 'board', 'wenmai', 'zhen', 'discard', 'deck']) {
     const u = P[z].find((x) => x.uid === uid);
     if (u) return { u, zone: z, P };
   }
@@ -113,6 +113,7 @@ export function bondState(s, i) {
     zhensha: zs ? (onBoard(P, 'LJ-009') ? 2 : 1) : 0,
     feiyi: fy,
     shisheng: onBoard(P, 'LJ-010') && onBoard(P, 'LJ-011') ? (onBoard(P, 'LJ-012') ? 2 : 1) : 0,
+    zhenfa: (P.zhen?.length ?? 0) >= 2 ? 1 : 0,
     ...autoBonds(P),
   };
 }
@@ -142,6 +143,7 @@ function auraAtk(s, u, target) {
   }
   if (d.bonds.includes('baxian') && baxianCount(P) >= 2) bond += 1;
   bond += Math.max(bondOn(s, u, 'shisheng') ? 1 : 0, autoBondAura(s, u));
+  if ((P.zhen?.length ?? 0) >= 2 && d.type === 'general') bond += 1;   // 两阵齐开
   wm += FX[u.id]?.auraSelf?.atk?.(s, u) ?? 0;
   if (P.res.fire > 0 && d.el === 'fire') res += 2;
   if (target && P.res.metal > 0 && ['metal', 'wood'].includes(card(target.id).el)) res += 1;
@@ -159,6 +161,7 @@ function auraDef(s, u) {
   }
   if (d.bonds.includes('baxian') && baxianCount(P) >= 2) a += 1;
   a += Math.max(bondOn(s, u, 'shisheng') ? 1 : 0, autoBondAura(s, u));
+  if ((P.zhen?.length ?? 0) >= 2 && d.type === 'general') a += 1;      // 两阵齐开
   a += FX[u.id]?.auraSelf?.def?.(s, u) ?? 0;
   if (u.id === 'LJ-016') a += Math.min(3, P.wenmai.length);        // 经纬
   if (P.res.earth > 0 && d.el === 'earth') a += 2;
@@ -335,7 +338,7 @@ function checkBonds(s, i) {
     P.once.genesisFull = true;
     emit(s, { t: 'bond', p: i, bond: 'genesis', level: 3 });
   }
-  for (const k of ['baxian', 'fengshen', 'zhensha', 'feiyi', 'shisheng', ...AUTO_BONDS.map(([x]) => x)]) {
+  for (const k of ['baxian', 'fengshen', 'zhensha', 'feiyi', 'shisheng', 'zhenfa', ...AUTO_BONDS.map(([x]) => x)]) {
     const was = P.bondOn[k] ?? 0;
     if (b[k] > was) {
       emit(s, { t: 'bond', p: i, bond: k, level: b[k] });
@@ -624,6 +627,15 @@ function doPlay(s, i, a) {
     onTalismanPlayed(s, i, d.el);
   } else if (d.type === 'artifact') {
     equipGear(s, i, u, a.target);
+  } else if (d.type === 'formation') {
+    if (P.zhen.length >= RULES.MAX_ZHEN) {
+      const old = P.zhen.shift();
+      P.discard.push(old);
+      emit(s, { t: 'zhenOut', p: i, uid: old.uid, id: old.id, why: 'full' });
+    }
+    P.zhen.push(u);
+    emit(s, { t: 'zhen', p: i, uid: u.uid, id: u.id });
+    runFx('play', s, i, u, a.target ? findUnit(s, a.target) : null);
   } else {
     if (P.wenmai.length >= RULES.MAX_WENMAI) {
       const old = P.wenmai.shift();
@@ -1006,6 +1018,7 @@ function startTurn(s) {
   }
   if (bondState(s, i).shisheng >= 2) healHero(s, i, 1);
   for (const w of [...P.wenmai]) runFx('turn', s, i, w);
+  for (const w of [...(P.zhen ?? [])]) runFx('turn', s, i, w);
   for (const u of [...P.board]) runFx('turn', s, i, u);
   const bs = bondState(s, i);
   for (const [k, B] of AUTO_BONDS) {   // level-2 perk of a chapter bond
@@ -1073,7 +1086,7 @@ export function spawn(s, i, id, { grade = 0, zone = 'board' } = {}) {
   const u = makeInst(s, i, id, grade);
   if (u.st) u.sleep = zone !== 'board';
   s.players[i][zone].push(u);
-  if (zone === 'board' || zone === 'wenmai') checkBonds(s, i);
+  if (zone === 'board' || zone === 'wenmai' || zone === 'zhen') checkBonds(s, i);
   return u;
 }
 

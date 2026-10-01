@@ -413,6 +413,69 @@ export const FX = {
   },
   'WM-031': { turn: (c) => { if (c.mine().some((u) => u.id === 'LJ-082' || u.id === 'LJ-083')) { c.draw(1); c.healHero(c.up ? 2 : 1); } } },
 
+  // ───────── 阵法（src/data/cardsForm.js）阵法区最多 2 座，钩子在进区和回合开始时跑 ─────────
+  'ZF-001': {
+    play: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'stun', c.up ? 2 : 1, 0); },
+    turn: (c) => { for (const t of c.foe()) c.neg(t, 'atkDown', 1, 1); },
+  },
+  'ZF-002': {
+    play: (c) => { for (const t of c.foe()) c.dmg(t, c.up ? 3 : 2); },
+    turn: (c) => { for (const t of c.foe()) c.dmg(t, 1); },
+  },
+  'ZF-003': {
+    play: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 99, 1); },
+    turn: (c) => c.healHero(c.up ? 2 : 1),
+  },
+  'ZF-004': {
+    play: (c) => { for (const t of c.foe()) { c.dmg(t, 1); if (t.hp > 0) c.neg(t, 'atkDown', 1, 1); } },
+    turn: (c) => { const t = c.rnd(c.foe()); if (t) c.dmg(t, c.up ? 3 : 2); },
+  },
+  'ZF-005': {
+    turn: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 1, 1); c.healHero(c.up ? 2 : 1); },
+  },
+  'ZF-006': {
+    play: (c) => c.draw(2),
+    turn: (c) => { if (c.handSize() < (c.up ? 5 : 4)) c.draw(1); },
+  },
+  'ZF-007': {   // 鱼丽：车步相补，所以是抽牌，再给全体一轮攻击
+    play: (c) => c.draw(1),
+    turn: (c) => { for (const u of c.mine()) c.buff(u, 'atkUp', 1, c.up ? 2 : 1); },
+  },
+  'ZF-008': {   // 背水：攻击换自己掉血。打出时全体先挨 1 点，再抬攻击
+    play: (c) => { for (const u of c.mine()) { c.dmg(u, 1); if (u.hp > 0) c.buff(u, 'atkUp', 2, c.up ? 3 : 2); } },
+    turn: (c) => { const t = c.strongest(c.mine()); if (t) c.buff(t, 'atkUp', 1, 1); },
+  },
+  'ZF-009': {
+    play: (c) => { const t = c.strongest(c.foe()); if (t) c.dmg(t, c.up ? 4 : 3); },
+    turn: (c) => { const t = c.strongest(c.foe()); if (t) c.neg(t, 'defDown', 1, 1); },
+  },
+  'ZF-010': {
+    play: (c) => {
+      const t = [...c.foe()].sort((a, b) => b.def - a.def)[0];
+      if (!t) return;
+      c.dmg(t, c.up ? 4 : 3);
+      if (t.hp > 0) c.neg(t, 'defDown', 2, 2);
+    },
+  },
+  'ZF-011': {
+    play: (c) => { for (const u of c.mine()) c.dodge(u); },
+    turn: (c) => c.healHero(c.up ? 2 : 1),
+  },
+  'ZF-012': {
+    play: (c) => { for (const t of c.foe()) c.dmg(t, c.up ? 2 : 1); },
+    turn: (c) => {
+      const foes = c.foe();
+      const hi = c.strongest(foes);
+      const lo = [...foes].sort((a, b) => a.atk - b.atk)[0];
+      if (hi) c.dmg(hi, 1);
+      if (lo && lo !== hi) c.dmg(lo, 1);
+    },
+  },
+  'ZF-013': {
+    play: (c) => { for (const u of c.mine()) c.cleanse(u); },
+    turn: (c) => { for (const u of c.mine()) c.buff(u, 'defUp', 1, c.up ? 2 : 1); },
+  },
+
   // ───────── 器物（src/data/artifacts.js） ─────────
   // 器物的钩子由 runFx 挂在佩戴者身上跑，所以这里的 c.u 是那名灵将，c.up 看的是器物自己的品阶。
   // ATK/DEF/HP/守护 这些静态加成不写在这儿——它们在卡表的 gear 字段里，引擎直接读。

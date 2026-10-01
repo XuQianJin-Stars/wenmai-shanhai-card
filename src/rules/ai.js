@@ -40,6 +40,8 @@ export function evaluate(s, me) {
   for (const u of O.board) v -= unitValue(s, u) * 1.05;
   for (const w of P.wenmai) v += 1.4 + card(w.id).cost * 0.6;
   for (const w of O.wenmai) v -= 1.4 + card(w.id).cost * 0.6;
+  for (const w of P.zhen ?? []) v += 1.6 + card(w.id).cost * 0.5;
+  for (const w of O.zhen ?? []) v -= 1.6 + card(w.id).cost * 0.5;
   v += P.hand.length * 0.9 - O.hand.length * 0.5;
   for (const k of ['metal', 'wood', 'water', 'fire', 'earth']) { if (P.res[k]) v += 1.5; if (O.res[k]) v -= 1.5; }
   if (P.barrierTurns) v += 1.5;

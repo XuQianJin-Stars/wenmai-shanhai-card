@@ -11,6 +11,8 @@ export const FRAME = {
   wenmai: { a: '#24503a', b: '#7aa87c', line: '#123022', label: '文脉' },
   // 器物取青铜绿锈：色相约 190°，和金 45°、竹青 122°、银白都隔得开（CARD_ART_SPEC 要求 > 90°）
   artifact: { a: '#274a54', b: '#7fb2bd', line: '#12303a', label: '器物' },
+  // 阵法取靛紫，和金、竹青、青铜都隔开。
+  formation: { a: '#3a2868', b: '#c4b4e6', line: '#241448', label: '阵法' },
   zhuo: { a: '#1a1a1a', b: '#5a5550', line: '#000', label: '浊灵' },
 };
 const ART = { x: 30, y: 78, w: 452, h: 318 };

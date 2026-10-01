@@ -8,8 +8,9 @@ import { XIYOU_CARDS, XIYOU_WENMAI, XIYOU_BOND } from './cardsXiyou.js';
 import { SONG_CARDS, SONG_BOND } from './cardsSong.js';
 import { MYTH_CARDS, MYTH_WENMAI, MYTH_BOND } from './cardsMyth.js';
 import { ERA_CARDS, ERA_BONDS } from './cardsEra.js';
+import { FORMATIONS, FORMATION_BOND } from './cardsForm.js';
 
-// type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物
+// type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物 | formation 阵法
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
 // target: null | 'enemyGeneral' | 'friendlyGeneral' | 'friendlyGeneralOpt' (may be played with no target)
 // skill (珍品 active, generals only): { name, cost, target, text }
@@ -26,7 +27,7 @@ export const EL = {
 export const EL_KEYS = ['metal', 'wood', 'water', 'fire', 'earth'];
 // 金克木 → 木克土 → 土克水 → 水克火 → 火克金
 export const COUNTERS = { metal: 'wood', wood: 'earth', earth: 'water', water: 'fire', fire: 'metal' };
-export const TYPE_ZH = { general: '灵将', talisman: '符箓', wenmai: '文脉', artifact: '器物' };
+export const TYPE_ZH = { general: '灵将', talisman: '符箓', wenmai: '文脉', artifact: '器物', formation: '阵法' };
 export const GRADE_ZH = ['凡品', '珍品', '极品'];
 export const GRADE_BONUS = [{ atk: 0, def: 0, hp: 0 }, { atk: 1, def: 1, hp: 2 }, { atk: 2, def: 2, hp: 3 }];
 // 器物升阶只抬 ATK/DEF，不抬 HP——HP 是佩戴那一刻加到灵将身上的，跟着品阶变会让卸下时的账很难算。
@@ -58,6 +59,7 @@ export const BONDS = {
   ...SONG_BOND,
   ...MYTH_BOND,
   ...ERA_BONDS,
+  ...FORMATION_BOND,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -343,6 +345,7 @@ for (const c of XIYOU_CARDS) add(c);         // 西游取经五众 (src/data/car
 for (const c of SONG_CARDS) add(c);          // 两宋风雅 (src/data/cardsSong.js)
 for (const c of MYTH_CARDS) add(c);          // 人间诸神 (src/data/cardsMyth.js)
 for (const c of ERA_CARDS) add(c);           // 第十四至二十章 (src/data/cardsEra.js)
+for (const c of FORMATIONS) add(c);          // 阵法 (src/data/cardsForm.js)
 add(XIYOU_WENMAI);
 add(MYTH_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)

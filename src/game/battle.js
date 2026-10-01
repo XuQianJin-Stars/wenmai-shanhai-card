@@ -171,6 +171,7 @@ export function startBattle(ctx, cfg) {
     return { pos: V((k - (n - 1) / 2) * 1.2, 0.02 + Math.sin(TILT) * CARD_H / 2 * sc, BOARD_Z[p] - Math.cos(TILT) * CARD_H / 2 * sc + 0.35), rot: new THREE.Euler(-Math.PI / 2 + TILT, 0, 0), scale: sc };
   };
   const wmSlot = (p, k) => ({ pos: V(-4.95 + k * 0.6, 0.12, WM_Z[p] - 0.1), rot: new THREE.Euler(-Math.PI / 2 + 0.3, 0, 0), scale: 0.5 });
+  const zhenSlot = (p, k) => ({ pos: V(3.35 + k * 0.7, 0.12, WM_Z[p] - 0.1), rot: new THREE.Euler(-Math.PI / 2 + 0.3, 0, 0), scale: 0.5 });
   const castSpot = () => ({ pos: V(0, 2.4, 1.2), rot: new THREE.Euler().setFromQuaternion(camera.quaternion), scale: 0.95 });
 
   const setShadow = (m, on) => { if (m.userData.shadow === on) return; m.userData.shadow = on; m.body.traverse((o) => { if (o.isMesh && o !== m.glow) o.castShadow = on; }); };
@@ -243,17 +244,27 @@ export function startBattle(ctx, cfg) {
       moveTo(m, wmSlot(p, k), dur);
     });
   }
+  function layoutZhen(p, dur = 0.4) {
+    s.players[p].zhen.filter((u) => meshes.has(u.uid)).forEach((u, k) => {
+      const m = meshes.get(u.uid);
+      info.set(u.uid, { p, zone: 'zhen' });
+      if (m.parent !== world) world.attach(m);
+      setShadow(m, true);
+      m.body.rotation.y = 0;
+      moveTo(m, zhenSlot(p, k), dur);
+    });
+  }
   function layoutAll(dur = 0.3) {
-    for (const p of [0, 1]) { layoutHand(p, dur); layoutBoard(p, dur); layoutWenmai(p, dur); }
+    for (const p of [0, 1]) { layoutHand(p, dur); layoutBoard(p, dur); layoutWenmai(p, dur); layoutZhen(p, dur); }
     // anything the state no longer shows (e.g. an interrupted animation) goes away
     const live = new Set();
-    for (const P of s.players) for (const z of ['hand', 'board', 'wenmai']) for (const u of P[z]) live.add(u.uid);
+    for (const P of s.players) for (const z of ['hand', 'board', 'wenmai', 'zhen']) for (const u of P[z]) live.add(u.uid);
     for (const uid of [...meshes.keys()]) if (!live.has(uid)) removeMesh(uid);
     // meshes the state shows but we never animated in (safety net)
-    for (const P of s.players) for (const z of ['hand', 'board', 'wenmai']) for (const u of P[z]) if (!meshes.has(u.uid)) {
+    for (const P of s.players) for (const z of ['hand', 'board', 'wenmai', 'zhen']) for (const u of P[z]) if (!meshes.has(u.uid)) {
       const m = makeMesh(u.uid, P.i);
       m.position.copy(DECK_P[P.i]); m.scale.setScalar(0.3); world.add(m);
-      if (z === 'hand') layoutHand(P.i, dur); else if (z === 'board') layoutBoard(P.i, dur); else layoutWenmai(P.i, dur);
+      if (z === 'hand') layoutHand(P.i, dur); else if (z === 'board') layoutBoard(P.i, dur); else if (z === 'zhen') layoutZhen(P.i, dur); else layoutWenmai(P.i, dur);
     }
   }
   function refreshPlate(m, u) {
@@ -493,6 +504,23 @@ export function startBattle(ctx, cfg) {
         log(`「${card(e.id).name}」${e.why === 'burn' ? '被焚毁' : e.why === 'expire' ? '效力耗尽' : '被挤出文脉区'}`);
         await burnOut(meshes.get(e.uid));
         layoutWenmai(e.p);
+        break;
+      }
+      case 'zhen': {
+        layoutZhen(e.p, 0.5);
+        audio.sfx('playWenmai');
+        await W(0.45);
+        const i = s.players[e.p].zhen.findIndex((u) => u.uid === e.uid);
+        const sl = zhenSlot(e.p, Math.max(0, i));
+        fx.ring(V(sl.pos.x, 0, sl.pos.z), { color: '#b7a6e4', size: 1.6, life: 1.2 });
+        await signature(e.id, 'play', e, V(sl.pos.x, 0.2, sl.pos.z));
+        await W(0.2);
+        break;
+      }
+      case 'zhenOut': {
+        log(`「${card(e.id).name}」被挤出阵法区`);
+        await burnOut(meshes.get(e.uid));
+        layoutZhen(e.p);
         break;
       }
       case 'discard': {
@@ -1007,7 +1035,7 @@ export function startBattle(ctx, cfg) {
     if (o.hero) {
       const i = +o.hero[1], P = s.players[i];
       detail.append(h('div.info', h('div.info-head', h('span.info-name', { text: P.name }), h('span.info-tags', { text: '主将' })),
-        h('div.info-meta', { text: `生命 ${P.hp}/${P.maxHp}　手牌 ${P.hand.length}　牌库 ${P.deck.length}　文脉 ${P.wenmai.length}/6` }),
+        h('div.info-meta', { text: `生命 ${P.hp}/${P.maxHp}　手牌 ${P.hand.length}　牌库 ${P.deck.length}　文脉 ${P.wenmai.length}/6　阵法 ${P.zhen.length}/2` }),
         h('div.info-text', { text: heroReduction(s, i) ? `每次受伤减免 ${heroReduction(s, i)}（单次至少 2 点）` : '单次受伤至少 2 点。牌库耗尽而需抽牌时判负。' }),
         PASSIVE_ZH[P.passive]
           ? h('div.info-skill', h('b', { text: `【${PASSIVE_ZH[P.passive].name}】` }), ` 每 ${PASSIVE_ZH[P.passive].every} 个自身回合：${PASSIVE_ZH[P.passive].foe}`) : null));
