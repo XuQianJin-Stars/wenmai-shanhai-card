@@ -18,6 +18,8 @@ export function defaultSave() {
     seenPro: [],                      // chapter numbers ≥2 whose prologue has been watched
     seenBonds: [],                    // bond ids whose culture note has been shown
     stats: { wins: 0, losses: 0, games: 0 },
+    quizDone: [],                      // 文脉闯关 ch key，首通过后不再给碎片
+    quizDaily: { day: '', done: false },
     settings: { master: 0.8, music: 0.7, sfx: 0.9, speed: 1, timer: true, quality: 'high', hints: true },
   };
 }
@@ -67,6 +69,11 @@ export function migrateSave(raw) {
   d.seenPro = [...pro].sort((a, b) => a - b);
   if (Array.isArray(raw.seenBonds)) d.seenBonds = raw.seenBonds.filter((x) => typeof x === 'string');
   if (raw.stats) for (const k of ['wins', 'losses', 'games']) d.stats[k] = Math.floor(num(raw.stats[k], 0, 1e7, 0));
+  if (Array.isArray(raw.quizDone)) d.quizDone = [...new Set(raw.quizDone.filter((id) => typeof id === 'string'))];
+  if (raw.quizDaily && typeof raw.quizDaily === 'object') {
+    const day = typeof raw.quizDaily.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.quizDaily.day) ? raw.quizDaily.day : '';
+    d.quizDaily = { day, done: !!raw.quizDaily.done };
+  }
   if (raw.settings) {
     const s = raw.settings;
     d.settings.master = num(s.master, 0, 1, d.settings.master);

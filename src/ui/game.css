@@ -58,15 +58,22 @@ button { font: inherit; color: inherit; }
    字号和内边距都按 slot 算——所以增减菜单项不用再手调数值，矮屏也不会顶穿。 */
 .menu { --n: 6; --gap: clamp(4px, calc(1.2 * var(--u)), 10px);
   --slot: calc((66 * var(--u) - (var(--n) - 1) * var(--gap)) / var(--n));
-  position: absolute; left: calc(7vw + var(--sal)); top: 25%; bottom: calc(9% + var(--sab));
+  position: absolute; left: calc(7vw + var(--sal)); top: 25%; bottom: calc(44px + var(--sab));
   display: flex; flex-direction: column; justify-content: center; gap: var(--gap); }
-.menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 300px;
+.menu-item { pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-width: 300px;
   padding: clamp(4px, calc(0.14 * var(--slot)), 12px) 22px clamp(4px, calc(0.14 * var(--slot)), 12px) 26px;
   background: linear-gradient(90deg, rgba(20, 18, 15, 0.8), rgba(20, 18, 15, 0.15)); border: 0; border-left: 3px solid rgba(200, 160, 74, 0.5);
-  animation: slideIn .5s ease both; transition: all .2s; text-align: left; }
+  animation: slideIn .5s ease both; transition: all .2s; text-align: left; box-sizing: border-box; }
+/* 条目一多，内边距会把最后一项撑到战绩上。高一点的窗口把每条钉在 --slot 里，战绩单独留在底下。 */
+@media (min-height: 640px) {
+  .menu-item { height: var(--slot); min-height: 0; overflow: hidden; }
+}
 .menu-t { font-family: var(--brush); font-size: clamp(18px, calc(0.44 * var(--slot)), 32px); color: var(--paper); letter-spacing: 0.2em; }
 .menu-s { font-size: clamp(9px, calc(0.19 * var(--slot)), 13px); color: rgba(240, 228, 204, 0.6); letter-spacing: 0.1em; }
-.stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(5% + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
+.menu-dock { display: none; }
+/* 电脑和 iPad 上，底栏的五项跟上面四项排成同一列。 */
+.menu-more { display: contents; }
+.stats { position: absolute; left: calc(7vw + var(--sal)); bottom: calc(12px + var(--sab)); font-size: 13px; color: rgba(240, 228, 204, 0.6); letter-spacing: 0.2em; }
 @keyframes slideIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 
 /* story */
@@ -98,6 +105,33 @@ button { font: inherit; color: inherit; }
 .opp .portrait { border-radius: 50%; border: 4px solid #2a2218; }
 .opp-t { font-family: var(--brush); font-size: 24px; margin-top: 10px; }
 .opp-d { font-size: 13px; color: #5a4a3a; }
+
+/* 文脉闯关。下一问默认不出现：display:flex 会盖掉 hidden，作答前按钮会露出来。 */
+.quiz-intro { font-size: 13px; color: #2a2218; margin: 0 0 10px; letter-spacing: 0.06em;
+  text-shadow: 0 0 10px rgba(255, 250, 235, 0.95); }
+.quiz-paper { max-width: 760px; margin: 0 auto; padding: 22px 24px; background: rgba(243, 236, 221, 0.94); color: #1a1612;
+  border: 1px solid #8a6a3a; border-radius: 3px; box-sizing: border-box; }
+.quiz-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.quiz-k { font-size: 13px; color: #8a5a2a; letter-spacing: 0.12em; }
+.quiz-q { font-family: var(--brush); font-size: 28px; line-height: 1.45; margin: 8px 0 16px; }
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt { pointer-events: auto; cursor: pointer; width: 100%; text-align: left; padding: 12px 14px; min-height: 44px;
+  border: 1px solid #8a6a3a; background: #f7f0e2; color: #1a1612; border-radius: 3px; font-size: 15px; line-height: 1.5; }
+.quiz-opt .tag { font-family: var(--brush); color: var(--cinnabar); margin-right: 8px; font-size: 18px; }
+.quiz-opts.locked .quiz-opt { pointer-events: none; }
+.quiz-opts.locked .quiz-opt:not(.ok):not(.no) { opacity: 0.45; }
+.quiz-opt.ok { background: #d5e8c8; border-color: #4a6a3a; }
+.quiz-opt.no { background: #ead0c8; border-color: var(--cinnabar); }
+.quiz-note { display: none; margin-top: 14px; font-size: 13px; line-height: 1.75; color: #3a3028;
+  border-left: 3px solid var(--cinnabar); padding: 8px 12px; background: rgba(178, 58, 47, 0.06); }
+.quiz-note.on { display: block; }
+.quiz-next { display: none; gap: 10px; margin-top: 16px; }
+.quiz-next.on, .quiz-end-btns { display: flex; gap: 10px; margin-top: 16px; }
+.quiz-list { gap: 8px; max-width: 860px; }
+.quiz-list .level { padding: 10px 14px; gap: 14px; }
+.quiz-list .level-no { width: auto; min-width: 46px; height: 46px; padding: 0 8px; font-size: 24px; white-space: nowrap; line-height: 1; box-sizing: border-box; }
+.quiz-list .level-t { font-size: 22px; }
+.quiz-list .level-seal { right: 22px; }
 
 /* collection */
 /* 卡池 ｜（预览卡的空当）｜ 详情栏。
@@ -399,10 +433,16 @@ button { font: inherit; color: inherit; }
 .short .top { padding-top: calc(8px + var(--sat)); padding-bottom: 8px; gap: 12px; }
 .short .top-title { font-size: 22px; }
 .short .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
-.short .menu { top: auto; bottom: calc(10px + var(--sab)); gap: 5px; justify-content: flex-end; }
-/* 只收窄和收紧字距，纵向尺寸仍交给 --slot，这样条目数变了也不用改这里。 */
+.short .menu { top: auto; bottom: calc(56px + var(--sab)); gap: 5px; justify-content: flex-end; --n: 4 !important; }
 .short .menu-item { min-width: 190px; padding-right: 16px; padding-left: 18px; }
 .short .menu-t { letter-spacing: 0.12em; }
+/* 底栏相对屏幕钉住。挂在 .menu 里的话，bottom 会算成菜单底边，和最后一项叠在一起。 */
+.short .menu-more { display: flex; position: fixed; left: calc(7vw + var(--sal)); bottom: calc(8px + var(--sab));
+  gap: 6px; width: min(560px, calc(100vw - 14vw - var(--sal) - var(--sar))); z-index: 2; }
+.short .menu-more .menu-item { flex: 1; min-width: 0; height: 40px; min-height: 40px; padding: 0 4px;
+  align-items: center; justify-content: center; overflow: hidden; }
+.short .menu-more .menu-t, .short .menu-more .menu-s { display: none; }
+.short .menu-more .menu-dock { display: block; font-family: var(--brush); font-size: 16px; letter-spacing: 0.12em; color: var(--paper); }
 .short .stats { display: none; }
 .short .logo.small .logo-main { font-size: 46px; }
 .short .logo.small .logo-sub { font-size: 22px; }
@@ -454,6 +494,11 @@ button { font: inherit; color: inherit; }
 .short .side-face { width: min(100px, 62%); margin-bottom: 6px; }
 .short .side-paper { padding: 8px 10px; font-size: 11px; }
 .short .relic-fig img { max-height: 88px; }
+.short .quiz-paper { padding: 12px 14px; }
+.short .quiz-q { font-size: 20px; margin: 6px 0 10px; }
+.short .quiz-opt { padding: 8px 10px; font-size: 13px; }
+.short .quiz-opt .tag { font-size: 16px; }
+.short .quiz-list .level-seal { right: 14px; font-size: 16px; }
   /* The faces carry an inline width from faceEl(); max-width clamps it and height stays automatic. */
 .short .cell .face { max-width: 84px; }
 .short .unlock .face { max-width: 104px; }

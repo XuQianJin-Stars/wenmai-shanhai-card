@@ -1,5 +1,5 @@
 // Boot + screen flow: title → main menu → 故事模式 / 自由对战 / 卡牌图鉴·升阶 / 牌组编成 / 设置.
-// URL switches for testing: ?battle=shenhua-1|p-stage  &auto=1 (AI plays both sides)  &screen=collection|deck|story|practice
+// URL switches for testing: ?battle=shenhua-1|p-stage  &auto=1 (AI plays both sides)  &screen=collection|deck|story|practice|quiz
 //   &speed=2  &reset=1 (fresh save)  &unlock=1 (all cards, 999 fragments)
 import * as THREE from 'three';
 import { createApp } from '../render/app.js';
@@ -18,6 +18,7 @@ import { GUARDIAN } from '../data/guardian.js';
 import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
 import { RELIC_IMAGES } from '../data/relicImages.js';
 import { RULES } from '../rules/engine.js';
+import { QUIZ_STAGES, QUIZ_N, QUIZ_NEED, QUIZ_PERFECT, QUIZ_DAILY_EACH, quizPassReward, quizStageOpen, dealQuiz, todayKey } from '../data/quiz.js';
 
 const MENU_CAM = { pos: new THREE.Vector3(0, 2.2, 9), look: new THREE.Vector3(0, 3.2, -30) };
 
@@ -193,22 +194,31 @@ export async function boot(params, fontsReady) {
     screen.className = 'screen show menu-screen';
     const cur = CHAPTERS.filter(chapterOpen).at(-1);
     const done = cur.levels.filter((L) => save.isDone(L.id)).length;
-    const items = [
+    const btn = (t, sub, fn, i) => h('button.menu-item', { style: { animationDelay: `${i * 70}ms` }, title: sub, onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); } },
+      h('span.menu-t', { text: t }), h('span.menu-s', { text: sub }));
+    // 前四项是每次都进的；后五项在 iPhone 横屏收成底下一排，九条竖着排不下。
+    const play = [
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
+      ['文脉闯关', quizSub(), () => quizMap()],
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
-      ['文 物 志', relicSub(), () => relicScreen()],
-      ['守护者', guardianSub(), () => guardianScreen()],
-      ['牌组编成', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
-      ['设　　置', '音量 · 速度 · 计时', () => settingsModal()],
-      ['帮　　助', '玩法 · 操作 · 屏幕', () => helpModal()],
+    ];
+    const more = [
+      ['文 物 志', '文物', relicSub(), () => relicScreen()],
+      ['守护者', '修行', guardianSub(), () => guardianScreen()],
+      ['牌组编成', '牌组', `${save.data.deck.length}/${DECK_SIZE} 张`, () => deckBuilder()],
+      ['设　　置', '设置', '音量 · 速度 · 计时', () => settingsModal()],
+      ['帮　　助', '帮助', '玩法 · 操作 · 屏幕', () => helpModal()],
     ];
     screen.append(
       h('div.logo.small', h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' })),
-      // --n 让 CSS 把可用高度按条目数分配，加减菜单项不用再手调字号（见 game.css）。
-      h('div.menu', { style: { '--n': String(items.length) } },
-        items.map(([t, sub, fn], i) => h('button.menu-item', { style: { animationDelay: `${i * 70}ms` }, onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); } },
-          h('span.menu-t', { text: t }), h('span.menu-s', { text: sub })))),
+      // --n 让 CSS 把可用高度按条目数分配。矮屏由 .short 改成 4，底栏另算。
+      h('div.menu', { style: { '--n': String(play.length + more.length) } },
+        play.map(([t, sub, fn], i) => btn(t, sub, fn, i)),
+        h('div.menu-more', more.map(([t, dock, sub, fn], i) => h('button.menu-item', {
+          style: { animationDelay: `${(play.length + i) * 70}ms` }, title: sub,
+          onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); },
+        }, h('span.menu-t', { text: t }), h('span.menu-dock', { text: dock }), h('span.menu-s', { text: sub }))))),
       h('div.frag.corner', { title: '文脉碎片' }, h('span.frag-ico'), h('span.frag-n', { text: String(save.data.fragments) })),
       h('div.stats', { text: `战绩 ${save.data.stats.wins} 胜 ${save.data.stats.losses} 负` }),
     );
@@ -498,6 +508,134 @@ export async function boot(params, fontsReady) {
     body.append(h('div.relic-intro', { text: '这里的每一件都真实存在，年代、出土地与现藏机构均据公开著录。看完了，可以去馆里看原件。' }), list);
   }
 
+  // ── 文脉闯关 ──
+  // 通关对应故事章才开那一关（第一章随时可考）。每关 5 题、对 4 题过；首通给碎片，重考只练手。
+  // 「今日一问」每天一次，从已开的题库里抽，答对一题一片碎片。
+  const quizOpen = (S) => quizStageOpen(S, save, CHAPTERS);
+  const quizCleared = (ch) => save.data.quizDone.includes(ch);
+  const dailyReady = () => save.data.quizDaily.day !== todayKey();
+  const quizSub = () => {
+    const open = QUIZ_STAGES.filter(quizOpen).length;
+    const done = save.data.quizDone.filter((ch) => QUIZ_STAGES.some((S) => S.ch === ch)).length;
+    return `${done}/${open} 关已过 · ${dailyReady() ? '今日一问未考' : '今日一问已毕'}`;
+  };
+
+  function quizMap() {
+    setStage('menu'); menuCam(); hideViewer();
+    audio.music('menu');
+    const body = frame('文脉闯关', { back: mainMenu });
+    const list = h('div.levels.quiz-list');
+    const dailyOn = dailyReady();
+    list.append(h('div.level' + (dailyOn ? '' : '.done'), {
+      onclick: () => {
+        if (!dailyOn) { audio.sfx('error'); toast('今日一问已经答过，明日再来'); return; }
+        audio.sfx('click');
+        const bank = QUIZ_STAGES.filter(quizOpen).flatMap((S) => S.bank);
+        runQuiz({
+          title: '今日一问',
+          bank,
+          daily: true,
+        });
+      },
+    },
+      h('div.level-no', { text: '日' }),
+      h('div.level-main',
+        h('div.level-t', { text: dailyOn ? '今日一问' : '今日一问 · 已毕' }),
+        h('div.level-d', { text: '从已开考的篇章里抽 5 题。答对一题得 1 碎片，每天一次。' }),
+        h('div.level-r', { text: dailyOn ? `最多 +${QUIZ_N * QUIZ_DAILY_EACH} 碎片` : '明日刷新' }))));
+
+    for (const [i, S] of QUIZ_STAGES.entries()) {
+      const C = CHAPTERS.find((x) => x.key === S.ch);
+      const open = quizOpen(S), done = quizCleared(S.ch);
+      const pass = quizPassReward(C?.n ?? i + 1);
+      list.append(h('div.level' + (open ? '' : '.locked') + (done ? '.done' : ''), {
+        onclick: () => {
+          if (!open) { audio.sfx('error'); toast(`通关「${C?.short ?? S.title}」后开考`); return; }
+          audio.sfx('click');
+          runQuiz({ title: S.title, bank: S.bank, ch: S.ch, n: C?.n ?? i + 1, first: !done });
+        },
+      },
+        h('div.level-no', { text: C?.num ?? String(i + 1) }),
+        h('div.level-main',
+          h('div.level-t', { text: `${C?.short ?? ''} · ${S.title}` }),
+          h('div.level-d', { text: S.desc }),
+          h('div.level-r', { text: done ? '已过 · 重考不再给碎片' : open ? `5 题对 ${QUIZ_NEED} 过关 · 首通碎片 ×${pass}（全对再 +${QUIZ_PERFECT}）` : `通关「${C?.short}」后开考` })),
+        done ? h('div.level-seal', { text: '已过' }) : null));
+    }
+    body.append(h('div.quiz-intro', { text: '题目出自文物志和能核实的公开史实。考过了，可以去馆里把原件对一遍。' }), list);
+  }
+
+  async function runQuiz({ title, bank, ch = null, n = 1, first = false, daily = false }) {
+    const qs = dealQuiz(bank, QUIZ_N);
+    let score = 0;
+    for (let i = 0; i < qs.length; i++) {
+      const hit = await askQuiz(title, qs[i], i, qs.length, score);
+      if (hit == null) return;
+      if (hit) score++;
+    }
+    let gain = 0, passed = score >= QUIZ_NEED;
+    if (daily) {
+      gain = score * QUIZ_DAILY_EACH;
+      save.data.quizDaily = { day: todayKey(), done: true };
+    } else if (first && passed) {
+      gain = quizPassReward(n) + (score === QUIZ_N ? QUIZ_PERFECT : 0);
+      if (ch && !save.data.quizDone.includes(ch)) save.data.quizDone.push(ch);
+    }
+    save.data.fragments += gain;
+    save.write();
+    audio.music(passed || daily ? 'victory' : 'defeat');
+    if (gain) audio.sfx('upgrade'); else audio.sfx(passed ? 'bond' : 'error');
+
+    const body = frame('文脉闯关', { back: quizMap });
+    const line = daily
+      ? `今日答对 ${score} / ${QUIZ_N}。`
+      : (passed ? (score === QUIZ_N ? '全部答对。' : `过关，答对 ${score} / ${QUIZ_N}。`) : `未过关，答对 ${score} / ${QUIZ_N}（需 ${QUIZ_NEED}）。`);
+    const pay = gain
+      ? `文脉碎片 +${gain}（共 ${save.data.fragments}）。`
+      : (daily ? '' : (first ? '通过后才给碎片。' : '此关已经给过首通奖励，重考不再给碎片。'));
+    body.append(h('div.quiz-paper.quiz-end',
+      h('div.quiz-k', { text: title }),
+      h('div.quiz-q', { text: daily ? '今日一问 · 毕' : (passed ? '闯关通过' : '再读一读') }),
+      h('div.quiz-note', { text: `${line} ${pay}`.trim() }),
+      h('div.quiz-end-btns',
+        !daily ? btn('再考一回', () => runQuiz({ title, bank, ch, n, first: false, daily: false })) : null,
+        btn('返回', quizMap, 'primary'))));
+  }
+
+  function askQuiz(title, q, i, total, score) {
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = (v) => { if (settled) return; settled = true; resolve(v); };
+      const body = frame(`${title} · ${i + 1}/${total}`, { back: () => { done(null); quizMap(); } });
+      let locked = false, picked = false;
+      const opts = h('div.quiz-opts');
+      const TAG = ['甲', '乙', '丙', '丁'];
+      const note = h('div.quiz-note', { text: q.note });
+      const next = h('div.quiz-next', btn(i + 1 === total ? '看结果' : '下一问', () => { if (locked) done(picked); }, 'primary'));
+      q.opts.forEach((t, k) => {
+        opts.append(h('button.quiz-opt', { onclick: () => {
+          if (locked) return;
+          locked = true;
+          picked = k === q.ans;
+          audio.sfx(picked ? 'bond' : 'error');
+          [...opts.children].forEach((el, j) => {
+            if (j === q.ans) el.classList.add('ok');
+            else if (j === k) el.classList.add('no');
+          });
+          opts.classList.add('locked');
+          note.classList.add('on');
+          next.classList.add('on');
+        } }, h('span.tag', { text: TAG[k] }), t));
+      });
+      body.append(h('div.quiz-paper',
+        h('div.quiz-bar',
+          h('span.quiz-k', { text: `第 ${i + 1} / ${total} 问` }),
+          h('span.quiz-k', { text: `已对 ${score}` })),
+        h('div.quiz-q', { text: q.ask }),
+        opts, note, next));
+    });
+  }
+
   // ── guardian cultivation ──
   function guardianScreen() {
     setStage('menu'); menuCam(); hideViewer();
@@ -666,7 +804,7 @@ export async function boot(params, fontsReady) {
         '五行相克：金克木、木克土、土克水、水克火、火克金，克制时伤害 ×1.3，目标会闪红光。',
         '在卡牌图鉴里用文脉碎片升阶，升到珍品会解锁卡牌自带的技能。',
         '碎片也能在「守护者」里修行，六条路永久强化主将：气血上限、受伤减免、每回合回复、首回合灵力、起手牌、手牌上限。',
-        '碎片来自故事关首通、自由对战和重打关卡；难度越高给得越多，宗师一局抵入门四局。',
+        '碎片来自故事关首通、文脉闯关、自由对战和重打关卡；闯关首通给碎片，重考不再给，另有每日一问。',
       )),
       操作: () => h('div.help-pane', bullets(
         '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',
@@ -747,7 +885,7 @@ export async function boot(params, fontsReady) {
     if (screen.classList.contains('menu-screen')) mainMenu();
   }
 
-  window.__nav = { title, mainMenu, storyMap, practice, collection, deckBuilder, runLevel, runPrologue };
+    window.__nav = { title, mainMenu, storyMap, practice, collection, deckBuilder, quizMap, runLevel, runPrologue };
   // ── go ──
   setStage('menu'); menuCam();
   window.__load?.(1, '');
@@ -770,7 +908,7 @@ export async function boot(params, fontsReady) {
     }
   }
   if (scr) {
-    ({ collection, deck: deckBuilder, story: storyMap, practice, menu: mainMenu }[scr] ?? mainMenu)();
+    ({ collection, deck: deckBuilder, story: storyMap, practice, quiz: quizMap, menu: mainMenu }[scr] ?? mainMenu)();
     requestAnimationFrame(() => requestAnimationFrame(() => { window.__ready = true; }));
     return;
   }

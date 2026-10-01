@@ -580,8 +580,17 @@ export function lateScenes(H) {
           boat.userData.tick = (dt, t) => { boat.position.y = -0.7 + Math.sin(t * 0.55) * 0.06; boat.rotation.z = Math.sin(t * 0.45) * 0.012; };
           root.add(boat);
           if (lake) {
-            for (let k = 0; k < 6; k++) { const s = k % 2 ? 1 : -1; root.add(pineTree(s * (7.4 + R() * 1.2), -4.4 + (k % 3) * 3.2, 1.5 + R() * 0.7)); }
-            for (let k = 0; k < 6; k++) root.add(rock((k % 2 ? 1 : -1) * (6.6 + R()), -3 + (k % 3) * 3, 0.5 + R() * 0.4));
+            for (let k = 0; k < 6; k++) {
+              const s = k % 2 ? 1 : -1;
+              const t = pineTree(mulberry32(300 + k), 1.5 + R() * 0.7);
+              t.position.set(s * (7.4 + R() * 1.2), 0, -4.4 + (k % 3) * 3.2);
+              root.add(t);
+            }
+            for (let k = 0; k < 6; k++) {
+              const r = rock(mulberry32(320 + k), 0.5 + R() * 0.4);
+              r.position.set((k % 2 ? 1 : -1) * (6.6 + R()), -0.5, -3 + (k % 3) * 3);
+              root.add(r);
+            }
           } else {
             // 市集：桥头堆着的货箱和酒瓮
             for (let k = 0; k < 10; k++) {
