@@ -11,6 +11,7 @@ import { createAudio } from '../audio/audio.js';
 import { createSave, deckProblem, MAX_DECKS } from './save.js';
 import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
 import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
+import { eraMap } from '../ui/eraMap.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, DECK_SIZE, MAX_COPIES } from '../data/story.js';
@@ -194,9 +195,8 @@ export async function boot(params, fontsReady) {
     screen.className = 'screen show menu-screen';
     const cur = CHAPTERS.filter(chapterOpen).at(-1);
     const done = cur.levels.filter((L) => save.isDone(L.id)).length;
-    const btn = (t, sub, fn, i) => h('button.menu-item', { style: { animationDelay: `${i * 70}ms` }, title: sub, onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); } },
-      h('span.menu-t', { text: t }), h('span.menu-s', { text: sub }));
-    // 前四项是每次都进的；后五项在 iPhone 横屏收成底下一排，九条竖着排不下。
+    const seal = ['壹', '贰', '叁', '肆'];
+    // 前四项做成立轴，竖排；后五项是轴下的签条。iPhone 横屏把签条收成底部一排印。
     const play = [
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
@@ -204,23 +204,36 @@ export async function boot(params, fontsReady) {
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
     ];
     const more = [
-      ['文 物 志', '文物', relicSub(), () => relicScreen()],
+      ['文物志', '文物', relicSub(), () => relicScreen()],
       ['守护者', '修行', guardianSub(), () => guardianScreen()],
       ['牌组编成', '牌组', `${save.deckName()} · ${save.data.deck.length}/${DECK_SIZE}`, () => deckBuilder()],
-      ['设　　置', '设置', '音量 · 速度 · 计时', () => settingsModal()],
-      ['帮　　助', '帮助', '玩法 · 操作 · 屏幕', () => helpModal()],
+      ['设置', '设置', '音量 · 速度 · 计时', () => settingsModal()],
+      ['帮助', '帮助', '玩法 · 操作 · 屏幕', () => helpModal()],
     ];
+    const plaque = (t, sub, fn, i) => h('button.plaque', {
+      style: { animationDelay: `${i * 80}ms` }, 'aria-label': `${t}，${sub}`,
+      onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); },
+    },
+      h('span.plaque-rod.top'),
+      h('span.plaque-seal', { text: seal[i] }),
+      h('span.plaque-t', { text: t }),
+      h('span.plaque-s', { text: sub }),
+      h('span.plaque-rod.bot'));
+    const slip = (t, dock, sub, fn, i) => h('button.slip', {
+      style: { animationDelay: `${(play.length + i) * 70}ms` }, 'aria-label': `${t}，${sub}`,
+      onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); },
+    },
+      h('span.menu-t', { text: t }), h('span.menu-dock', { text: dock }), h('span.menu-s', { text: sub }));
     screen.append(
-      h('div.logo.small', h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' })),
-      // --n 让 CSS 把可用高度按条目数分配。矮屏由 .short 改成 4，底栏另算。
-      h('div.menu', { style: { '--n': String(play.length + more.length) } },
-        play.map(([t, sub, fn], i) => btn(t, sub, fn, i)),
-        h('div.menu-more', more.map(([t, dock, sub, fn], i) => h('button.menu-item', {
-          style: { animationDelay: `${(play.length + i) * 70}ms` }, title: sub,
-          onpointerenter: () => audio.sfx('hover'), onclick: () => { audio.sfx('click'); fn(); },
-        }, h('span.menu-t', { text: t }), h('span.menu-dock', { text: dock }), h('span.menu-s', { text: sub }))))),
+      h('div.logo.small',
+        h('div.logo-main', { text: '文脉' }), h('div.logo-dot', { text: '·' }), h('div.logo-sub', { text: '山海卡' }),
+        h('div.logo-seal', { text: '山' }),
+        h('div.logo-brush', { html: '<svg viewBox="0 0 240 16" preserveAspectRatio="none" aria-hidden="true"><path d="M2 10 C 28 4, 70 13, 120 8 S 196 12, 238 5" fill="none" stroke="#1a1612" stroke-width="3.4" stroke-linecap="round"/></svg>' })),
+      h('div.menu',
+        h('div.menu-play', play.map(([t, sub, fn], i) => plaque(t, sub, fn, i))),
+        h('div.menu-more', more.map(([t, dock, sub, fn], i) => slip(t, dock, sub, fn, i))),
+        h('div.stats', { text: `战绩 ${save.data.stats.wins} 胜 ${save.data.stats.losses} 负` })),
       h('div.frag.corner', { title: '文脉碎片' }, h('span.frag-ico'), h('span.frag-n', { text: String(save.data.fragments) })),
-      h('div.stats', { text: `战绩 ${save.data.stats.wins} 胜 ${save.data.stats.losses} 负` }),
     );
   }
 
@@ -278,11 +291,13 @@ export async function boot(params, fontsReady) {
       if (!best) { audio.sfx('error'); toast('这些章节还没开启'); return; }
       goCh(best);
     };
-    let railTries = 0;
+    let railFrame = 0;
     const fillRail = () => {
-      const listH = list.offsetHeight;
-      if (listH < 48) { if (railTries++ < 6) requestAnimationFrame(fillRail); return; }
-      railTries = 0;
+      cancelAnimationFrame(railFrame);
+      railFrame = requestAnimationFrame(() => {
+      const listH = sheet.offsetHeight;
+      if (listH < 48) return;
+      if (tabs.style.height === `${listH}px` && tabs.childElementCount > 2) return;
       tabs.style.height = listH + 'px';
       const avail = tabs.clientHeight;
       clear(tabs);
@@ -305,9 +320,12 @@ export async function boot(params, fontsReady) {
       tabs.append(stepBtn('下一页', nextCh, nextCh ? (chapterOpen(nextCh) ? `下一页 · ${nextCh.title}` : `通关「${C.short}」后开启`) : '已经是最后一章'));
       // 行数按自然高度算完再平摊余数，底边贴齐关卡列表，单行不会被拉得很高。
       for (const b of tabs.children) b.style.flexGrow = '1';
+      });
     };
     const body = frame(`故事模式 · ${C.title}`, { back: mainMenu, extra: deckSwitch(() => storyMap(C.n)) });
-    window.addEventListener('resize', fillRail, { signal: screenAbort.signal });
+    screen.classList.add('story-screen');
+    const railWatch = new ResizeObserver(() => fillRail());
+    screenAbort.signal.addEventListener('abort', () => railWatch.disconnect());
     const list = h('div.levels');
     const seen = seenOf(C);
     list.append(h('div.level' + (seen ? '.done' : ''), { onclick: () => { audio.sfx('click'); runPrologue(true, C); } },
@@ -326,7 +344,14 @@ export async function boot(params, fontsReady) {
     if (next && !chapterOpen(next)) list.append(h('div.level.locked', h('div.level-no', { text: '续' }), h('div.level-main', h('div.level-t', { text: next.title }), h('div.level-d', { text: `通关「${C.levels.at(-1).title.split(' · ')[1]}」后开启` })),
       portraitEl(next.levels.at(-1).enemy.portrait, 84, next.n + 40)));
     if (!next) list.append(h('div.level.locked', h('div.level-no', { text: '续' }), h('div.level-main', h('div.level-t', { text: '文脉未完' }), h('div.level-d', { text: '更多篇章，筹备之中' }))));
-    body.append(h('div.story-map', list, tabs));
+    const sheet = h('div.scroll-sheet', list, eraMap(C.key));
+    body.append(h('div.story-map',
+      h('div.handscroll',
+        h('div.handscroll-rod', { 'aria-hidden': 'true' }),
+        sheet,
+        h('div.handscroll-rod', { 'aria-hidden': 'true' })),
+      tabs));
+    railWatch.observe(sheet);
     fillRail();
   }
 

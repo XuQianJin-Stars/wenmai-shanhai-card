@@ -44,3 +44,4 @@ canvas#c { position: fixed; top: 0; left: 0; width: var(--vw, 100vw); height: va
 #load .seal { width: 28px; height: 28px; border: 2px solid var(--cinnabar); color: var(--cinnabar); font-family: var(--brush);
   font-size: 17px; display: grid; place-items: center; border-radius: 3px; opacity: 0.85; }
 #load .label { font-size: 12px; letter-spacing: 0.3em; color: rgba(233, 224, 204, 0.4); min-height: 1em; }
+.ink-defs { position: absolute; width: 0; height: 0; overflow: hidden; }

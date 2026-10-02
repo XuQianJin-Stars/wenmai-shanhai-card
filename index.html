@@ -22,6 +22,14 @@
 <link rel="stylesheet" href="/src/ui/game.css">
 </head>
 <body>
+<svg class="ink-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="wmInkEdge" x="-14%" y="-8%" width="128%" height="116%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.045" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
 <canvas id="c" tabindex="0"></canvas>
 <div id="ui"></div>
 <div id="load" aria-hidden="true"><div class="wrap">

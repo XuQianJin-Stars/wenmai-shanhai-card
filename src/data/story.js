@@ -392,7 +392,7 @@ export const chapterEnd = (n) => {
   return { title: `${C.short} · 终`, sub: next ? `${next.title} 已开启` : '文脉不绝，代代有人' };
 };
 
-// 自由对战 opponents: one per scene (SCENE_DESIGN_v1: 昆仑墟 / 古戏台 / 书斋)
+// 自由对战：每条是一位对手、一处场景。菜单上的「N 处场景」直接数这张表。
 export const PRACTICE = [
   { id: 'p-kunlun', title: '昆仑墟 · 创世之试', scene: 'kunlun', variant: 'summit', enemy: { name: '昆仑守山人', hp: 40, portrait: 'giant',
     deck: ['LJ-001', 'LJ-004', 'LJ-002', 'LJ-009', 'LJ-007', 'LJ-007', 'LJ-008', 'LJ-008', 'LJ-006', 'LJ-006',

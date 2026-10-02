@@ -433,11 +433,14 @@ const pdeck = (ids) => {
 };
 
 export const ERA_PRACTICE = [
-  { id: 'p-sanguo', title: '三国 · 出师', scene: 'han', variant: 'ruin', enemy: { name: '汉中书佐', hp: 36, portrait: 'swordsman', deck: pdeck(['LJ-070', 'LJ-070', 'LJ-071', 'LJ-071', 'WM-025', 'WM-025']) } },
+  { id: 'p-sanguo', title: '三国 · 出师', scene: 'han', variant: 'ruin', enemy: { name: '汉中书佐', hp: 36, portrait: 'sanguo-clerk', deck: pdeck(['LJ-070', 'LJ-070', 'LJ-071', 'LJ-071', 'WM-025', 'WM-025']) } },
   { id: 'p-nanbei', title: '南北朝 · 双兔', scene: 'lanting', variant: 'stream', enemy: { name: '边关诗卒', hp: 36, portrait: 'youth', deck: pdeck(['LJ-072', 'LJ-072', 'LJ-073', 'LJ-073', 'WM-026', 'WM-026']) } },
-  { id: 'p-wudai', title: '五代 · 夜宴', scene: 'bianjing', variant: 'night', enemy: { name: '画院待诏', hp: 36, portrait: 'poet', deck: pdeck(['LJ-074', 'LJ-074', 'LJ-075', 'LJ-075', 'WM-027']) } },
+  { id: 'p-wudai', title: '五代 · 夜宴', scene: 'bianjing', variant: 'night', enemy: { name: '画院待诏', hp: 36, portrait: 'wudai-painter', deck: pdeck(['LJ-074', 'LJ-074', 'LJ-075', 'LJ-075', 'WM-027']) } },
   { id: 'p-mengyuan', title: '蒙元 · 授时', scene: 'tiangong', enemy: { name: '司天监生', hp: 36, portrait: 'zhangheng', deck: pdeck(['LJ-076', 'LJ-076', 'LJ-077', 'LJ-077', 'WM-028']) } },
-  { id: 'p-wanqing', title: '晚清 · 京张', scene: 'han', enemy: { name: '铁路学生', hp: 38, portrait: 'giant', deck: pdeck(['LJ-078', 'LJ-078', 'LJ-079', 'LJ-079', 'WM-029']) } },
-  { id: 'p-minguo', title: '民国 · 铁屋', scene: 'jiangnan', variant: 'night', enemy: { name: '报社编辑', hp: 38, portrait: 'judge', deck: pdeck(['LJ-080', 'LJ-080', 'LJ-081', 'LJ-081', 'WM-030']) } },
+  { id: 'p-wanqing', title: '晚清 · 京张', scene: 'han', enemy: { name: '铁路学生', hp: 38, portrait: 'wanqing-student', deck: pdeck(['LJ-078', 'LJ-078', 'LJ-079', 'LJ-079', 'WM-029']) } },
+  { id: 'p-minguo', title: '民国 · 铁屋', scene: 'jiangnan', variant: 'night', enemy: { name: '报社编辑', hp: 38, portrait: 'minguo-editor', deck: pdeck(['LJ-080', 'LJ-080', 'LJ-081', 'LJ-081', 'WM-030']) } },
   { id: 'p-dangdai', title: '当下 · 未干的墨', scene: 'cangshu', variant: 'court', enemy: { name: '夜班馆员', hp: 40, portrait: 'cottage', deck: pdeck(['LJ-082', 'LJ-082', 'LJ-083', 'LJ-083', 'WM-031', 'WM-031']) } },
+  { id: 'p-penglai', title: '蓬莱 · 八仙过海', scene: 'stage', enemy: { name: '何仙姑', hp: 36, portrait: 'LJ-086', deck: pdeck(['LJ-084', 'LJ-084', 'LJ-085', 'LJ-085', 'LJ-086', 'LJ-086', 'LJ-087', 'LJ-087', 'LJ-088', 'LJ-088', 'LJ-089', 'LJ-089']) } },
+  { id: 'p-qishan', title: '岐山 · 封神台', scene: 'kunlun', variant: 'edge', enemy: { name: '闻太师', hp: 38, portrait: 'LJ-104', deck: pdeck(['LJ-099', 'LJ-099', 'LJ-100', 'LJ-100', 'LJ-101', 'LJ-101', 'LJ-104', 'LJ-104', 'LJ-106', 'LJ-106']) } },
+  { id: 'p-changban', title: '长坂坡 · 当阳', scene: 'changan', variant: 'palace', enemy: { name: '赵云', hp: 38, portrait: 'LJ-091', deck: pdeck(['LJ-090', 'LJ-090', 'LJ-091', 'LJ-091', 'LJ-092', 'LJ-092', 'LJ-093', 'LJ-093']) } },
 ];
