@@ -201,7 +201,7 @@ export async function boot(params, fontsReady) {
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
       ['文脉闯关', quizSub(), () => quizMap()],
-      ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => collection()],
+      ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => openCollection()],
     ];
     const more = [
       ['文物志', '文物', relicSub(), () => relicScreen()],
@@ -479,7 +479,34 @@ export async function boot(params, fontsReady) {
   }
 
   // ── collection / upgrade ──
-  function collection(sel = null) {
+  // 图鉴要逐张铺牌面。很快就好的话不闪一下；超过一会儿再盖上「铺开图鉴」。
+  let busyEl = null;
+  function showBusy(text) {
+    if (busyEl) return;
+    busyEl = h('div.busy', { role: 'status', 'aria-live': 'polite' },
+      h('div.busy-card',
+        h('div.busy-seal', { text: '卷' }),
+        h('div.busy-t', { text }),
+        h('div.busy-line')));
+    root.append(busyEl);
+    requestAnimationFrame(() => busyEl?.classList.add('in'));
+  }
+  function hideBusy() {
+    const el = busyEl;
+    if (!el) return;
+    busyEl = null;
+    el.classList.remove('in');
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 280);
+  }
+  function openCollection() {
+    let opened = false;
+    const timer = setTimeout(() => { if (!opened) showBusy('铺开图鉴'); }, 140);
+    const finish = () => { opened = true; clearTimeout(timer); hideBusy(); };
+    requestAnimationFrame(() => collection(null, finish));
+  }
+
+  function collection(sel = null, onReady = null) {
     setStage('menu'); menuCam();
     audio.music('menu');
     const body = frame('卡牌图鉴 · 升阶', { back: () => { hideViewer(); mainMenu(); } });
@@ -489,18 +516,34 @@ export async function boot(params, fontsReady) {
     const side = h('div.side');
     const tabs = h('div.seg', [['all', '全部'], ['general', '灵将'], ['talisman', '符箓'], ['wenmai', '文脉'], ['artifact', '器物'], ['formation', '阵法'], ['zhuo', '浊灵']].map(([k, t]) =>
       h('button' + (k === filter ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); filter = k; tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } })));
+    let drawGen = 0;
+    let ready = onReady;
+    const finish = () => { const fn = ready; ready = null; fn?.(); };
+    screenAbort.signal.addEventListener('abort', finish);
     function draw() {
+      const gen = ++drawGen;
       clear(grid);
-      for (const id of all) {
+      const ids = all.filter((id) => {
         const d = CARDS[id];
-        if (filter === 'zhuo' ? !d.zhuo : filter !== 'all' && (d.zhuo || d.type !== filter)) continue;
-        const owned = d.zhuo || save.owns(id), g = save.grade(id);
-        const cell = h('div.cell' + (owned ? '' : '.locked') + (sel === id ? '.sel' : ''), { onclick: () => { audio.sfx('pick'); sel = id; draw(); pickCard(id); } },
-          faceEl(id, owned ? g : 0, { w: 118 }),
-          !owned ? h('div.lock', { text: '未解锁' }) : g ? h('div.grade-tag.g' + g, { text: GRADE_ZH[g] }) : null,
-          owned && !d.zhuo && save.canUpgrade(id) ? h('div.up-dot', { title: '可升阶' }) : null);
-        grid.append(cell);
-      }
+        return filter === 'zhuo' ? d.zhuo : filter === 'all' || (!d.zhuo && d.type === filter);
+      });
+      let i = 0;
+      const step = () => {
+        if (gen !== drawGen || screenAbort.signal.aborted) return;
+        const t0 = performance.now();
+        while (i < ids.length && performance.now() - t0 < 14) {
+          const id = ids[i++];
+          const d = CARDS[id];
+          const owned = d.zhuo || save.owns(id), g = save.grade(id);
+          grid.append(h('div.cell' + (owned ? '' : '.locked') + (sel === id ? '.sel' : ''), { onclick: () => { audio.sfx('pick'); sel = id; draw(); pickCard(id); } },
+            faceEl(id, owned ? g : 0, { w: 118 }),
+            !owned ? h('div.lock', { text: '未解锁' }) : g ? h('div.grade-tag.g' + g, { text: GRADE_ZH[g] }) : null,
+            owned && !d.zhuo && save.canUpgrade(id) ? h('div.up-dot', { title: '可升阶' }) : null));
+        }
+        if (i < ids.length) requestAnimationFrame(step);
+        else finish();
+      };
+      step();
     }
     function pickCard(id) {
       clear(side);

@@ -461,6 +461,20 @@ button { font: inherit; color: inherit; }
 .modal .btn:not(.primary) { background: linear-gradient(#3a342a, #221e18); }
 
 /* toast / banner */
+.busy { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; pointer-events: auto;
+  background: rgba(14, 12, 10, 0.28); opacity: 0; transition: opacity .2s ease; }
+.busy.in { opacity: 1; }
+.busy.out { opacity: 0; }
+.busy-card { display: grid; justify-items: center; gap: 12px; min-width: 180px; padding: 22px 32px 18px;
+  background: linear-gradient(180deg, rgba(251, 246, 236, 0.97), rgba(236, 224, 198, 0.96));
+  border: 1px solid rgba(90, 60, 30, 0.45); color: #1a1612; box-shadow: 0 16px 40px rgba(20, 16, 12, 0.35); }
+.busy-seal { width: 36px; height: 36px; display: grid; place-items: center; border: 2px solid var(--cinnabar); color: var(--cinnabar);
+  font-family: var(--brush); font-size: 20px; transform: rotate(-8deg); }
+.busy-t { font-family: var(--brush); font-size: 26px; letter-spacing: 0.22em; }
+.busy-line { width: 148px; height: 3px; background: rgba(26, 22, 18, 0.12); position: relative; overflow: hidden; }
+.busy-line::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: var(--cinnabar); animation: busySlide 1s ease-in-out infinite; }
+@keyframes busySlide { to { left: 110%; } }
+@media (prefers-reduced-motion: reduce) { .busy-line::after { animation: none; left: 0; width: 100%; } }
 .toast { position: absolute; left: 50%; top: 18%; transform: translate(-50%, -10px); padding: 8px 22px; background: rgba(16, 14, 12, 0.85); border: 1px solid rgba(200, 160, 74, 0.5);
   color: var(--paper2); font-size: 14px; letter-spacing: 0.1em; border-radius: 2px; opacity: 0; transition: all .3s; z-index: 25; white-space: nowrap; }
 .toast.in { opacity: 1; transform: translate(-50%, 0); }
