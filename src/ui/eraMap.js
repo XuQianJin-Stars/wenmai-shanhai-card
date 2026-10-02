@@ -188,7 +188,8 @@ export function eraSvg(key) {
 
 export function eraMap(key) {
   const era = ERA[KEY[key] ?? 'myth'];
-  const img = `/card-art/era-${KEY[key] ?? 'myth'}.jpg`;
+  const base = import.meta.env.BASE_URL || './';
+  const img = `${base}card-art/era-${KEY[key] ?? 'myth'}.jpg`;
   const el = document.createElement('div');
   el.className = 'era-map';
   el.setAttribute('aria-label', era.caption);
