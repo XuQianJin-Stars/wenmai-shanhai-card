@@ -407,6 +407,7 @@ export async function boot(params, fontsReady) {
     audio.music('story');
     await banner(L.title, L.desc, { cls: 'title', ms: 2000 });
     await talk(L.pre);
+    let chapterFresh = false;
     for (;;) {
       const res = await fight(L, battleCfg(L));
       const first = res.won && !save.isDone(L.id);
@@ -415,6 +416,7 @@ export async function boot(params, fontsReady) {
       if (first) {
         for (const id of L.reward.unlock) if (save.unlock(id)) { reward.unlock.push(id); const out = save.autoInsert(id); if (out) (reward.swapped ??= []).push([id, out]); }
         save.complete(L.id);
+        if (L.id === C.levels.at(-1).id) chapterFresh = true;
       }
       save.data.fragments += reward.fragments;
       save.write();
@@ -427,6 +429,7 @@ export async function boot(params, fontsReady) {
       }
       break;
     }
+    if (chapterFresh) await relicUnlock(C);
     await transition(async () => storyMap(chapterOf(L).n));
   }
 
@@ -665,6 +668,24 @@ export async function boot(params, fontsReady) {
       r.spec ? h('div.relic-spec', { text: r.spec }) : null,
       h('div.relic-note', { text: r.note }),
       img?.official ? h('a.relic-link', { href: img.official, target: '_blank', rel: 'noopener', text: '官方藏品页 ↗' }) : null);
+  }
+
+  /** 首次打通一章的末关：把这一章新录入的文物摊开，看完再回地图。重打不再弹。 */
+  function relicUnlock(C) {
+    const items = RELICS_BY_CHAPTER[C.key] ?? [];
+    if (!items.length) return Promise.resolve();
+    audio.sfx('upgrade');
+    clear(screen);
+    screen.className = 'screen show';
+    return new Promise((resolve) => {
+      screen.append(h('div.relic-pop',
+        h('div.relic-pop-sheet',
+          h('div.relic-pop-kicker', { text: '文物志 · 新录' }),
+          h('div.relic-pop-title', { text: C.short }),
+          h('div.relic-pop-sub', { text: `通关本章，${items.length} 件文物已录入。年代、出土地与现藏机构均据公开著录。` }),
+          h('div.relic-grid', items.map(relicCard)),
+          h('div.relic-pop-btns', btn('收入文物志', () => resolve(), 'primary')))));
+    });
   }
 
   function relicScreen() {
