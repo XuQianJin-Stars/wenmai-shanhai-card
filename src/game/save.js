@@ -10,7 +10,7 @@ const DECK_NUM = ['一', '二', '三', '四', '五', '六'];
 export function defaultSave() {
   const starter = [...STARTER_DECK];
   return {
-    v: 3,                              // 3 = 唐宋拆成两章之后（见 migrateLevelId / migrateChapterNo）
+    v: 4,                              // 4 = 章节按历史事件重排之后（见 reorderChapterNo）
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
@@ -41,6 +41,9 @@ const OLD_N = { 1: 1, 2: 7, 3: 11, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 9, 10: 10, 1
 const migrateLevelId = (id) => (typeof id === 'string' ? id.replace(/^ch(\d+)-(\d+)$/, (m, c, k) => (OLD_CH[c] ? `${OLD_CH[c]}-${k}` : m)) : id);
 const splitTangSong = (id) => (typeof id === 'string' ? id.replace(/^tangsong-(\d+)$/, 'datang-$1') : id);
 const shiftChapterNo = (n) => (n >= 8 ? n + 1 : n);
+// v3 的章号是「先写到的编年 + 后补的年代挂在末尾」。v4 起按历史事件重排，序章标记要跟着走。
+const REORDER_N = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 9, 8: 11, 9: 13, 10: 16, 11: 15, 12: 19, 13: 14, 14: 5, 15: 7, 16: 10, 17: 12, 18: 17, 19: 18, 20: 20 };
+const reorderChapterNo = (n) => REORDER_N[n] ?? n;
 
 /**
  * 把任意一坨 JSON 洗成一份合法存档：非法字段丢掉，旧版本按 v 号依次迁移。
@@ -76,7 +79,7 @@ export function migrateSave(raw) {
   d.decks = decks;
   d.deckOn = Number.isInteger(raw.deckOn) && raw.deckOn >= 0 && raw.deckOn < decks.length ? raw.deckOn : 0;
   d.deck = [...decks[d.deckOn].cards];
-  const old = !(raw.v >= 2), preSplit = !(raw.v >= 3);
+  const old = !(raw.v >= 2), preSplit = !(raw.v >= 3), preReorder = !(raw.v >= 4);
   if (Array.isArray(raw.done)) {
     d.done = raw.done
       .map((id) => (old ? migrateLevelId(id) : id))
@@ -84,7 +87,11 @@ export function migrateSave(raw) {
       .filter((id) => LEVELS.some((l) => l.id === id));
   }
   d.seenPrologue = !!raw.seenPrologue;
-  const chNo = (n) => (preSplit ? shiftChapterNo(old ? OLD_N[n] ?? n : n) : n);
+  const chNo = (n) => {
+    let x = preSplit ? shiftChapterNo(old ? OLD_N[n] ?? n : n) : n;
+    if (preReorder) x = reorderChapterNo(x);
+    return x;
+  };
   const pro = new Set(Array.isArray(raw.seenPro)
     ? raw.seenPro.filter((n) => Number.isInteger(n) && n >= 2 && n <= 99).map(chNo) : []);
   if (raw.seenPrologue2) pro.add(chNo(2));   // saves written before the prologue flags were generalised

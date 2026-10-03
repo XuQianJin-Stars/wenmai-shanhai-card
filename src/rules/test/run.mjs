@@ -91,8 +91,8 @@ test('守护者修行：等级表算出来的加成和引擎字段对得上', ()
 });
 test('章节：按朝代编年一路排下来，id 前缀和章号都不重复', () => {
   const order = CHAPTERS.map((C) => C.key);
-  eq(order.join(' '), 'shenhua xianqin chuci qinhan weijin dunhuang datang liangsong haisi shijing tiangong feiyi guizang sanguo nanbei wudai mengyuan wanqing minguo dangdai',
-    '章节顺序 = 神话 → 朝代编年 → 传承 → 终章 → 补上的年代');
+  eq(order.join(' '), 'shenhua xianqin chuci qinhan sanguo weijin nanbei dunhuang datang wudai liangsong mengyuan haisi guizang tiangong shijing wanqing minguo feiyi dangdai',
+    '章节顺序按历史事件：神话、先秦、秦汉、三国至清、晚清至今');
   eq(new Set(order).size, order.length, '每章一个 id 前缀');
   eq(new Set(CHAPTERS.map((C) => C.n)).size, CHAPTERS.length, '章号不重复');
   CHAPTERS.forEach((C, i) => eq(C.n, i + 1, `第 ${i + 1} 章的章号要连着`));
@@ -103,13 +103,15 @@ test('章节：按朝代编年一路排下来，id 前缀和章号都不重复',
 test('存档迁移：v1 的 chN-M 和 v2 的 tangsong-* 都能落到今天的关卡 id 上', () => {
   const v1 = migrateSave({ done: ['ch1-1', 'ch1-2', 'ch1-3', 'ch2-1', 'ch2-3', 'ch11-1'], seenPro: [2, 11] });
   eq(v1.done.join(','), 'shenhua-1,shenhua-2,shenhua-3,datang-1,datang-3,haisi-1', 'v1 的关卡 id');
-  eq(v1.seenPro.join(','), '7,9', 'v1 的章号：唐宋是第七章，海丝在拆章后成了第九章');
+  eq(v1.seenPro.join(','), '9,13', 'v1 的章号：唐、海丝按历史事件重排后的章号');
   const v2 = migrateSave({ v: 2, done: ['tangsong-2', 'haisi-3', 'guizang-1'], seenPro: [7, 8, 12] });
   eq(v2.done.join(','), 'datang-2,haisi-3,guizang-1', 'v2 只需要改唐那三关');
-  eq(v2.seenPro.join(','), '7,9,13', '第八章往后的序章标记跟着章号一起后移');
+  eq(v2.seenPro.join(','), '9,13,14', '拆章后再按历史事件重排：唐、海丝、归藏');
   const v3 = migrateSave({ v: 3, done: ['datang-3', 'liangsong-1'], seenPro: [8] });
   eq(v3.done.join(','), 'datang-3,liangsong-1', 'v3 原样收下');
-  eq(v3.seenPro.join(','), '8', 'v3 的章号不再动');
+  eq(v3.seenPro.join(','), '11', 'v3 的第八章是两宋，重排后为第十一章');
+  const v4 = migrateSave({ v: 4, done: ['datang-1'], seenPro: [8] });
+  eq(v4.seenPro.join(','), '8', 'v4 的章号已经是历史顺序，不再翻一次');
   eq(migrateSave({ v: 3, done: ['tangsong-1', '不存在的关'] }).done.length, 0, '认不出的关卡 id 一律丢掉');
 });
 test('多牌组：旧存档的一套牌变成牌组一，不合法的丢掉', () => {

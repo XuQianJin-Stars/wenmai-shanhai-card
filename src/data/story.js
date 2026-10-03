@@ -377,15 +377,26 @@ const chapter = (n, short, prologue, desc) => {
   return { n, key: levels[0].id.replace(/-\d+$/, ''), short, title: `第${numeral(n)}章 · ${short}`, num: numeral(n), prologue, desc, levels };
 };
 
-// 章节顺序 = 中国神话 → 朝代编年 → 传承 → 终章。想插一章进去，改这里的章号即可，
-// 关卡 id 用的是朝代拼音（shenhua-1 / xianqin-1 …）而不是章号，重排不会动到存档。
+// 游玩顺序按历史事件，不按这些章当初写下来的先后。
+// 敦煌放在南北朝之后、长安之前：窟始凿于十六国，玄奘与盛唐洞窟则贴着大唐。
+// 海丝收在蒙元之后：序里的刺桐港是宋元，走出去的远航落到明初郑和。
+// 天一阁（嘉靖）、天工开物（明末）先于市井章里收到清中叶的小说；非遗是还活在手上的传统，紧挨当下。
+const HISTORY = ['shenhua', 'xianqin', 'chuci', 'qinhan', 'sanguo', 'weijin', 'nanbei', 'dunhuang', 'datang', 'wudai', 'liangsong', 'mengyuan', 'haisi', 'guizang', 'tiangong', 'shijing', 'wanqing', 'minguo', 'feiyi', 'dangdai'];
 export const CHAPTERS = [
   chapter(1, '上古神话篇', PROLOGUE, '书斋之中，泛黄典籍里溢出一缕金光。'),
   chapter(7, '大唐气象篇', PROLOGUE2, '典籍里的诗只剩半句，铜镜映出黄昏的长安。'),
   chapter(12, '非遗薪传篇', PROLOGUE3, '铜镜蒙尘。有一种文脉不写在书上，只活在人手里。'),
   ...LATE_CHAPTERS.map((C) => chapter(C.n, C.short, C.prologue, C.desc)),
   ...ERA_CHAPTERS.map((C) => chapter(C.n, C.short, C.prologue, C.desc)),
-].sort((a, b) => a.n - b.n);
+].sort((a, b) => HISTORY.indexOf(a.key) - HISTORY.indexOf(b.key));
+CHAPTERS.forEach((C, i) => {
+  C.n = i + 1;
+  C.num = numeral(C.n);
+  C.title = `第${C.num}章 · ${C.short}`;
+  for (const L of C.levels) L.chapter = C.n;
+  if (C.prologue?.title?.startsWith('第')) C.prologue.title = C.prologue.title.replace(/^第.+?章/, `第${C.num}章`);
+});
+LEVELS.sort((a, b) => (a.chapter ?? 1) - (b.chapter ?? 1));
 /** Closing banner for a chapter's last 'end' cue. */
 export const chapterEnd = (n) => {
   const C = CHAPTERS.find((x) => x.n === n) ?? CHAPTERS[0], next = CHAPTERS.find((x) => x.n === n + 1);
