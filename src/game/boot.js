@@ -337,7 +337,7 @@ export async function boot(params, fontsReady) {
         h('div.level-no', { text: ['一', '二', '三', '四', '五'][k] }),
         h('div.level-main', h('div.level-t', { text: L.title }), h('div.level-d', { text: L.desc }),
           h('div.level-r', { text: `首通奖励：碎片 ×${L.reward.fragments}${L.reward.unlock.length ? ' · 解锁 ' + L.reward.unlock.map((id) => card(id).name).join('、') : ''}` })),
-        done ? h('div.level-seal', { text: '已通' }) : null,
+        done ? h('div.level-seal', { text: '通关' }) : null,
         portraitEl(L.enemy.portrait, 84, i + 3)));
     });
     const next = CHAPTERS.find((x) => x.n === C.n + 1);
