@@ -90,7 +90,7 @@ export function startBattle(ctx, cfg) {
       // 教学关的牌序和提示是按固定起手写死的，修行加成会打乱它，所以那一关不带加成。
       { name: '守护者', deck: cfg.playerDeck ?? save.data.deck, grades: save.grades(), ordered: !!cfg.ordered,
         boon: cfg.tutorial ? null : save.boon() },
-      { name: cfg.enemy.name, deck: cfg.enemy.deck, grades: cfg.enemy.grades ?? {}, hp: cfg.enemy.hp, passive: cfg.enemy.passive, ordered: !!cfg.enemy.ordered },
+      { name: cfg.enemy.name, deck: cfg.enemy.deck, grades: cfg.enemy.grades ?? {}, hp: cfg.enemy.hp, passive: cfg.enemy.passive, ordered: !!cfg.enemy.ordered, boon: cfg.enemy.boon },
     ],
   });
   const ai = createAI({ level: cfg.ai ?? 'normal', seed: seed ^ 0x5bd1 });

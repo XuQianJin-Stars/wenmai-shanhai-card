@@ -14,7 +14,7 @@ import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue,
 import { eraMap } from '../ui/eraMap.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
-import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, DECK_SIZE, MAX_COPIES } from '../data/story.js';
+import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, practiceEnemy, DECK_SIZE, MAX_COPIES } from '../data/story.js';
 import { GUARDIAN } from '../data/guardian.js';
 import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
 import { RELIC_IMAGES } from '../data/relicImages.js';
@@ -456,16 +456,21 @@ export async function boot(params, fontsReady) {
     const body = frame('自由对战', { back: mainMenu });
     let level = 'normal';
     const payout = h('span.dim');
-    const showPayout = () => { const R = practiceReward(level); payout.textContent = `胜利 +${R.win} 碎片 · 失败 +${R.loss}`; };
+    const note = h('div.dim');
+    const showPayout = () => {
+      const R = practiceReward(level);
+      payout.textContent = `胜利 +${R.win} 碎片 · 失败 +${R.loss}`;
+      note.textContent = level === 'hard' ? '宗师：对手气血 +8，灵将皆为珍品，开局多 1 点灵力' : '';
+    };
     showPayout();
     const diff = h('div.seg', [['easy', '入门'], ['normal', '寻常'], ['hard', '宗师']].map(([k, t]) => h('button' + (k === level ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); level = k; showPayout(); diff.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); } })));
     const prob = deckProblem(save.data.deck);
     if (prob) body.append(h('div.warn', { text: `当前牌组不可用：${prob}` }));
-    body.append(h('div.row', h('span', { text: '出战：' }), deckSwitch(() => practice()), h('span', { text: '难度：' }), diff, payout),
+    body.append(h('div.row', h('span', { text: '出战：' }), deckSwitch(() => practice()), h('span', { text: '难度：' }), diff, payout), note,
       h('div.opps', PRACTICE.map((P, i) => h('div.opp', { onclick: async () => {
         if (prob) { audio.sfx('error'); toast('请先在「牌组编成」中组好 20 张牌'); return; }
         audio.sfx('click');
-        const L = { ...P, ai: level, playerFirst: Math.random() < 0.5 };
+        const L = { ...P, enemy: practiceEnemy(P.enemy, level), ai: level, playerFirst: Math.random() < 0.5 };
         for (;;) {
           const res = await fight(L, battleCfg(L, { title: P.title }));
           const R = practiceReward(L.ai);
@@ -512,10 +517,25 @@ export async function boot(params, fontsReady) {
     const body = frame('卡牌图鉴 · 升阶', { back: () => { hideViewer(); mainMenu(); } });
     const all = [...PLAYER_CARD_IDS, ...Object.keys(CARDS).filter((id) => CARDS[id].zhuo)];
     let filter = 'all';
+    let bond = 'all';
     const grid = h('div.grid');
     const side = h('div.side');
+    const rank = (ids) => Math.min(...ids.map((id) => { const i = PLAYER_CARD_IDS.indexOf(id); return i < 0 ? 1e9 : i; }));
+    const groups = Object.entries(BONDS)
+      .map(([k, B]) => ({ k, name: B.name, ids: B.members.filter((id) => CARDS[id]?.type === 'general' && !CARDS[id].zhuo) }))
+      .filter((g) => g.ids.length)
+      .sort((a, b) => rank(a.ids) - rank(b.ids));
+    const loose = all.some((id) => { const d = CARDS[id]; return d.type === 'general' && !d.zhuo && !(d.bonds ?? []).length; });
+    const bondRow = h('div.bond-row', [['all', '全部'], ...groups.map((g) => [g.k, g.name]), ...(loose ? [['none', '散将']] : [])].map(([k, t]) =>
+      h('button' + (k === bond ? '.on' : ''), { text: t, onclick: (e) => {
+        audio.sfx('click'); bond = k;
+        bondRow.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+        e.target.classList.add('on');
+        e.target.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+        draw();
+      } })));
     const tabs = h('div.seg', [['all', '全部'], ['general', '灵将'], ['talisman', '符箓'], ['wenmai', '文脉'], ['artifact', '器物'], ['formation', '阵法'], ['zhuo', '浊灵']].map(([k, t]) =>
-      h('button' + (k === filter ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); filter = k; tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } })));
+      h('button' + (k === filter ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); filter = k; bondRow.classList.toggle('show', filter === 'general'); tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } })));
     let drawGen = 0;
     let ready = onReady;
     const finish = () => { const fn = ready; ready = null; fn?.(); };
@@ -525,7 +545,13 @@ export async function boot(params, fontsReady) {
       clear(grid);
       const ids = all.filter((id) => {
         const d = CARDS[id];
-        return filter === 'zhuo' ? d.zhuo : filter === 'all' || (!d.zhuo && d.type === filter);
+        if (filter === 'zhuo') return !!d.zhuo;
+        if (filter !== 'all' && (d.zhuo || d.type !== filter)) return false;
+        if (filter === 'general' && bond !== 'all') {
+          const bs = d.bonds ?? [];
+          return bond === 'none' ? bs.length === 0 : bs.includes(bond);
+        }
+        return true;
       });
       let i = 0;
       const step = () => {
@@ -570,7 +596,7 @@ export async function boot(params, fontsReady) {
       // 洞的尺寸要等进文档才量得准，下一帧再摆 3D 卡。
       requestAnimationFrame(() => placeViewer(id, owned ? g : 0, hole));
     }
-    body.append(h('div.coll', h('div.coll-left', tabs, grid), side));
+    body.append(h('div.coll', h('div.coll-left', tabs, bondRow, grid), side));
     // 空当宽度是量出来的，窗口一变 / iPad 转屏 / 分屏都不作数了，得重新摆。
     let t = 0;
     const relayout = () => {

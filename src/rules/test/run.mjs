@@ -3,7 +3,7 @@ import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, canPlay,
 import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
-import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward } from '../../data/story.js';
+import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward, practiceEnemy } from '../../data/story.js';
 import { insertCard, deckProblem, migrateSave } from '../../game/save.js';
 import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
 import { CHAPTERS } from '../../data/story.js';
@@ -839,6 +839,18 @@ test('碎片奖励随难度递增，未知难度落回寻常', () => {
   for (const R of [e, n, hd]) ok(R.loss < R.win, '输了拿的必须比赢了少');
   eq(practiceReward(undefined).win, n.win, '故事关没写 ai 时按寻常算');
   for (const L of LEVELS) ok(['easy', 'normal', 'hard'].includes(L.ai), `${L.id} 的难度要在表里，不然重打只能按寻常给`);
+});
+test('宗师自由对战单独加强，寻常和故事关不动', () => {
+  const base = PRACTICE[0].enemy;
+  eq(practiceEnemy(base, 'normal'), base);
+  eq(practiceEnemy(base, 'easy'), base);
+  const hard = practiceEnemy(base, 'hard');
+  eq(hard.hp, base.hp + 8);
+  eq(hard.boon.mana, 1);
+  for (const id of new Set(base.deck)) if (CARDS[id].type === 'general') ok(hard.grades[id] >= 1, `${id} 宗师至少珍品`);
+  const graded = PRACTICE.find((p) => p.enemy.grades);
+  for (const [id, g] of Object.entries(graded.enemy.grades)) eq(practiceEnemy(graded.enemy, 'hard').grades[id], Math.min(2, g + 1), id);
+  eq(LEVELS[0].enemy.hp, practiceEnemy(LEVELS[0].enemy, 'normal').hp);
 });
 test('decks reference real cards and are 20 long', () => {
   eq(STARTER_DECK.length, DECK_SIZE);

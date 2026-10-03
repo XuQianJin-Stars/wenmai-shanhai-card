@@ -1,6 +1,7 @@
 // Story mode (DT_Levels + DT_Dialogues). Chapter 1 dialogue: docs/narrative/STORY_CHAPTER_1.md (verbatim lines).
 // Chapters 2–3 are written here; chapters 4–10 live in storyLate.js. All of them are original text built on the
 // scene settings in docs/narrative/LORE_BIBLE.md §2 — quoted classical lines are real and named in place.
+import { CARDS } from './cards.js';
 import { LATE_CHAPTERS, LATE_PRACTICE, LATE_SPEAKERS } from './storyLate.js';
 import { ERA_CHAPTERS, ERA_PRACTICE, ERA_SPEAKERS } from './storyEra.js';
 
@@ -435,3 +436,19 @@ export const REWARD_PRACTICE = {
   hard: { win: 12, loss: 3 },
 };
 export const practiceReward = (ai) => REWARD_PRACTICE[ai] ?? REWARD_PRACTICE.normal;
+
+// 宗师只加在自由对战。寻常和入门仍用表里的原对手；故事关自己写了 ai，不走这里。
+const MASTER_HP = 8;
+const MASTER_MANA = 1;
+export function practiceEnemy(enemy, ai) {
+  if (ai !== 'hard' || !enemy) return enemy;
+  const grades = { ...(enemy.grades ?? {}) };
+  for (const id of new Set([...enemy.deck, ...Object.keys(grades)])) {
+    const had = enemy.grades?.[id] ?? 0;
+    let g = had;
+    if (CARDS[id]?.type === 'general') g = Math.max(g, 1);   // 凡品灵将放不出技能，宗师要放
+    if (had >= 1) g = Math.min(2, had + 1);                   // 本来就是珍品的，再进一阶
+    if (g) grades[id] = g;
+  }
+  return { ...enemy, hp: (enemy.hp ?? 40) + MASTER_HP, grades, boon: { ...(enemy.boon ?? {}), mana: (enemy.boon?.mana ?? 0) + MASTER_MANA } };
+}

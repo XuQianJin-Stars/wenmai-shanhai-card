@@ -20,6 +20,11 @@ button { font: inherit; color: inherit; }
 .seg button { cursor: pointer; background: rgba(20, 18, 15, 0.6); border: 0; padding: 6px 14px; color: var(--paper2); letter-spacing: 0.1em; }
 .seg button + button { border-left: 1px solid rgba(200, 160, 74, 0.3); }
 .seg button.on { background: var(--cinnabar); color: #fff; }
+/* 灵将页的第二排：按卡牌组筛。宽屏折行，矮屏横滑，免得把牌墙挤没。 */
+.bond-row { display: none; flex: none; gap: 6px; overflow: auto; overscroll-behavior: contain; padding: 1px 2px 2px; scrollbar-width: thin; }
+.bond-row.show { display: flex; flex-wrap: wrap; }
+.bond-row button { flex: none; cursor: pointer; background: rgba(20, 18, 15, 0.45); color: var(--paper2); border: 1px solid rgba(200, 160, 74, 0.45); border-radius: 2px; padding: 5px 12px; letter-spacing: 0.12em; font-size: 13px; }
+.bond-row button.on { background: var(--cinnabar); color: #fff6ea; border-color: transparent; }
 
 /* screens */
 .screen { position: absolute; inset: 0; display: none; }
@@ -589,6 +594,7 @@ button { font: inherit; color: inherit; }
   .btn { padding: 12px 22px; }
   .icon-btn { width: 44px; height: 44px; }
   .seg button { padding: 11px 18px; }
+  .bond-row button { min-height: 44px; padding: 8px 14px; }
   /* 竖条本身 52px 已经够点，不要再把每一章垫到 44px 高，iPhone 横屏排不下。 */
   .ch-tabs .tab { padding: 6px 0; }
   .deck-row { padding: 9px 8px; }
@@ -679,6 +685,8 @@ button { font: inherit; color: inherit; }
 .short .ch-tabs { width: 40px; }
 .short .ch-tabs .tab { padding: 1px 0; font-size: 13px; }
 .short .ch-tabs .ch-step { font-size: 9px; padding: 2px 0; }
+.short .bond-row.show { flex-wrap: nowrap; }
+.short .bond-row button { min-height: 36px; padding: 4px 10px; font-size: 12px; letter-spacing: 0.06em; }
 .short .coll { gap: 8px; }
 .short .coll .side { width: min(200px, 36vw); max-width: 200px; }
 .short .side-face { width: min(100px, 62%); margin-bottom: 6px; }
