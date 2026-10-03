@@ -31,19 +31,52 @@ export const clear = (e) => { while (e.firstChild) e.firstChild.remove(); return
 const coarse = matchMedia('(pointer: coarse)');
 export const touch = () => coarse.matches;
 
-/** A <canvas> element showing a card face (copied from the texture cache). */
-export function faceEl(id, grade = 0, { w = 256, cls = '' } = {}) {
+const faceJobs = [];
+let facePumping = false;
+function paintFace(el, id, grade) {
   const src = faceCanvas(id, grade);
+  if (el.width !== src.width || el.height !== src.height) { el.width = src.width; el.height = src.height; }
+  el.getContext('2d').drawImage(src, 0, 0);
+  delete el.dataset.defer;
+  delete el.dataset.painting;
+}
+function pumpFaces() {
+  const t0 = performance.now();
+  while (faceJobs.length && performance.now() - t0 < 10) {
+    const job = faceJobs.shift();
+    if (!job.el.isConnected) { delete job.el.dataset.painting; continue; }
+    paintFace(job.el, job.id, job.grade);
+  }
+  if (faceJobs.length) requestAnimationFrame(pumpFaces);
+  else facePumping = false;
+}
+function scheduleFacePaint(el, id, grade) {
+  if (el.dataset.painting === '1') return;
+  el.dataset.painting = '1';
+  faceJobs.push({ el, id, grade });
+  if (!facePumping) { facePumping = true; requestAnimationFrame(pumpFaces); }
+}
+
+/** A <canvas> element showing a card face (copied from the texture cache). `defer` leaves it blank until something calls scheduleFacePaint. */
+export function faceEl(id, grade = 0, { w = 256, cls = '', defer = false } = {}) {
   const c = h('canvas.face' + (cls ? '.' + cls : ''), { 'data-card-id': id, 'data-card-grade': String(grade) });
-  c.width = src.width; c.height = src.height;
-  c.getContext('2d').drawImage(src, 0, 0);
   c.style.width = `${w}px`;
+  if (defer) {
+    c.width = 2; c.height = 3;
+    const g = c.getContext('2d'); g.fillStyle = '#f3ecdd'; g.fillRect(0, 0, 2, 3);
+    c.style.aspectRatio = '512 / 720';
+    c.style.height = 'auto';
+    c.dataset.defer = '1';
+    return c;
+  }
+  paintFace(c, id, grade);
   return c;
 }
+export { scheduleFacePaint };
 onCustomArtLoad((id) => {
   for (const el of document.querySelectorAll(`canvas.face[data-card-id="${CSS.escape(id)}"]`)) {
-    const src = faceCanvas(id, Number(el.dataset.cardGrade || 0));
-    el.getContext('2d').drawImage(src, 0, 0);
+    if (el.dataset.defer === '1') continue;
+    scheduleFacePaint(el, id, Number(el.dataset.cardGrade || 0));
   }
 });
 // Custom portrait images: motif → image URL. Loaded async, drawn after procedural placeholder.
@@ -187,7 +220,14 @@ export function cardInfo(id, grade = 0, { live = null, cost = null } = {}) {
   }
   if (d.up) box.append(h('div.info-skill' + (grade >= 1 ? '' : '.locked'), h('b', { text: '【珍品】' }), ' ', d.up, grade >= 1 ? '' : h('i', { text: '（升阶后生效）' })));
   if (live?.st?.length) box.append(h('div.info-status', { text: '状态：' + [...new Set(live.st)].map((k) => STATUS_ZH[k] ?? k).join('、') }));
-  if (d.bonds?.length) box.append(h('div.info-bonds', d.bonds.map((b) => h('span.bond-chip', { title: BONDS[b].text, text: `${BONDS[b].name}·${BONDS[b].title}` }))));
+  if (d.bonds?.length || d.rank) {
+    const row = h('div.info-bonds', d.bonds?.map((b) => h('span.bond-chip', { title: BONDS[b].text, text: `${BONDS[b].name}·${BONDS[b].title}` })));
+    if (d.rank) row.append(h('span.info-rank', {
+      title: d.rank.n <= 36 ? '三十六天罡' : '七十二地煞',
+      text: `第${d.rank.n}位 · ${d.rank.star}星`,
+    }));
+    box.append(row);
+  }
   if (d.quote) box.append(h('blockquote.info-quote', h('div', { text: d.quote }), h('cite', { text: d.source })));
   if (d.flavor) box.append(h('div.info-flavor', { text: d.flavor }));
   return box;

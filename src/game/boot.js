@@ -10,7 +10,7 @@ import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
 import { createSave, deckProblem, MAX_DECKS } from './save.js';
 import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
-import { h, clear, faceEl, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
+import { h, clear, faceEl, scheduleFacePaint, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
 import { eraMap } from '../ui/eraMap.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
@@ -537,11 +537,13 @@ export async function boot(params, fontsReady) {
     const tabs = h('div.seg', [['all', '全部'], ['general', '灵将'], ['talisman', '符箓'], ['wenmai', '文脉'], ['artifact', '器物'], ['formation', '阵法'], ['zhuo', '浊灵']].map(([k, t]) =>
       h('button' + (k === filter ? '.on' : ''), { text: t, onclick: (e) => { audio.sfx('click'); filter = k; bondRow.classList.toggle('show', filter === 'general'); tabs.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); draw(); } })));
     let drawGen = 0;
+    let faceObs = null;
     let ready = onReady;
     const finish = () => { const fn = ready; ready = null; fn?.(); };
-    screenAbort.signal.addEventListener('abort', finish);
+    screenAbort.signal.addEventListener('abort', () => { faceObs?.disconnect(); finish(); });
     function draw() {
       const gen = ++drawGen;
+      faceObs?.disconnect();
       clear(grid);
       const ids = all.filter((id) => {
         const d = CARDS[id];
@@ -553,23 +555,33 @@ export async function boot(params, fontsReady) {
         }
         return true;
       });
-      let i = 0;
-      const step = () => {
-        if (gen !== drawGen || screenAbort.signal.aborted) return;
-        const t0 = performance.now();
-        while (i < ids.length && performance.now() - t0 < 14) {
-          const id = ids[i++];
-          const d = CARDS[id];
-          const owned = d.zhuo || save.owns(id), g = save.grade(id);
-          grid.append(h('div.cell' + (owned ? '' : '.locked') + (sel === id ? '.sel' : ''), { onclick: () => { audio.sfx('pick'); sel = id; draw(); pickCard(id); } },
-            faceEl(id, owned ? g : 0, { w: 118 }),
-            !owned ? h('div.lock', { text: '未解锁' }) : g ? h('div.grade-tag.g' + g, { text: GRADE_ZH[g] }) : null,
-            owned && !d.zhuo && save.canUpgrade(id) ? h('div.up-dot', { title: '可升阶' }) : null));
+      // 先把空格子摆上，牌面和后到的绘稿都等滚进视口再画，铺开图鉴不用等全部画完。
+      const obs = new IntersectionObserver((entries) => {
+        if (gen !== drawGen) return;
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          obs.unobserve(e.target);
+          scheduleFacePaint(e.target, e.target.dataset.cardId, Number(e.target.dataset.cardGrade || 0));
         }
-        if (i < ids.length) requestAnimationFrame(step);
-        else finish();
-      };
-      step();
+      }, { root: grid, rootMargin: '280px' });
+      faceObs = obs;
+      for (const id of ids) {
+        const d = CARDS[id];
+        const owned = d.zhuo || save.owns(id), g = save.grade(id);
+        const face = faceEl(id, owned ? g : 0, { w: 118, defer: true });
+        const cell = h('div.cell' + (owned ? '' : '.locked') + (sel === id ? '.sel' : ''), { onclick: () => {
+          audio.sfx('pick'); sel = id;
+          grid.querySelector('.cell.sel')?.classList.remove('sel');
+          cell.classList.add('sel');
+          pickCard(id);
+        } },
+          face,
+          !owned ? h('div.lock', { text: '未解锁' }) : g ? h('div.grade-tag.g' + g, { text: GRADE_ZH[g] }) : null,
+          owned && !d.zhuo && save.canUpgrade(id) ? h('div.up-dot', { title: '可升阶' }) : null);
+        grid.append(cell);
+        obs.observe(face);
+      }
+      finish();
     }
     function pickCard(id) {
       clear(side);

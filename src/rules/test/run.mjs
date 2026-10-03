@@ -852,6 +852,20 @@ test('宗师自由对战单独加强，寻常和故事关不动', () => {
   for (const [id, g] of Object.entries(graded.enemy.grades)) eq(practiceEnemy(graded.enemy, 'hard').grades[id], Math.min(2, g + 1), id);
   eq(LEVELS[0].enemy.hp, practiceEnemy(LEVELS[0].enemy, 'normal').hp);
 });
+test('水浒座次按石碣，同一人的场面共用一座', () => {
+  const liang = Object.values(CARDS).filter((c) => c.faction === '梁山' && c.type === 'general');
+  for (const c of liang) ok(c.rank && c.rank.n >= 1 && c.rank.n <= 108 && c.rank.star, `${c.id} 要有座次`);
+  eq(CARDS['LJ-107'].rank.n, 1); eq(CARDS['LJ-107'].rank.star, '天魁');
+  eq(CARDS['LJ-122'].rank.n, 36); eq(CARDS['LJ-137'].rank.n, 37); eq(CARDS['LJ-212'].rank.n, 108);
+  eq(CARDS['LJ-112'].rank.n, CARDS['LJ-150'].rank.n);
+  eq(CARDS['LJ-120'].rank.n, CARDS['LJ-128'].rank.n);
+  const seen = new Map();
+  for (const c of liang) {
+    const prev = seen.get(c.rank.n);
+    if (prev) ok(prev === c.rank.star, `${c.id} 的第${c.rank.n}位不该是另一颗星`);
+    seen.set(c.rank.n, c.rank.star);
+  }
+});
 test('decks reference real cards and are 20 long', () => {
   eq(STARTER_DECK.length, DECK_SIZE);
   for (const L of [...LEVELS, ...PRACTICE]) {

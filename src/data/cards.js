@@ -10,6 +10,7 @@ import { MYTH_CARDS, MYTH_WENMAI, MYTH_BOND } from './cardsMyth.js';
 import { ERA_CARDS, ERA_BONDS } from './cardsEra.js';
 import { FORMATIONS, FORMATION_BOND } from './cardsForm.js';
 import { CAST_CARDS } from './cardsCast.js';
+import { SHUIHU_GANG, SHUIHU_SHA, SHUIHU_ARTIFACTS, SHUIHU_FORMATIONS, SHUIHU_WENMAI, SHUIHU_BONDS } from './cardsWater.js';
 
 // type: general 灵将 | talisman 符箓 | wenmai 文脉 | artifact 器物 | formation 阵法
 // el:   metal 金 | wood 木 | water 水 | fire 火 | earth 土
@@ -61,6 +62,7 @@ export const BONDS = {
   ...MYTH_BOND,
   ...ERA_BONDS,
   ...FORMATION_BOND,
+  ...SHUIHU_BONDS,
   shisheng: { name: '诗文组', title: '李杜文章', members: ['LJ-010', 'LJ-011', 'LJ-012'],
     text: '李白+杜甫同时在场：诗文组灵将 ATK/DEF +1（持续），激活时抽 1 张牌；再有苏轼在场：我方主将每回合开始回复 1 点 HP。',
     line: '李杜文章在，光焰万丈长。——韩愈《调张籍》' },
@@ -348,6 +350,11 @@ for (const c of MYTH_CARDS) add(c);          // 人间诸神 (src/data/cardsMyth
 for (const c of ERA_CARDS) add(c);           // 第十四至二十章 (src/data/cardsEra.js)
 for (const c of FORMATIONS) add(c);          // 阵法 (src/data/cardsForm.js)
 for (const c of CAST_CARDS) add(c);          // 八仙、三国、封神补全 (src/data/cardsCast.js)
+for (const c of SHUIHU_GANG) add(c);         // 水浒36天罡 (src/data/cardsWater.js)
+for (const c of SHUIHU_SHA) add(c);          // 水浒72地煞核心
+for (const c of SHUIHU_ARTIFACTS) add(c);    // 水浒器物
+for (const c of SHUIHU_FORMATIONS) add(c);   // 水浒阵法
+for (const c of SHUIHU_WENMAI) add(c);       // 水浒文脉
 add(XIYOU_WENMAI);
 add(MYTH_WENMAI);
 for (const c of ARTIFACTS) add({ bonds: [], quote: '', source: '本作原创（LORE_BIBLE）', ...c });   // 器物 (src/data/artifacts.js)
