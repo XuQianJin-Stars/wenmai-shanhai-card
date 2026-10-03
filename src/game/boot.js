@@ -8,7 +8,7 @@ import { createFx } from '../render/fx.js';
 import { CardMesh, CARD_W, CARD_H } from '../render/cardMesh.js';
 import { tween, ease, wait } from '../render/tween.js';
 import { createAudio } from '../audio/audio.js';
-import { createSave, deckProblem, MAX_DECKS } from './save.js';
+import { createSave, deckProblem, MAX_DECKS, rewardFillsDeck } from './save.js';
 import { startBattle, battleCamPos, BATTLE_CAM } from './battle.js';
 import { h, clear, faceEl, scheduleFacePaint, cardInfo, portraitEl, banner, toast, modal, dialogue, setLayer, fade, touch } from './ui.js';
 import { eraMap } from '../ui/eraMap.js';
@@ -243,6 +243,14 @@ export async function boot(params, fontsReady) {
   const chapterOpen = (C) => C.n === 1 || save.isDone(CHAPTERS[C.n - 2].levels.at(-1).id);
   const seenOf = (C) => save.sawPrologue(C.n);
   const chapterOf = (L) => CHAPTERS.find((C) => C.levels.some((x) => x.id === L.id)) ?? CHAPTERS[0];
+  const unlockBrief = (ids) => !ids.length ? '' : ids.length <= 4
+    ? ' · 解锁 ' + ids.map((id) => card(id).name).join('、')
+    : ` · 解锁 ${ids.length} 张`;
+  const lockHint = (id) => {
+    const L = LEVELS.find((l) => l.reward.unlock.includes(id));
+    if (!L) return '尚未解锁。';
+    return `尚未解锁：通关「${chapterOf(L).short} · ${L.title}」获得。`;
+  };
   let storyTab = null;
   function storyMap(n = storyTab) {
     setStage('menu'); menuCam(); hideViewer();
@@ -338,7 +346,7 @@ export async function boot(params, fontsReady) {
       list.append(h('div.level' + (open ? '' : '.locked') + (done ? '.done' : ''), { onclick: () => { if (!open) { audio.sfx('error'); toast(seen ? '先完成上一关' : '先观看序章'); return; } audio.sfx('click'); runLevel(L); } },
         h('div.level-no', { text: ['一', '二', '三', '四', '五'][k] }),
         h('div.level-main', h('div.level-t', { text: L.title }), h('div.level-d', { text: L.desc }),
-          h('div.level-r', { text: `首通奖励：碎片 ×${L.reward.fragments}${L.reward.unlock.length ? ' · 解锁 ' + L.reward.unlock.map((id) => card(id).name).join('、') : ''}` })),
+          h('div.level-r', { text: `首通奖励：碎片 ×${L.reward.fragments}${unlockBrief(L.reward.unlock)}` })),
         done ? h('div.level-seal', { text: '通关' }) : null,
         portraitEl(L.enemy.portrait, 84, i + 3)));
     });
@@ -414,7 +422,11 @@ export async function boot(params, fontsReady) {
       const R = practiceReward(L.ai);      // 重打按关卡本身的难度给，前期的关卡刷不出后期的量
       const reward = { fragments: res.won ? (first ? L.reward.fragments : R.win) : R.loss, unlock: [] };
       if (first) {
-        for (const id of L.reward.unlock) if (save.unlock(id)) { reward.unlock.push(id); const out = save.autoInsert(id); if (out) (reward.swapped ??= []).push([id, out]); }
+        const fillDeck = rewardFillsDeck(L.reward.unlock);
+        for (const id of L.reward.unlock) if (save.unlock(id)) {
+          reward.unlock.push(id);
+          if (fillDeck) { const out = save.autoInsert(id); if (out) (reward.swapped ??= []).push([id, out]); }
+        }
         save.complete(L.id);
         if (L.id === C.levels.at(-1).id) chapterFresh = true;
       }
@@ -438,12 +450,13 @@ export async function boot(params, fontsReady) {
     clear(screen);
     screen.className = 'screen show result-screen';
     return new Promise((resolve) => {
-      const unlocks = reward.unlock.map((id) => h('div.unlock', faceEl(id, 0, { w: 150 }), h('div', { text: `解锁「${card(id).name}」` })));
+      const many = reward.unlock.length > 8;
+      const unlocks = reward.unlock.map((id) => h('div.unlock', faceEl(id, 0, { w: many ? 86 : 150 }), h('div', { text: many ? (card(id).short || card(id).name) : `解锁「${card(id).name}」` })));
       screen.append(h('div.result' + (res.won ? '.win' : '.lose'),
         h('div.result-big', { text: res.won ? '胜' : '败' }),
         h('div.result-sub', { text: res.forfeited ? '认输离场' : res.won ? `历经 ${res.turns} 回合，文脉得续。` : res.reason === 'deck' ? '牌库耗尽，功亏一篑。' : '文脉黯淡……再整旗鼓。' }),
         h('div.result-reward', h('span.frag-ico'), h('span', { text: `文脉碎片 +${reward.fragments}` }), h('span.dim', { text: `（共 ${save.data.fragments}）` })),
-        unlocks.length ? h('div.unlocks', unlocks) : null,
+        unlocks.length ? h('div.unlocks' + (many ? '.many' : ''), unlocks) : null,
         unlocks.length ? h('div.dim', { text: reward.swapped?.length
           ? `已自动编入「${save.deckName()}」：${reward.swapped.map(([a, b]) => `「${card(a).name}」替换「${card(b).name}」`).join('，')}。可在「牌组编成」中调整。`
           : '新卡牌已加入图鉴，可在「牌组编成」中使用。' }) : null,
@@ -605,7 +618,7 @@ export async function boot(params, fontsReady) {
       paper.append(cardInfo(id, owned ? g : 0));
       if (d.lore) paper.append(h('div.lore', h('b', { text: '典故　' }), d.lore));
       for (const r of RELICS_BY_CARD[id] ?? []) paper.append(relicCard(r));
-      if (!owned) paper.append(h('div.warn', { text: '尚未解锁：通关故事关卡获得。' }));
+      if (!owned) paper.append(h('div.warn', { text: lockHint(id) }));
       else if (!d.zhuo) {
         const cost = save.upgradeCost(id);
         if (cost == null) paper.append(h('div.maxed', { text: '已臻极品' }));

@@ -1,5 +1,11 @@
 // 第十四至二十章。归藏传灯写的是「书还在」；这七章补先前跳过的年代，
-// 最后一章停在还没写完的现在。关卡 id 用新前缀，不改旧章号，旧存档不用迁移。
+// 最后一章停在还没写完的现在。关卡 id 用新前缀。
+// 水浒另起一章（shuihu），插在蒙元和海丝之间，旧存档的章号在 save.js 里顺延。
+import { SHUIHU_GANG, SHUIHU_SHA, SHUIHU_FORMATIONS, SHUIHU_WENMAI } from './cardsWater.js';
+
+const GANG_IDS = SHUIHU_GANG.map((c) => c.id);
+const SHA_IDS = SHUIHU_SHA.map((c) => c.id);
+const SHA_SPLIT = Math.ceil(SHA_IDS.length / 2);
 
 const lv = (c) => ({ playerFirst: true, ai: 'normal', ...c });
 const PAD = ['ZL-001', 'ZL-002', 'ZL-007', 'ZL-008', 'ZL-013', 'ZL-014', 'FL-002', 'FL-003', 'FL-004', 'ZL-006'];
@@ -411,6 +417,75 @@ export const ERA_CHAPTERS = [
         { who: '', text: '当代传灯篇 · 终　　文脉不绝，代代有人', stage: 'end' },
       ] }),
   ]),
+
+  ch(21, '水浒梁山篇', '一百零八个名字散在茶馆里。写成书之前，它们只是被人讲丢的故事。', {
+    id: 'prologue21', title: '第二十一章 序 · 石碣', scene: 'study',
+    lines: [
+      { who: '旁白', text: '灯花爆了一下。桌上多出一块石头，石头上有字，字是倒着的。' },
+      { who: '', text: '（石面潮乎乎的，像刚从水里捞上来。名字排成两列，有的已经模糊。）', stage: 'glow' },
+      { who: '守护者', text: '这是名册？' },
+      { who: '女娲之灵', text: '是小说里的名册。正史不收他们，茶馆里却人人能报出几个。' },
+      { who: '守护者', text: '那文脉断在哪儿？' },
+      { who: '女娲之灵', text: '断在「只记得几个」。宋江、林冲、鲁智深，后面的人一个个从嘴里消失。' },
+      { who: '女娲之灵', text: '书把一百零八个名字钉在一起。书没被人翻开的时候，名字就散回水泊里。' },
+      { who: '', text: '（镜面起了雾。雾后面是一片芦苇，苇丛里有人举着火把，火把照不见脸。）', stage: 'mirror' },
+    ],
+  }, [
+    lv({ id: 'shuihu-1', title: '第一关 · 天罡', scene: 'chu', variant: 'marsh',
+      desc: '水泊边缘，三十六天罡的名字还浮在水上。聚义残影会把散掉的名字重新搅浑。',
+      enemy: { name: '聚义残影', hp: 42, portrait: 'swordsman', deck: deck(['ZL-023', 'ZL-023', 'ZL-024', 'ZL-024', 'ZL-016', 'ZL-008', 'ZL-014']) },
+      reward: { fragments: 50, unlock: [...GANG_IDS] },
+      pre: [
+        { who: '', text: '（芦苇荡里漂着竹牌，每块牌上一个名字。风一吹，牌就扣过去。）' },
+        { who: '女娲之灵', text: '天罡三十六。上面的人还被人记得，下面的人已经只剩绰号。' },
+        { who: '守护者', text: '绰号也是名字。' },
+        { who: '女娲之灵', text: '绰号好记。好记的东西先留下，人反而先走。' },
+      ],
+      post: [
+        { who: '', text: '（竹牌一张张翻过来，字稳定了。水边站着一个押司打扮的人，腰里没有刀。）', stage: 'card:LJ-107' },
+        { who: '宋江之灵', text: '浔阳楼那两句是酒后写的。写完，郓城就回不去了。' },
+        { who: '守护者', text: '你把他们都召上山？' },
+        { who: '宋江之灵', text: '我召的是还肯报出名字的人。报不出的，在下一片芦苇里。' },
+      ] }),
+    lv({ id: 'shuihu-2', title: '第二关 · 逼上山', scene: 'jiangnan', variant: 'night',
+      desc: '雪夜的山神庙。地煞前半的名字卡在半道。蚀文雾灵命中后会永久削掉防御。',
+      enemy: { name: '半道风雪', hp: 48, portrait: 'scholarGhost', deck: deck(['ZL-002', 'ZL-002', 'ZL-035', 'ZL-035', 'ZL-012', 'ZL-020', 'FL-005']),
+        grades: { 'ZL-002': 1 } },
+      ai: 'hard',
+      reward: { fragments: 55, unlock: [...SHA_IDS.slice(0, SHA_SPLIT)] },
+      pre: [
+        { who: '', text: '（山神庙的门被雪顶住。庙里有人在烤火，枪靠在门边，枪上没有血。）' },
+        { who: '女娲之灵', text: '这一段最常被人讲。讲来讲去，只剩风雪和一个被逼的人。' },
+        { who: '守护者', text: '后面还有很多人。' },
+        { who: '女娲之灵', text: '有。可听众听到这里就散了，剩下的名字没人往下说。' },
+      ],
+      post: [
+        { who: '', text: '（雪停了。枪上的霜化开，露出原本的字。）', stage: 'card:LJ-112' },
+        { who: '林冲之灵', text: '风雪山神庙人人会讲。讲完了，别把后面的人留在雪里。' },
+        { who: '守护者', text: '地煞还有一半。' },
+        { who: '林冲之灵', text: '上山的路很长。名字一个个点，才算到了。' },
+      ] }),
+    lv({ id: 'shuihu-3', title: '第三关 · 替天行道', scene: 'chu', variant: 'marsh', ai: 'hard', playerFirst: false,
+      music: 'boss',
+      desc: '忠义堂前。首领：石碣巨影——每 3 回合「焚册」，烧一张手牌，并伤我方灵将。',
+      enemy: { name: '石碣巨影', hp: 56, portrait: 'husk', passive: 'fenshu', deck: deck(['ZL-016', 'ZL-016', 'ZL-026', 'ZL-005', 'ZL-022', 'ZL-042', 'FL-006', 'FL-004']),
+        grades: { 'FL-006': 1, 'ZL-016': 1 } },
+      reward: { fragments: 80, unlock: [...SHA_IDS.slice(SHA_SPLIT), ...SHUIHU_FORMATIONS.map((c) => c.id), ...SHUIHU_WENMAI.map((c) => c.id)] },
+      pre: [
+        { who: '石碣巨影', text: '留几个响亮的就够了。一百零八个，谁记得住。' },
+        { who: '守护者', text: '记不住，就写成书。' },
+        { who: '石碣巨影', text: '写成书又怎样。书会禁，名字会从书上掉下去。' },
+        { who: '女娲之灵', text: '掉下去的，可以再捞起来。你手里那块石头，不就是捞起来的。' },
+      ],
+      post: [
+        { who: '', text: '（石碣裂开。两列名字从裂缝里升起，天罡在上，地煞在下，一个不缺。）' },
+        { who: '', text: '（堂前多了一面旗，旗下摆开三座阵。有人把这些名字抄进了一本书。）', stage: 'card:WM-032' },
+        { who: '施耐庵之灵', text: '茶馆里讲得热闹的，往往最先被讲丢。我把座位写死，就是不让人只记得前几个。' },
+        { who: '守护者', text: '阵也写进去了？' },
+        { who: '施耐庵之灵', text: '九宫、连环、水泊。人聚在一起，才有阵。散了，就只是一百零八个单独的名字。' },
+        { who: '', text: '水浒梁山篇 · 终', stage: 'end' },
+      ] }),
+  ]),
 ];
 
 export const ERA_SPEAKERS = {
@@ -422,6 +497,8 @@ export const ERA_SPEAKERS = {
   '鲁迅之灵': 'judge', '梅兰芳之灵': 'dancer', '无窗巨影': 'wuren',
   '修书人之灵': 'cottage', '开蒙先生之灵': 'poet', '绝笔巨影': 'wuren',
   '残卷武影': 'swordsman', '未送之表': 'scholarGhost',
+  '宋江之灵': 'cottage', '林冲之灵': 'swordsman', '施耐庵之灵': 'poet', '石碣巨影': 'husk',
+  '聚义残影': 'swordsman', '半道风雪': 'scholarGhost',
 };
 
 const pdeck = (ids) => {
@@ -440,6 +517,7 @@ export const ERA_PRACTICE = [
   { id: 'p-wanqing', title: '晚清 · 京张', scene: 'han', enemy: { name: '铁路学生', hp: 38, portrait: 'wanqing-student', deck: pdeck(['LJ-078', 'LJ-078', 'LJ-079', 'LJ-079', 'WM-029']) } },
   { id: 'p-minguo', title: '民国 · 铁屋', scene: 'jiangnan', variant: 'night', enemy: { name: '报社编辑', hp: 38, portrait: 'minguo-editor', deck: pdeck(['LJ-080', 'LJ-080', 'LJ-081', 'LJ-081', 'WM-030']) } },
   { id: 'p-dangdai', title: '当下 · 未干的墨', scene: 'cangshu', variant: 'court', enemy: { name: '夜班馆员', hp: 40, portrait: 'cottage', deck: pdeck(['LJ-082', 'LJ-082', 'LJ-083', 'LJ-083', 'WM-031', 'WM-031']) } },
+  { id: 'p-liangshan', title: '梁山 · 忠义堂', scene: 'chu', variant: 'marsh', enemy: { name: '梁山步将', hp: 40, portrait: 'swordsman', deck: pdeck(['LJ-107', 'LJ-107', 'LJ-108', 'LJ-112', 'LJ-117', 'LJ-120', 'WM-032', 'ZF-026']) } },
   { id: 'p-penglai', title: '蓬莱 · 八仙过海', scene: 'stage', enemy: { name: '何仙姑', hp: 36, portrait: 'LJ-086', deck: pdeck(['LJ-084', 'LJ-084', 'LJ-085', 'LJ-085', 'LJ-086', 'LJ-086', 'LJ-087', 'LJ-087', 'LJ-088', 'LJ-088', 'LJ-089', 'LJ-089']) } },
   { id: 'p-qishan', title: '岐山 · 封神台', scene: 'kunlun', variant: 'edge', enemy: { name: '闻太师', hp: 38, portrait: 'LJ-104', deck: pdeck(['LJ-099', 'LJ-099', 'LJ-100', 'LJ-100', 'LJ-101', 'LJ-101', 'LJ-104', 'LJ-104', 'LJ-106', 'LJ-106']) } },
   { id: 'p-changban', title: '长坂坡 · 当阳', scene: 'changan', variant: 'palace', enemy: { name: '赵云', hp: 38, portrait: 'LJ-091', deck: pdeck(['LJ-090', 'LJ-090', 'LJ-091', 'LJ-091', 'LJ-092', 'LJ-092', 'LJ-093', 'LJ-093']) } },

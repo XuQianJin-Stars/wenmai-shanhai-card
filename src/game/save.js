@@ -10,7 +10,7 @@ const DECK_NUM = ['一', '二', '三', '四', '五', '六'];
 export function defaultSave() {
   const starter = [...STARTER_DECK];
   return {
-    v: 4,                              // 4 = 章节按历史事件重排之后（见 reorderChapterNo）
+    v: 5,                              // 5 = 水浒梁山篇插入蒙元与海丝之间（见 insertShuihu）
     fragments: 0,
     owned: [...STARTER_CARDS],        // card ids the player may put in a deck
     grades: {},                       // id → 0 | 1 | 2  (凡 / 灵 / 圣)
@@ -44,6 +44,8 @@ const shiftChapterNo = (n) => (n >= 8 ? n + 1 : n);
 // v3 的章号是「先写到的编年 + 后补的年代挂在末尾」。v4 起按历史事件重排，序章标记要跟着走。
 const REORDER_N = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 9, 8: 11, 9: 13, 10: 16, 11: 15, 12: 19, 13: 14, 14: 5, 15: 7, 16: 10, 17: 12, 18: 17, 19: 18, 20: 20 };
 const reorderChapterNo = (n) => REORDER_N[n] ?? n;
+// v4 的第十三章是海丝。v5 把水浒插在蒙元（十二）之后，海丝及以后的章号各让一位。
+const insertShuihu = (n) => (n >= 13 ? n + 1 : n);
 
 /**
  * 把任意一坨 JSON 洗成一份合法存档：非法字段丢掉，旧版本按 v 号依次迁移。
@@ -79,7 +81,7 @@ export function migrateSave(raw) {
   d.decks = decks;
   d.deckOn = Number.isInteger(raw.deckOn) && raw.deckOn >= 0 && raw.deckOn < decks.length ? raw.deckOn : 0;
   d.deck = [...decks[d.deckOn].cards];
-  const old = !(raw.v >= 2), preSplit = !(raw.v >= 3), preReorder = !(raw.v >= 4);
+  const old = !(raw.v >= 2), preSplit = !(raw.v >= 3), preReorder = !(raw.v >= 4), preShuihu = !(raw.v >= 5);
   if (Array.isArray(raw.done)) {
     d.done = raw.done
       .map((id) => (old ? migrateLevelId(id) : id))
@@ -90,6 +92,7 @@ export function migrateSave(raw) {
   const chNo = (n) => {
     let x = preSplit ? shiftChapterNo(old ? OLD_N[n] ?? n : n) : n;
     if (preReorder) x = reorderChapterNo(x);
+    if (preShuihu) x = insertShuihu(x);
     return x;
   };
   const pro = new Set(Array.isArray(raw.seenPro)
@@ -115,8 +118,17 @@ export function migrateSave(raw) {
     d.settings.quality = ['low', 'high'].includes(s.quality) ? s.quality : 'high';
     d.settings.guardianGender = s.guardianGender === 'female' ? 'female' : 'male';
   }
+  // 关卡奖励会随版本加卡。已经打过的关，按今天的奖励表把缺的卡补进图鉴，不必再打一遍。
+  const cleared = new Set(d.done);
+  for (const L of LEVELS) {
+    if (!cleared.has(L.id)) continue;
+    for (const id of L.reward.unlock) if (PLAYER_CARD_IDS.includes(id) && !d.owned.includes(id)) d.owned.push(id);
+  }
   return d;
 }
+
+/** 一关一次解开的张数不多时，新卡会试着编入当前牌组。成批发放（如一整组梁山）只进图鉴。 */
+export const rewardFillsDeck = (ids) => ids.length <= 8;
 
 /** null if the deck is legal, otherwise a Chinese reason. */
 export function deckProblem(deck) {
@@ -156,8 +168,9 @@ export function insertCard(deck, id) {
 }
 
 export function createSave() {
+  let raw = null;
   let data;
-  try { data = migrateSave(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch { data = defaultSave(); }
+  try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); data = migrateSave(raw); } catch { data = defaultSave(); }
   const api = {
     get data() { return data; },
     write() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* private mode: progress lives for the session */ } },
@@ -252,5 +265,8 @@ export function createSave() {
     isDone(levelId) { return data.done.includes(levelId); },
     levelOpen(i) { return i === 0 || data.done.includes(LEVELS[i - 1].id); },
   };
+  // 旧存档通关了、卡却还锁着：补发之后写回去，图鉴下次打开就是新状态。
+  const had = new Set(Array.isArray(raw?.owned) ? raw.owned : []);
+  if (raw && data.owned.some((id) => !had.has(id))) api.write();
   return api;
 }

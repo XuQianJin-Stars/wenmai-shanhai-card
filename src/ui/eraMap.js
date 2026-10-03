@@ -81,6 +81,11 @@ const ERA = {
     ],
     places: [['中原', 113, 34.8], ['江南', 119, 31], ['蜀', 104, 30.7]],
   },
+  liangshan: {
+    caption: '梁山 · 水泊',
+    art: 'song',
+    places: [['梁山', 116.1, 35.8], ['汴京', 114.3, 34.8], ['江州', 116, 29.7]],
+  },
   song: {
     caption: '两宋',
     parts: [
@@ -129,7 +134,7 @@ const ERA = {
 const KEY = {
   shenhua: 'myth', xianqin: 'zhou', chuci: 'chu', qinhan: 'han', weijin: 'jin',
   sanguo: 'three', nanbei: 'split', dunhuang: 'tang', datang: 'tang', wudai: 'five',
-  liangsong: 'song', mengyuan: 'yuan', haisi: 'sea', shijing: 'ming', guizang: 'ming',
+  liangsong: 'song', mengyuan: 'yuan', shuihu: 'liangshan', haisi: 'sea', shijing: 'ming', guizang: 'ming',
   tiangong: 'craft', wanqing: 'qing', minguo: 'republic', feiyi: 'now', dangdai: 'now',
 };
 
@@ -189,7 +194,7 @@ export function eraSvg(key) {
 export function eraMap(key) {
   const era = ERA[KEY[key] ?? 'myth'];
   const base = import.meta.env.BASE_URL || './';
-  const img = `${base}card-art/era-${KEY[key] ?? 'myth'}.jpg`;
+  const img = `${base}card-art/era-${era.art ?? KEY[key] ?? 'myth'}.jpg`;
   const el = document.createElement('div');
   el.className = 'era-map';
   el.setAttribute('aria-label', era.caption);

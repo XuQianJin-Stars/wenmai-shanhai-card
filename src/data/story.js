@@ -386,7 +386,8 @@ const chapter = (n, short, prologue, desc) => {
 // 敦煌放在南北朝之后、长安之前：窟始凿于十六国，玄奘与盛唐洞窟则贴着大唐。
 // 海丝收在蒙元之后：序里的刺桐港是宋元，走出去的远航落到明初郑和。
 // 天一阁（嘉靖）、天工开物（明末）先于市井章里收到清中叶的小说；非遗是还活在手上的传统，紧挨当下。
-const HISTORY = ['shenhua', 'xianqin', 'chuci', 'qinhan', 'sanguo', 'weijin', 'nanbei', 'dunhuang', 'datang', 'wudai', 'liangsong', 'mengyuan', 'haisi', 'guizang', 'tiangong', 'shijing', 'wanqing', 'minguo', 'feiyi', 'dangdai'];
+// 水浒成书在元末明初，故事却发生在北宋末。放在蒙元之后、明初远航之前：书出现的时候，而不是故事里的年号。
+const HISTORY = ['shenhua', 'xianqin', 'chuci', 'qinhan', 'sanguo', 'weijin', 'nanbei', 'dunhuang', 'datang', 'wudai', 'liangsong', 'mengyuan', 'shuihu', 'haisi', 'guizang', 'tiangong', 'shijing', 'wanqing', 'minguo', 'feiyi', 'dangdai'];
 export const CHAPTERS = [
   chapter(1, '上古神话篇', PROLOGUE, '书斋之中，泛黄典籍里溢出一缕金光。'),
   chapter(7, '大唐气象篇', PROLOGUE2, '典籍里的诗只剩半句，铜镜映出黄昏的长安。'),

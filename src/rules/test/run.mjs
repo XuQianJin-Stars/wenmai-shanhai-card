@@ -3,9 +3,9 @@ import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, canPlay,
 import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
-import { LEVELS, PRACTICE, STARTER_DECK, DECK_MIN, DECK_MAX, practiceReward, practiceEnemy } from '../../data/story.js';
+import { LEVELS, PRACTICE, STARTER_DECK, STARTER_CARDS, DECK_MIN, DECK_MAX, practiceReward, practiceEnemy } from '../../data/story.js';
 import { createBoard, covered, STACK_LAYERS } from '../../game/stackMatch.js';
-import { insertCard, deckProblem, migrateSave } from '../../game/save.js';
+import { insertCard, deckProblem, migrateSave, rewardFillsDeck } from '../../game/save.js';
 import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
 import { CHAPTERS } from '../../data/story.js';
 import { SIGNATURE } from '../../game/cardvfx.js';
@@ -92,7 +92,7 @@ test('守护者修行：等级表算出来的加成和引擎字段对得上', ()
 });
 test('章节：按朝代编年一路排下来，id 前缀和章号都不重复', () => {
   const order = CHAPTERS.map((C) => C.key);
-  eq(order.join(' '), 'shenhua xianqin chuci qinhan sanguo weijin nanbei dunhuang datang wudai liangsong mengyuan haisi guizang tiangong shijing wanqing minguo feiyi dangdai',
+  eq(order.join(' '), 'shenhua xianqin chuci qinhan sanguo weijin nanbei dunhuang datang wudai liangsong mengyuan shuihu haisi guizang tiangong shijing wanqing minguo feiyi dangdai',
     '章节顺序按历史事件：神话、先秦、秦汉、三国至清、晚清至今');
   eq(new Set(order).size, order.length, '每章一个 id 前缀');
   eq(new Set(CHAPTERS.map((C) => C.n)).size, CHAPTERS.length, '章号不重复');
@@ -104,16 +104,29 @@ test('章节：按朝代编年一路排下来，id 前缀和章号都不重复',
 test('存档迁移：v1 的 chN-M 和 v2 的 tangsong-* 都能落到今天的关卡 id 上', () => {
   const v1 = migrateSave({ done: ['ch1-1', 'ch1-2', 'ch1-3', 'ch2-1', 'ch2-3', 'ch11-1'], seenPro: [2, 11] });
   eq(v1.done.join(','), 'shenhua-1,shenhua-2,shenhua-3,datang-1,datang-3,haisi-1', 'v1 的关卡 id');
-  eq(v1.seenPro.join(','), '9,13', 'v1 的章号：唐、海丝按历史事件重排后的章号');
+  eq(v1.seenPro.join(','), '9,14', 'v1 的章号：唐、海丝；水浒插入后再让一位');
   const v2 = migrateSave({ v: 2, done: ['tangsong-2', 'haisi-3', 'guizang-1'], seenPro: [7, 8, 12] });
   eq(v2.done.join(','), 'datang-2,haisi-3,guizang-1', 'v2 只需要改唐那三关');
-  eq(v2.seenPro.join(','), '9,13,14', '拆章后再按历史事件重排：唐、海丝、归藏');
+  eq(v2.seenPro.join(','), '9,14,15', '拆章后再按历史事件重排：唐、海丝、归藏，并为水浒让位');
   const v3 = migrateSave({ v: 3, done: ['datang-3', 'liangsong-1'], seenPro: [8] });
   eq(v3.done.join(','), 'datang-3,liangsong-1', 'v3 原样收下');
   eq(v3.seenPro.join(','), '11', 'v3 的第八章是两宋，重排后为第十一章');
   const v4 = migrateSave({ v: 4, done: ['datang-1'], seenPro: [8] });
   eq(v4.seenPro.join(','), '8', 'v4 的章号已经是历史顺序，不再翻一次');
+  eq(migrateSave({ v: 4, seenPro: [12, 13, 16] }).seenPro.join(','), '12,14,17', 'v4 里蒙元不动，海丝和市井为水浒各让一位');
+  eq(migrateSave({ v: 5, seenPro: [13] }).seenPro.join(','), '13', 'v5 的水浒章号不再往后挪');
   eq(migrateSave({ v: 3, done: ['tangsong-1', '不存在的关'] }).done.length, 0, '认不出的关卡 id 一律丢掉');
+});
+test('通关进度会补发当时没拿到的卡，每张玩家卡都对应一关', () => {
+  const granted = LEVELS.flatMap((L) => L.reward.unlock);
+  eq(new Set(granted).size, granted.length, '同一张卡不能由两关发放');
+  for (const id of granted) ok(!STARTER_CARDS.includes(id), `${id} 不该既是起手又是通关奖励`);
+  for (const id of PLAYER_CARD_IDS) ok(STARTER_CARDS.includes(id) || granted.includes(id), `${id} 没有对应的故事关`);
+  const fresh = migrateSave({ v: 4, done: ['shenhua-3'], owned: [...STARTER_CARDS] });
+  for (const id of ['WM-006', 'QW-005', 'QW-018']) ok(fresh.owned.includes(id), `${id} 第一章末关已通过就该在图鉴里`);
+  ok(!fresh.owned.includes('WM-008'), '没打到的关不该提前解锁');
+  const all = migrateSave({ v: 4, done: LEVELS.map((L) => L.id), owned: [...STARTER_CARDS] });
+  for (const id of PLAYER_CARD_IDS) ok(all.owned.includes(id), `${id} 全通关后仍锁着`);
 });
 test('多牌组：旧存档的一套牌变成牌组一，不合法的丢掉', () => {
   const old = migrateSave({ v: 3, deck: [...STARTER_DECK] });
@@ -678,7 +691,7 @@ test('首领被动表：忘川每 2 个自身回合触发', () => {
 });
 test('自动编入不会压垮费用曲线', () => {
   let deck = [...STARTER_DECK];
-  for (const L of LEVELS) for (const id of L.reward.unlock) deck = insertCard(deck, id)?.deck ?? deck;
+  for (const L of LEVELS) if (rewardFillsDeck(L.reward.unlock)) for (const id of L.reward.unlock) deck = insertCard(deck, id)?.deck ?? deck;
   ok(deck.length >= DECK_MIN && deck.length <= DECK_MAX, `编入之后应落在 ${DECK_MIN}～${DECK_MAX}，现在 ${deck.length}`);
   eq(deckProblem(deck), null, 'still a legal deck');
   const heavy = deck.filter((id) => CARDS[id].cost >= 5).length;

@@ -3,7 +3,7 @@
 import { createGame } from '../engine.js';
 import { createAI, playTurn } from '../ai.js';
 import { LEVELS, PRACTICE, STARTER_DECK } from '../../data/story.js';
-import { insertCard } from '../../game/save.js';
+import { insertCard, rewardFillsDeck } from '../../game/save.js';
 
 const N = +(process.argv[2] ?? 200);
 const decks = { starter: STARTER_DECK, ...Object.fromEntries(PRACTICE.map((p) => [p.id, p.enemy.deck])) };
@@ -58,7 +58,7 @@ const progressAt = (upTo) => {
   for (const L of LEVELS) {
     if (L.id === upTo) break;
     frag += L.reward.fragments;
-    for (const id of L.reward.unlock) deck = insertCard(deck, id)?.deck ?? deck;
+    if (rewardFillsDeck(L.reward.unlock)) for (const id of L.reward.unlock) deck = insertCard(deck, id)?.deck ?? deck;
   }
   const grades = {};
   const uniq = [...new Set(deck)];
