@@ -21,7 +21,11 @@ export const STARTER_DECK = [
   'LJ-007', 'LJ-007', 'LJ-006', 'LJ-006', 'LJ-008', 'LJ-008', 'LJ-004', 'LJ-004', 'LJ-009', 'LJ-003',
   'LJ-005', 'FL-001', 'FL-001', 'FL-003', 'FL-004', 'FL-006', 'FL-002', 'WM-005', 'WM-002', 'WM-001',
 ];
-export const DECK_SIZE = 20;
+// 起手 4～5 张、每回合抽 1 张，一局大约看见 20 张。上限 30 才能装下一组羁绊再带符箓和文脉，
+// 下限仍是 20：再短，关键牌不是必进手就是整局摸不到。
+export const DECK_MIN = 20;
+export const DECK_MAX = 30;
+export const DECK_SIZE = DECK_MAX;
 export const MAX_COPIES = 2;
 
 // The tutorial hand is stacked so the three card types arrive one per turn (CORE_LOOP §十一 Onboarding Flow).

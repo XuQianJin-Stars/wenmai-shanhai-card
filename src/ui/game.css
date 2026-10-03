@@ -74,7 +74,7 @@ button { font: inherit; color: inherit; }
   width: min(600px, calc(50vw - var(--sal)));
   display: flex; flex-direction: column; justify-content: center; gap: clamp(10px, calc(1.6 * var(--u)), 16px); }
 .menu-play { flex: 1 1 auto; min-height: 0; max-height: min(460px, 62vh);
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(14px, 1.5vw, 22px); align-items: stretch; }
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 1.2vw, 18px); align-items: stretch; }
 .plaque, .slip { -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: pointer; border: 0; margin: 0;
   font: inherit; color: #1a1612; background: none; box-sizing: border-box; }
 .plaque { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
@@ -606,7 +606,7 @@ button { font: inherit; color: inherit; }
 .short .top-title { font-size: 22px; }
 .short .body { padding-top: 2px; padding-bottom: calc(14px + var(--sab)); }
 /* iPhone 横屏：四轴留在左侧，五张签钉在屏幕底边，拇指够得到。 */
-.short .menu { top: calc(6px + var(--sat)); bottom: calc(58px + var(--sab)); width: min(400px, calc(48vw - var(--sal)));
+.short .menu { top: calc(6px + var(--sat)); bottom: calc(58px + var(--sab)); width: min(480px, calc(58vw - var(--sal)));
   justify-content: center; gap: 0; }
 .short .menu-play { max-height: none; height: 100%; gap: 8px; }
 .short .plaque { padding: 22px 4px 14px; }
@@ -682,6 +682,57 @@ button { font: inherit; color: inherit; }
 .short .story-map .ch-tabs { width: 36px; }
 .short .era-map { margin: 2px 16px 10px; }
 .short .era-map .era-cap { font-size: 14px; top: 6px; left: 8px; }
+
+/* 叠牌：分层的牌只能点没被盖住的，七格槽里三张同名即消。 */
+.stack-body { position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.stack-match { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.stack-bar { display: flex; align-items: center; gap: 12px; flex: none; flex-wrap: wrap; }
+.stack-bar .dim { letter-spacing: 0.06em; }
+.stack-board { position: relative; z-index: 1; flex: 1; min-height: 0; overflow: hidden; }
+.stack-tile { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 6px;
+  filter: drop-shadow(0 6px 8px rgba(20, 14, 8, 0.35)); }
+.stack-tile.covered { filter: brightness(0.62) drop-shadow(0 2px 2px rgba(20, 14, 8, 0.2)); pointer-events: none; }
+.stack-tile .face { width: 100% !important; height: 100% !important; aspect-ratio: auto; }
+.stack-slot { position: relative; z-index: 3; flex: none; display: flex; justify-content: center; align-items: stretch; gap: 8px; height: 128px; }
+.stack-cell { flex: none; width: calc(128px * 512 / 720); height: 100%; box-sizing: border-box;
+  border: 1px dashed rgba(90, 60, 30, 0.4); border-radius: 4px; background: rgba(247, 241, 230, 0.28); overflow: hidden; }
+.stack-cell.on { border-style: solid; border-color: rgba(140, 90, 40, 0.7); background: rgba(247, 241, 230, 0.8); }
+.stack-cell .face { width: 100% !important; height: 100% !important; aspect-ratio: auto; display: block; }
+.stack-cell.pop { position: relative; z-index: 2; animation: stackPop .46s ease forwards; }
+.stack-burst { position: absolute; left: 50%; top: 0; transform: translate(-50%, -70%); pointer-events: none;
+  font-family: var(--brush); font-size: 42px; letter-spacing: 0.2em; color: var(--cinnabar);
+  text-shadow: 0 0 12px rgba(255, 236, 210, 0.9); animation: stackBurst .46s ease forwards; }
+.stack-burst i { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%;
+  background: var(--cinnabar); opacity: 0.8; animation: stackInk .46s ease forwards; }
+.stack-burst i:nth-child(1) { --dx: -36px; --dy: -18px; }
+.stack-burst i:nth-child(2) { --dx: 28px; --dy: -26px; animation-delay: .04s; }
+.stack-burst i:nth-child(3) { --dx: 8px; --dy: -40px; animation-delay: .08s; }
+@keyframes stackPop {
+  40% { transform: translateY(-8px) scale(1.06); box-shadow: 0 0 0 3px rgba(184, 50, 42, 0.9), 0 10px 18px rgba(120, 30, 20, 0.28); }
+  100% { transform: translateY(-22px) scale(0.72); opacity: 0; }
+}
+@keyframes stackBurst {
+  0% { opacity: 0; transform: translate(-50%, -20%) scale(0.6); }
+  30% { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -140%) scale(1.15); }
+}
+@keyframes stackInk {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0.9; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stack-cell.pop, .stack-burst, .stack-burst i { animation: none; }
+}
+.stack-end { position: absolute; z-index: 8; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.stack-end:not(:empty) { pointer-events: auto; background: rgba(14, 12, 10, 0.45); }
+.stack-end-card { position: relative; z-index: 1; width: min(420px, calc(100% - 32px)); padding: 22px 24px 18px; text-align: center; color: #1a1612;
+  background: linear-gradient(180deg, #f7f1e6, #e7d5b4); border: 1px solid rgba(90, 60, 30, 0.45);
+  box-shadow: 0 16px 40px rgba(20, 14, 8, 0.35); }
+.stack-end-t { font-family: var(--brush); font-size: 36px; letter-spacing: 0.2em; color: var(--cinnabar); }
+.stack-end-btns { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+.short .stack-slot { height: 96px; }
+.short .stack-cell { width: calc(96px * 512 / 720); }
+.short .stack-end-t { font-size: 28px; }
 .short .ch-tabs { width: 40px; }
 .short .ch-tabs .tab { padding: 1px 0; font-size: 13px; }
 .short .ch-tabs .ch-step { font-size: 9px; padding: 2px 0; }

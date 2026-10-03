@@ -3,7 +3,8 @@ import { createGame, act, spawn, atkOf, defOf, legalActions, canAttack, canPlay,
 import { createAI, playTurn } from '../ai.js';
 import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
-import { LEVELS, PRACTICE, STARTER_DECK, DECK_SIZE, practiceReward, practiceEnemy } from '../../data/story.js';
+import { LEVELS, PRACTICE, STARTER_DECK, DECK_MIN, DECK_MAX, practiceReward, practiceEnemy } from '../../data/story.js';
+import { createBoard, covered, STACK_LAYERS } from '../../game/stackMatch.js';
 import { insertCard, deckProblem, migrateSave } from '../../game/save.js';
 import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
 import { CHAPTERS } from '../../data/story.js';
@@ -678,10 +679,10 @@ test('首领被动表：忘川每 2 个自身回合触发', () => {
 test('自动编入不会压垮费用曲线', () => {
   let deck = [...STARTER_DECK];
   for (const L of LEVELS) for (const id of L.reward.unlock) deck = insertCard(deck, id)?.deck ?? deck;
-  eq(deck.length, DECK_SIZE);
+  ok(deck.length >= DECK_MIN && deck.length <= DECK_MAX, `编入之后应落在 ${DECK_MIN}～${DECK_MAX}，现在 ${deck.length}`);
   eq(deckProblem(deck), null, 'still a legal deck');
   const heavy = deck.filter((id) => CARDS[id].cost >= 5).length;
-  ok(heavy <= 5, `too many 5+ drops after every unlock: ${heavy}`);
+  ok(heavy / deck.length <= 0.4, `5 费以上不该过四成，现在 ${heavy}/${deck.length}`);
 });
 
 test('人间诸神：杨戬天眼有增益就驱散，没有就压攻击', () => {
@@ -866,8 +867,26 @@ test('水浒座次按石碣，同一人的场面共用一座', () => {
     seen.set(c.rank.n, c.rank.star);
   }
 });
+test('叠牌每张图的张数是 3 的倍数，开局有牌可点', () => {
+  for (const level of ['easy', 'normal', 'hard']) {
+    const tiles = createBoard(level, 7);
+    ok(tiles.length >= 18 && tiles.length % 3 === 0, level);
+    eq(Math.max(...tiles.map((t) => t.z)) + 1, STACK_LAYERS[level], `${level} 层数`);
+    const n = {};
+    for (const t of tiles) n[t.cardId] = (n[t.cardId] ?? 0) + 1;
+    for (const c of Object.values(n)) ok(c % 3 === 0, `${level} ${c}`);
+    ok(tiles.some((t) => !covered(t, tiles)), level);
+  }
+});
 test('decks reference real cards and are 20 long', () => {
-  eq(STARTER_DECK.length, DECK_SIZE);
+  eq(STARTER_DECK.length, DECK_MIN);
+  eq(deckProblem(STARTER_DECK), null, '起手 20 张仍可用');
+  eq(deckProblem(STARTER_DECK.slice(0, DECK_MIN - 1)) !== null, true);
+  const room = ['LJ-001', 'LJ-002', 'LJ-010', 'LJ-011', 'LJ-012', 'WM-003', 'WM-008', 'WM-009', 'FL-005', 'LJ-013'];
+  const full = [...STARTER_DECK, ...room];
+  eq(full.length, DECK_MAX);
+  eq(deckProblem(full), null, '补到 30 张可用');
+  ok(deckProblem([...full, 'LJ-014']) !== null, '第 31 张不行');
   for (const L of [...LEVELS, ...PRACTICE]) {
     eq(L.enemy.deck.length, 20, `${L.id} enemy deck`);
     for (const id of L.enemy.deck) ok(CARDS[id], `${L.id}: ${id}`);

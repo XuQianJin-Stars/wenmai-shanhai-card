@@ -14,7 +14,8 @@ import { h, clear, faceEl, scheduleFacePaint, cardInfo, portraitEl, banner, toas
 import { eraMap } from '../ui/eraMap.js';
 import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFullscreen } from './fullscreen.js';
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
-import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, practiceEnemy, DECK_SIZE, MAX_COPIES } from '../data/story.js';
+import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, practiceEnemy, DECK_MIN, DECK_SIZE, MAX_COPIES } from '../data/story.js';
+import { mountStackMatch } from './stackMatch.js';
 import { GUARDIAN } from '../data/guardian.js';
 import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
 import { RELIC_IMAGES } from '../data/relicImages.js';
@@ -195,11 +196,12 @@ export async function boot(params, fontsReady) {
     screen.className = 'screen show menu-screen';
     const cur = CHAPTERS.filter(chapterOpen).at(-1);
     const done = cur.levels.filter((L) => save.isDone(L.id)).length;
-    const seal = ['壹', '贰', '叁', '肆'];
-    // 前四项做成立轴，竖排；后五项是轴下的签条。iPhone 横屏把签条收成底部一排印。
+    const seal = ['壹', '贰', '叁', '肆', '伍'];
+    // 前五项做成立轴，竖排；后五项是轴下的签条。iPhone 横屏把签条收成底部一排印。
     const play = [
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
+      ['叠牌消乐', '三张相同即消', () => stackScreen()],
       ['文脉闯关', quizSub(), () => quizMap()],
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => openCollection()],
     ];
@@ -449,6 +451,15 @@ export async function boot(params, fontsReady) {
     });
   }
 
+  // ── 叠牌 ──
+  function stackScreen() {
+    setStage('menu'); menuCam(); hideViewer();
+    audio.music('menu');
+    const body = frame('叠牌消乐', { back: mainMenu });
+    body.classList.add('stack-body');
+    mountStackMatch(body, { h, audio, save, faceEl, scheduleFacePaint, toast });
+  }
+
   // ── practice ──
   function practice() {
     setStage('menu'); menuCam(); hideViewer();
@@ -468,7 +479,7 @@ export async function boot(params, fontsReady) {
     if (prob) body.append(h('div.warn', { text: `当前牌组不可用：${prob}` }));
     body.append(h('div.row', h('span', { text: '出战：' }), deckSwitch(() => practice()), h('span', { text: '难度：' }), diff, payout), note,
       h('div.opps', PRACTICE.map((P, i) => h('div.opp', { onclick: async () => {
-        if (prob) { audio.sfx('error'); toast('请先在「牌组编成」中组好 20 张牌'); return; }
+        if (prob) { audio.sfx('error'); toast(`请先组好 ${DECK_MIN} 至 ${DECK_SIZE} 张牌`); return; }
         audio.sfx('click');
         const L = { ...P, enemy: practiceEnemy(P.enemy, level), ai: level, playerFirst: Math.random() < 0.5 };
         for (;;) {
@@ -931,7 +942,7 @@ export async function boot(params, fontsReady) {
       for (const id of save.data.owned.slice().sort((a, b) => card(a).cost - card(b).cost || a.localeCompare(b))) {
         const n = count(id);
         pool.append(h('div.cell' + (n >= MAX_COPIES ? '.full' : ''), {
-          onclick: () => { if (deck.length >= DECK_SIZE) { audio.sfx('error'); toast('牌组已满 20 张'); return; } if (n >= MAX_COPIES) { audio.sfx('error'); toast(`同名卡最多 ${MAX_COPIES} 张`); return; } audio.sfx('pick'); deck.push(id); draw(); },
+          onclick: () => { if (deck.length >= DECK_SIZE) { audio.sfx('error'); toast(`牌组已满 ${DECK_SIZE} 张`); return; } if (n >= MAX_COPIES) { audio.sfx('error'); toast(`同名卡最多 ${MAX_COPIES} 张`); return; } audio.sfx('pick'); deck.push(id); draw(); },
           onpointerenter: () => { clear(infoBox); infoBox.append(cardInfo(id, save.grade(id))); },
         }, faceEl(id, save.grade(id), { w: 104 }), h('div.cnt', { text: `${n}/${MAX_COPIES}` })));
       }
@@ -943,7 +954,7 @@ export async function boot(params, fontsReady) {
           h('span.cost', { text: d.cost }), h('span.nm', { text: d.name }), h('span.el', { style: { color: EL[d.el]?.color }, text: EL[d.el]?.zh ?? '' }), h('span.x', { text: `×${count(id)}` })));
       }
     }
-    body.append(h('div.deckb', h('div.deck-pool', tabs, h('div.hint2', { text: '点上方牌组切换出战 · 点卡牌加入 · 点右侧条目移除 · 同名最多 2 张' }), pool),
+    body.append(h('div.deckb', h('div.deck-pool', tabs, h('div.hint2', { text: `点上方牌组切换出战 · 点卡牌加入 · 点右侧条目移除 · ${DECK_MIN} 至 ${DECK_SIZE} 张 · 同名最多 2 张` }), pool),
       h('div.deck-side', head, list, h('div.deck-btns',
         btn('保存牌组', () => { const p = deckProblem(deck); if (p) { audio.sfx('error'); toast(p); return; } save.setDeck(deck); toast(`「${save.deckName()}」已保存`); }, 'primary'),
         btn('改名', async () => {
@@ -965,7 +976,7 @@ export async function boot(params, fontsReady) {
         btn('清空', () => { deck = []; draw(); }),
         btn('自动补全', () => {
           const owned = save.data.owned.slice().sort(() => Math.random() - 0.5);
-          const want = { general: 10, talisman: 6, wenmai: 4 };
+          const want = { general: 15, talisman: 9, wenmai: 6 };
           for (const t of ['general', 'talisman', 'wenmai']) for (const id of owned) {
             while (deck.length < DECK_SIZE && card(id).type === t && count(id) < MAX_COPIES && deck.filter((x) => card(x).type === t).length < want[t]) deck.push(id);
           }
@@ -1030,7 +1041,8 @@ export async function boot(params, fontsReady) {
         '五行相克：金克木、木克土、土克水、水克火、火克金，克制时伤害 ×1.3，目标会闪红光。',
         '在卡牌图鉴里用文脉碎片升阶，升到珍品会解锁卡牌自带的技能。',
         '碎片也能在「守护者」里修行，六条路永久强化主将：气血上限、受伤减免、每回合回复、首回合灵力、起手牌、手牌上限。',
-        '碎片来自故事关首通、文脉闯关、自由对战和重打关卡；闯关首通给碎片，重考不再给，另有每日一问。',
+        '碎片来自故事关首通、文脉闯关、自由对战、叠牌消乐和重打关卡；闯关首通给碎片，重考不再给，另有每日一问。',
+        '叠牌消乐：只能点没被盖住的牌，放进下方七格。同名凑满三张就消掉，清完全部牌即过关；七格占满则这局结束。',
       )),
       操作: () => h('div.help-pane', bullets(
         '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',

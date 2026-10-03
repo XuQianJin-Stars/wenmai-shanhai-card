@@ -1,6 +1,6 @@
 // Progress save (localStorage). Everything is validated on load so a hand-edited or stale save can never break the game.
 import { CARDS, UPGRADE_COST, PLAYER_CARD_IDS } from '../data/cards.js';
-import { STARTER_CARDS, STARTER_DECK, DECK_SIZE, MAX_COPIES, LEVELS } from '../data/story.js';
+import { STARTER_CARDS, STARTER_DECK, DECK_MIN, DECK_MAX, MAX_COPIES, LEVELS } from '../data/story.js';
 import { GUARDIAN, guardianCost, boonOf, guardianRank } from '../data/guardian.js';
 
 const KEY = 'wenmai_save_v1';
@@ -120,7 +120,7 @@ export function migrateSave(raw) {
 
 /** null if the deck is legal, otherwise a Chinese reason. */
 export function deckProblem(deck) {
-  if (deck.length !== DECK_SIZE) return `牌组需恰好 ${DECK_SIZE} 张（当前 ${deck.length}）`;
+  if (deck.length < DECK_MIN || deck.length > DECK_MAX) return `牌组需 ${DECK_MIN} 至 ${DECK_MAX} 张（当前 ${deck.length}）`;
   const n = {};
   for (const id of deck) {
     if (!CARDS[id]) return '含有未知卡牌';
@@ -132,13 +132,18 @@ export function deckProblem(deck) {
 }
 
 /**
- * { deck, out } with `id` swapped in for a card of the same type, or null if it cannot be placed.
- * The card that leaves is the one closest in cost to the newcomer (duplicates first), so a run of
- * unlocks never quietly turns the deck into a pile of six-drops.
+ * { deck, out } after placing `id`. While the deck is under the cap the new card is added.
+ * Once it is full, `id` replaces the same-type card closest in cost (duplicates first), so a run of
+ * unlocks never quietly turns the deck into a pile of six-drops. `out` is the card that left, or null.
  */
 export function insertCard(deck, id) {
   const d = CARDS[id];
-  if (deck.includes(id)) return null;
+  if (!d || deck.includes(id)) return null;
+  if (deck.length < DECK_MAX) {
+    const next = [...deck, id];
+    if (deckProblem(next)) return null;
+    return { deck: next, out: null };
+  }
   const n = (x) => deck.filter((y) => y === x).length;
   const rank = (x) => Math.abs(CARDS[x].cost - d.cost) * 10 + (n(x) >= 2 ? 0 : 5) + CARDS[x].cost * 0.1;
   const pick = deck.map((x, i) => ({ x, i })).filter(({ x }) => CARDS[x].type === d.type)

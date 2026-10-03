@@ -136,6 +136,11 @@ export function createAudio() {
     poem: (t) => { [62, 64, 67, 69, 74].forEach((m, i) => playBuffer(E, qin(m, 3), t + i * 0.11, { gain: 0.5, bus: 'sfx', rev: 0.55, pan: (i - 2) * 0.15 })); },
     snap: (t) => { playBuffer(E, qin(57, 3, 0.8, { slide: -3 }), t, { gain: 0.9, bus: 'sfx', rev: 0.6 }); tone(t + 0.02, 1900, { dur: 0.08, vel: 0.25, type: 'square', glide: 600 }); },
     shuffle: (t) => { for (let i = 0; i < 6; i++) noiseHit(t + i * 0.05, { f: 3200, q: 0.8, dur: 0.05, vel: 0.12, bus: 'ui' }); },
+    match: (t) => {
+      [74, 81, 86].forEach((m, i) => bell(t + i * 0.07, m, { vel: 0.42, dur: 1.8, rev: 0.55 }));
+      noiseHit(t + 0.05, { f: 1800, q: 0.7, dur: 0.22, vel: 0.28, sweep: [900, 3200], rev: 0.35 });
+      playGong(E, { t: t + 0.16, vel: 0.18, bus: 'sfx', rev: 0.45 });
+    },
   };
 
   // ── generative music ──
