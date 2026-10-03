@@ -178,7 +178,7 @@ button { font: inherit; color: inherit; }
     linear-gradient(180deg, #f7f1e6 0%, #f3e6d0 55%, #e7d5b4 100%);
   filter: url(#wmInkEdge); }
 .story-map .levels { position: relative; z-index: 1; flex-direction: row; align-items: stretch; gap: 0;
-  flex: 1; min-height: 0; height: auto; margin: 0; padding: 6px 10px 8px; background: none; }
+  flex: 0 0 auto; min-height: min-content; height: auto; margin: 0; padding: 6px 10px 8px; background: none; }
 .levels { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
 .level { position: relative; display: flex; align-items: center; gap: 18px; padding: 14px 18px; cursor: pointer;
   background: linear-gradient(90deg, rgba(243, 236, 221, 0.95), rgba(233, 224, 204, 0.88)); color: #1a1612; border-radius: 3px; border: 1px solid #8a6a3a; transition: all .2s; }
@@ -192,7 +192,7 @@ button { font: inherit; color: inherit; }
 .level .portrait { border-radius: 50%; border: 3px solid #2a2218; flex: none; }
 .level.done .level-no { background: #4a6a3a; }
 /* 每列同一套行高：画像、朱印、题名横着对齐。序章没有画像，也占着那一行。 */
-.story-map .level { --face: 88px; --seal: 46px; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; display: grid;
+.story-map .level { --face: 88px; --seal: 46px; flex: 1 1 0; min-width: 0; min-height: min-content; overflow: hidden; display: grid;
   grid-template-rows: var(--face) var(--seal) auto auto auto auto; align-content: start; justify-items: center;
   gap: 8px 0; padding: 16px 12px 12px; text-align: center; background: transparent; border: 0; border-radius: 0;
   border-right: 1px solid rgba(60, 44, 28, 0.14); box-shadow: none; }
@@ -204,20 +204,18 @@ button { font: inherit; color: inherit; }
 .story-map .level.done .level-no { background: transparent; color: #3f6a34; border-color: #3f6a34; }
 .story-map .level-main { display: contents; }
 .story-map .level-t { grid-row: 3; width: 100%; margin: 0; font-size: clamp(16px, calc(2.4 * var(--u)), 24px); line-height: 1.3;
-  min-height: 2.6em; align-self: start;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  min-height: 2.6em; max-height: 2.6em; align-self: start; overflow: hidden; }
 .story-map .level-d { grid-row: 4; width: 100%; margin: 0; font-size: 13px; line-height: 1.5; align-self: start;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+  max-height: 4.5em; overflow: hidden; }
 .story-map .level-r { grid-row: 5; width: 100%; margin: 0; font-size: 11px; line-height: 1.4; align-self: start;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  max-height: 2.8em; overflow: hidden; }
 .story-map .level .portrait { grid-row: 1; width: 76px !important; height: 76px !important; align-self: center; border-width: 2px; }
 .story-map .level-seal { grid-row: 6; position: static; transform: rotate(-8deg); margin: 0; align-self: center;
   background: rgba(247, 241, 230, 0.55); }
 .story-map .level { position: relative; z-index: 1; }
-.era-map { position: relative; z-index: 0; flex: none; align-self: center; min-height: 0; pointer-events: none;
-  width: calc(100cqw - 96px);
-  aspect-ratio: 2048 / 680; height: auto; margin: 4px auto 28px; }
-.era-map img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.era-map { position: relative; z-index: 0; flex: 1 1 auto; align-self: stretch; min-height: 0; pointer-events: none;
+  width: auto; height: auto; margin: 8px 48px 22px; }
+.era-map img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .era-map .era-cap { position: absolute; left: 12px; top: 10px; font-family: var(--brush), serif;
   font-size: 18px; letter-spacing: 0.18em; color: rgba(120, 42, 32, 0.88);
   text-shadow: 0 0 6px rgba(247, 241, 230, 0.9); }
@@ -676,12 +674,12 @@ button { font: inherit; color: inherit; }
 .short .story-map .level { --face: 48px; --seal: 32px; padding: 8px 6px 6px; gap: 6px 0; }
 .short .story-map .level-no { width: 28px; height: 28px; font-size: 16px; }
 .short .story-map .level-t { font-size: 14px; }
-.short .story-map .level-d { font-size: 11px; -webkit-line-clamp: 3; margin-top: 0; }
+.short .story-map .level-d { font-size: 11px; max-height: 4.5em; margin-top: 0; }
 .short .story-map .level-r { display: none; }
 .short .story-map .level .portrait { width: 42px !important; height: 42px !important; }
 .short .story-map .level-seal { font-size: 14px; margin-top: 2px; padding: 0 4px; border-width: 2px; }
 .short .story-map .ch-tabs { width: 36px; }
-.short .era-map { width: min(calc(100cqw - 28px), calc(24cqh * 2048 / 680)); margin: 2px auto 10px; }
+.short .era-map { margin: 2px 16px 10px; }
 .short .era-map .era-cap { font-size: 14px; top: 6px; left: 8px; }
 .short .ch-tabs { width: 40px; }
 .short .ch-tabs .tab { padding: 1px 0; font-size: 13px; }
