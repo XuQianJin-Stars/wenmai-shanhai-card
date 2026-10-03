@@ -16,6 +16,7 @@ import { canFullscreen, isFullscreen, standalone, requestFullscreen, toggleFulls
 import { CARDS, card, PLAYER_CARD_IDS, TYPE_ZH, GRADE_ZH, EL, BONDS } from '../data/cards.js';
 import { LEVELS, CHAPTERS, chapterEnd, SPEAKER_ART, PRACTICE, practiceReward, practiceEnemy, DECK_MIN, DECK_SIZE, MAX_COPIES } from '../data/story.js';
 import { mountStackMatch } from './stackMatch.js';
+import { mountAutoChess } from './autoChess.js';
 import { GUARDIAN } from '../data/guardian.js';
 import { RELICS_BY_CARD, RELICS_BY_CHAPTER } from '../data/relics.js';
 import { RELIC_IMAGES } from '../data/relicImages.js';
@@ -196,7 +197,7 @@ export async function boot(params, fontsReady) {
     screen.className = 'screen show menu-screen';
     const cur = CHAPTERS.filter(chapterOpen).at(-1);
     const done = cur.levels.filter((L) => save.isDone(L.id)).length;
-    const seal = ['壹', '贰', '叁', '肆', '伍'];
+    const seal = ['壹', '贰', '叁', '肆', '伍', '陆'];
     // 前五项做成立轴，竖排；后五项是轴下的签条。iPhone 横屏把签条收成底部一排印。
     const play = [
       ['故事模式', `${cur.title.split(' · ')[1]} · ${done}/${cur.levels.length}`, () => storyMap()],
@@ -204,6 +205,7 @@ export async function boot(params, fontsReady) {
       ['叠牌消乐', '三张相同即消', () => stackScreen()],
       ['文脉闯关', quizSub(), () => quizMap()],
       ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => openCollection()],
+      ['卡牌战棋', '布阵自走 · 三阶合成', () => chessScreen()],
     ];
     const more = [
       ['文物志', '文物', relicSub(), () => relicScreen()],
@@ -474,6 +476,14 @@ export async function boot(params, fontsReady) {
     const body = frame('叠牌消乐', { back: mainMenu });
     body.classList.add('stack-body');
     mountStackMatch(body, { h, audio, save, faceEl, scheduleFacePaint, toast });
+  }
+
+  function chessScreen() {
+    setStage('menu'); menuCam(); hideViewer();
+    audio.music('menu');
+    const body = frame('卡牌战棋', { back: mainMenu });
+    body.classList.add('ac-body');
+    mountAutoChess(body, { h, audio, save, faceEl, toast, btn });
   }
 
   // ── practice ──
@@ -1077,6 +1087,7 @@ export async function boot(params, fontsReady) {
         '碎片也能在「守护者」里修行，六条路永久强化主将：气血上限、受伤减免、每回合回复、首回合灵力、起手牌、手牌上限。',
         '碎片来自故事关首通、文脉闯关、自由对战、叠牌消乐和重打关卡；闯关首通给碎片，重考不再给，另有每日一问。',
         '叠牌消乐：只能点没被盖住的牌，放进下方七格。同名凑满三张就消掉，清完全部牌即过关；七格占满则这局结束。',
+        '卡牌战棋：用已有的灵将布在己方半场，点开战双方自己打。三张同名同阶合成上一阶。同羁绊凑满两人会加攻击。撑过八回合即胜，气血见底即负。',
       )),
       操作: () => h('div.help-pane', bullets(
         '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',

@@ -71,10 +71,10 @@ button { font: inherit; color: inherit; }
 .menu-screen { background:
   linear-gradient(90deg, rgba(14, 12, 10, 0.38) 0%, rgba(14, 12, 10, 0.16) 26%, rgba(14, 12, 10, 0.04) 46%, transparent 64%); }
 .menu { position: absolute; left: calc(4.2vw + var(--sal)); top: 13%; bottom: calc(20px + var(--sab));
-  width: min(600px, calc(50vw - var(--sal)));
+  width: min(720px, calc(58vw - var(--sal)));
   display: flex; flex-direction: column; justify-content: center; gap: clamp(10px, calc(1.6 * var(--u)), 16px); }
 .menu-play { flex: 1 1 auto; min-height: 0; max-height: min(460px, 62vh);
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(10px, 1.2vw, 18px); align-items: stretch; }
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(8px, 1vw, 16px); align-items: stretch; }
 .plaque, .slip { -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: pointer; border: 0; margin: 0;
   font: inherit; color: #1a1612; background: none; box-sizing: border-box; }
 .plaque { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
@@ -696,6 +696,35 @@ button { font: inherit; color: inherit; }
 .short .story-map .ch-tabs { width: 36px; }
 .short .era-map { margin: 2px 16px 10px; }
 .short .era-map .era-cap { font-size: 14px; top: 6px; left: 8px; }
+
+/* 卡牌战棋：己方半场布灵将，开战之后自己走、自己打。 */
+.ac-body { display: flex; flex-direction: column; min-height: 0; }
+.ac-match { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.ac-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; font-size: 14px; letter-spacing: 0.06em; }
+.ac-bar .dim { font-size: 12px; }
+.ac-bonds { display: flex; flex-wrap: wrap; gap: 6px; min-height: 22px; }
+.ac-bonds span { font-size: 12px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 99px;
+  background: rgba(122, 42, 34, 0.1); color: #7a2a22; }
+.ac-board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.ac-bench-label { font-size: 12px; letter-spacing: 0.14em; color: rgba(42, 34, 26, 0.62); }
+.ac-bench, .ac-shop { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.ac-cell, .ac-shop-card { position: relative; border: 1px dashed rgba(90, 60, 30, 0.35); border-radius: 4px;
+  background: rgba(247, 241, 230, 0.35); padding: 4px; min-height: 78px; cursor: pointer; color: inherit; font: inherit; }
+.ac-board .ac-cell { min-height: 86px; }
+.ac-cell.far { background: rgba(42, 34, 26, 0.06); cursor: default; }
+.ac-cell.far em, .ac-shop-card.empty em { font-style: normal; font-size: 11px; color: rgba(42, 34, 26, 0.35); }
+.ac-cell.on { border-style: solid; border-color: var(--cinnabar); box-shadow: 0 0 0 2px rgba(184, 50, 42, 0.25); }
+.ac-piece { display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.ac-piece i { font-style: normal; font-size: 10px; letter-spacing: 0.08em; color: #a8781a; }
+.ac-piece b { font-size: 11px; color: #7a2a22; }
+.ac-piece.foe i { color: #5a4030; }
+.ac-shop-card { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 84px; }
+.ac-shop-card b { font-size: 12px; }
+.ac-shop-card em { font-style: normal; font-size: 11px; color: #6a5a48; }
+.ac-shop-ops { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.ac-end { display: flex; align-items: center; gap: 14px; padding: 10px 12px; background: rgba(247, 241, 230, 0.85);
+  border: 1px solid rgba(138, 106, 58, 0.45); border-radius: 4px; }
+.ac-end b { font-family: var(--brush); font-size: 28px; letter-spacing: 0.08em; }
 
 /* 叠牌：分层的牌只能点没被盖住的，七格槽里三张同名即消。 */
 .stack-body { position: relative; overflow: hidden; display: flex; flex-direction: column; }

@@ -5,6 +5,8 @@ import { CARDS, PLAYER_CARD_IDS } from '../../data/cards.js';
 import { GUARDIAN, GUARDIAN_MAX, boonOf, guardianRank } from '../../data/guardian.js';
 import { LEVELS, PRACTICE, STARTER_DECK, STARTER_CARDS, DECK_MIN, DECK_MAX, practiceReward, practiceEnemy } from '../../data/story.js';
 import { createBoard, covered, STACK_LAYERS } from '../../game/stackMatch.js';
+import { createMatch, buy, relocate, sell, fight, strikeDamage, pieceStats, bondBonus, spawnEnemy, afterFight, boardCap, isPlayerCell, ENEMY_POOL } from '../../game/autoChess.js';
+import { mulberry32 } from '../rng.js';
 import { insertCard, deckProblem, migrateSave, rewardFillsDeck } from '../../game/save.js';
 import { RELICS, RELIC_BY_ID } from '../../data/relics.js';
 import { CHAPTERS } from '../../data/story.js';
@@ -879,6 +881,59 @@ test('水浒座次按石碣，同一人的场面共用一座', () => {
     if (prev) ok(prev === c.rank.star, `${c.id} 的第${c.rank.n}位不该是另一颗星`);
     seen.set(c.rank.n, c.rank.star);
   }
+});
+test('战棋：三张同阶合成，人数有上限，敌阵不能放', () => {
+  const s = createMatch(['LJ-007'], 3);
+  eq(s.cap, boardCap(1));
+  eq(s.gold, 8);
+  ok(buy(s, 0).ok && buy(s, 1).ok && buy(s, 2).ok);
+  const held = [...s.bench, ...s.board].filter(Boolean);
+  eq(held.length, 1, '三张一阶合成一张二阶');
+  eq(held[0].star, 2);
+  eq(s.gold, 2);
+  const fresh = createMatch(['LJ-007'], 4);
+  fresh.gold = 20;
+  fresh.shop = ['LJ-007', 'LJ-008', 'LJ-009', 'LJ-006'].map((id, n) => ({ uid: 100 + n, id, star: 1 }));
+  for (let n = 0; n < 3; n++) {
+    ok(buy(fresh, n).ok);
+    const b = fresh.bench.findIndex(Boolean);
+    ok(relocate(fresh, { zone: 'bench', i: b }, { zone: 'board', i: 14 + n }).ok);
+  }
+  const i = fresh.shop.findIndex(Boolean);
+  ok(buy(fresh, i).ok);
+  const b = fresh.bench.findIndex(Boolean);
+  const blocked = relocate(fresh, { zone: 'bench', i: b }, { zone: 'board', i: 20 });
+  eq(blocked.ok, false);
+  eq(relocate(fresh, { zone: 'bench', i: b }, { zone: 'board', i: 0 }).ok, false);
+  ok(!isPlayerCell(0) && isPlayerCell(14));
+  const before = fresh.gold;
+  ok(sell(fresh, { zone: 'bench', i: b }).ok);
+  ok(fresh.gold > before);
+});
+test('战棋：相克加伤，两人羁绊抬攻击，强的一边打赢', () => {
+  eq(strikeDamage(4, 2, 'fire', 'wood'), 2);
+  eq(strikeDamage(4, 2, 'fire', 'metal'), 3, '火克金');
+  const lone = pieceStats('LJ-001', 1, 0).atk;
+  const { bonusOf } = bondBonus([{ id: 'LJ-001' }, { id: 'LJ-002' }]);
+  eq(pieceStats('LJ-001', 1, bonusOf('LJ-001')).atk, lone + 1);
+  const r = fight([
+    { uid: 'a', id: 'LJ-001', star: 3, side: 'p', x: 3, y: 2 },
+    { uid: 'b', id: 'LJ-007', star: 1, side: 'e', x: 3, y: 1 },
+  ]);
+  eq(r.winner, 'player');
+  ok(r.frames.length >= 2);
+  const rng = mulberry32(9);
+  const foe = spawnEnemy(1, rng);
+  eq(foe.length, 2);
+  ok(foe.every((p) => p.y < 2 && ENEMY_POOL.includes(p.id)));
+  const late = spawnEnemy(8, mulberry32(2));
+  ok(late.length > foe.length && late.length <= 6);
+  ok(late.some((p) => p.star >= 2));
+  const s = createMatch(['LJ-007'], 5);
+  s.hp = 1;
+  const done = afterFight(s, { winner: 'enemy', eLeft: 2, pLeft: 0 });
+  eq(s.over, 'lose');
+  eq(done.dmg, 4);
 });
 test('叠牌每张图的张数是 3 的倍数，开局有牌可点', () => {
   for (const level of ['easy', 'normal', 'hard']) {
