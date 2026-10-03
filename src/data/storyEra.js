@@ -61,7 +61,7 @@ export const ERA_CHAPTERS = [
       music: 'boss',
       desc: '北伐前夜。首领：歧路巨影——沿用「散佚」，烧手牌并永久削防御。',
       enemy: { name: '歧路巨影', hp: 44, portrait: 'husk', passive: 'sanyi', deck: deck(['ZL-005', 'ZL-022', 'ZL-020', 'ZL-027', 'ZL-030', 'FL-006', 'FL-004']) },
-      reward: { fragments: 65, unlock: ['LJ-070'] },
+      reward: { fragments: 65, unlock: ['LJ-070', 'ZF-019'] },
       pre: [
         { who: '歧路巨影', text: '表送出去也没用。路会在半道断掉。' },
         { who: '守护者', text: '断了也可以有人接着走。' },

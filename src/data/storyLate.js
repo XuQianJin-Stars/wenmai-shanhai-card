@@ -514,7 +514,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '禁毁书影', hp: 34, portrait: 'bannedBook', deck: [
           'ZL-039', 'ZL-039', 'ZL-039', 'ZL-040', 'ZL-040', 'ZL-041', 'ZL-041', 'ZL-042', 'ZL-029', 'ZL-019',
           'ZL-027', 'ZL-014', 'ZL-020', 'ZL-013', 'ZL-008', 'ZL-006', 'ZL-012', 'FL-002', 'FL-003', 'FL-006'] },
-        reward: { fragments: 45, unlock: ['LJ-039', 'LJ-041', 'LJ-054', 'LJ-055'] },
+        reward: { fragments: 45, unlock: ['LJ-039', 'LJ-041', 'LJ-054', 'LJ-055', 'ZF-023'] },
         pre: [
           { who: '', text: '（书坊后巷堆着一堆灰。灰上摊着一张单子，单子上全是书名，每个名字都打了叉。）' },
           { who: '守护者', text: '这些书……' },
@@ -538,7 +538,7 @@ export const LATE_CHAPTERS = [
           'ZL-041', 'ZL-041', 'ZL-041', 'ZL-042', 'ZL-042', 'ZL-040', 'ZL-040', 'ZL-039', 'ZL-039', 'ZL-016',
           'ZL-026', 'ZL-010', 'ZL-030', 'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'FL-001', 'FL-003', 'FL-004'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 50, unlock: ['LJ-040', 'WM-017', 'LJ-056', 'LJ-057'] },
+        reward: { fragments: 50, unlock: ['LJ-040', 'WM-017', 'LJ-056', 'LJ-057', 'ZF-024'] },
         pre: [
           { who: '', text: '（河上停着一条药船。船舱里挂满药包，包上的字大半模糊了。）' },
           { who: '徐霞客之灵', text: '我在路上见过。有的村子里，会治病的老人一走，方子就没了。' },
@@ -562,7 +562,7 @@ export const LATE_CHAPTERS = [
           'ZL-042', 'ZL-042', 'ZL-041', 'ZL-041', 'ZL-040', 'ZL-040', 'ZL-039', 'ZL-039', 'ZL-016', 'ZL-005',
           'ZL-026', 'ZL-022', 'ZL-030', 'ZL-010', 'ZL-020', 'ZL-012', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1, 'FL-006': 1 } },
-        reward: { fragments: 70, unlock: ['LJ-038', 'LJ-058', 'WM-021'] },
+        reward: { fragments: 70, unlock: ['LJ-038', 'LJ-058', 'WM-021', 'ZF-025'] },
         pre: [
           { who: '', text: '（书坊里一盏灯亮着。灯下坐着一个影子，正在一本一本地翻书，翻到的每一本都合上、放到左边。）' },
           { who: '禁毁之影', text: '这本不合适。这本也不合适。' },
@@ -723,7 +723,7 @@ export const LATE_CHAPTERS = [
         enemy: { name: '褪画之影', hp: 36, portrait: 'shishengGhost', deck: [
           'ZL-057', 'ZL-057', 'ZL-057', 'ZL-058', 'ZL-058', 'ZL-059', 'ZL-013', 'ZL-014', 'ZL-020', 'ZL-027',
           'ZL-008', 'ZL-006', 'ZL-012', 'ZL-023', 'ZL-035', 'FL-002', 'FL-003', 'FL-006', 'ZL-010', 'ZL-018'] },
-        reward: { fragments: 40, unlock: ['LJ-061', 'WM-023'] },
+        reward: { fragments: 40, unlock: ['LJ-061', 'WM-023', 'ZF-020'] },
         pre: [
           { who: '', text: '（桥上很挤。挑担的、看热闹的、拽着缆绳喊号子的，都在。）' },
           { who: '守护者', text: '这么热闹的地方，也会出事？' },
@@ -747,7 +747,7 @@ export const LATE_CHAPTERS = [
           'ZL-058', 'ZL-058', 'ZL-058', 'ZL-057', 'ZL-057', 'ZL-059', 'ZL-027', 'ZL-016', 'ZL-026', 'ZL-030',
           'ZL-014', 'ZL-020', 'ZL-012', 'ZL-018', 'ZL-010', 'FL-001', 'FL-003', 'FL-004', 'ZL-022', 'ZL-047'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 45, unlock: ['LJ-062', 'WM-022'] },
+        reward: { fragments: 45, unlock: ['LJ-062', 'WM-022', 'ZF-021'] },
         pre: [
           { who: '', text: '（水面很静。远山是青的，堤上柳丝垂到水里。）' },
           { who: '', text: '（然后山开始掉色。石青一片片剥下来，浮在水上，像碎瓷。）' },
@@ -773,7 +773,7 @@ export const LATE_CHAPTERS = [
           'ZL-059', 'ZL-059', 'ZL-058', 'ZL-058', 'ZL-057', 'ZL-057', 'ZL-052', 'ZL-016', 'ZL-026', 'ZL-022',
           'ZL-030', 'ZL-010', 'ZL-020', 'ZL-012', 'ZL-018', 'ZL-047', 'FL-003', 'FL-004', 'FL-005', 'FL-006'],
           grades: { 'FL-003': 1 } },
-        reward: { fragments: 65, unlock: ['LJ-059', 'LJ-060'] },
+        reward: { fragments: 65, unlock: ['LJ-059', 'LJ-060', 'ZF-022'] },
         pre: [
           { who: '', text: '（雨下了一夜。院子里堆着十几只书箱，锁都锁着，盖子却是空的。）' },
           { who: '散箧巨影', text: '别再捡了。' },

@@ -139,7 +139,8 @@ export function deckProblem(deck) {
 export function insertCard(deck, id) {
   const d = CARDS[id];
   if (!d || deck.includes(id)) return null;
-  if (deck.length < DECK_MAX) {
+  // 器物、阵法起手牌组里没有同类，只进图鉴，不自动编入。
+  if (deck.length < DECK_MAX && deck.some((x) => CARDS[x].type === d.type)) {
     const next = [...deck, id];
     if (deckProblem(next)) return null;
     return { deck: next, out: null };
