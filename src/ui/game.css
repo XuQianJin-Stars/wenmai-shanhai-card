@@ -706,7 +706,17 @@ button { font: inherit; color: inherit; }
 .ac-bonds span { font-size: 12px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 99px;
   background: rgba(122, 42, 34, 0.1); color: #7a2a22; }
 .ac-board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.ac-bench-label { font-size: 12px; letter-spacing: 0.14em; color: rgba(42, 34, 26, 0.62); }
+.ac-bench-label, .ac-form-label { font-size: 12px; letter-spacing: 0.08em; color: rgba(42, 34, 26, 0.72); }
+.ac-forms { display: flex; gap: 8px; }
+.ac-forms .ac-cell { width: 108px; background: rgba(74, 58, 122, 0.08); border-color: rgba(74, 58, 122, 0.35); }
+.ac-forms .ac-cell.casting { animation: acCast .8s ease; z-index: 2; }
+.ac-cast, .ac-ward { position: absolute; left: 50%; z-index: 4; pointer-events: none;
+  font-family: var(--brush); letter-spacing: 0.08em; text-shadow: 0 1px 0 #fff6ea, 0 0 10px rgba(180, 140, 255, 0.9);
+  animation: acFloat .75s ease forwards; }
+.ac-cast { top: 0; font-size: 40px; color: #4a1878; }
+.ac-ward { top: 0; font-size: 18px; color: #3a1868; white-space: nowrap; }
+.ac-cell.ward { animation: acWard .7s ease; }
+.ac-shop-card.form { box-shadow: inset 3px 0 0 #5a3a8a; }
 .ac-bench, .ac-shop { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
 .ac-cell, .ac-shop-card { position: relative; border: 1px dashed rgba(90, 60, 30, 0.35); border-radius: 4px;
   background: rgba(247, 241, 230, 0.35); padding: 4px; min-height: 78px; cursor: pointer; color: inherit; font: inherit; }
@@ -717,6 +727,14 @@ button { font: inherit; color: inherit; }
 .ac-piece { display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .ac-piece i { font-style: normal; font-size: 10px; letter-spacing: 0.08em; color: #a8781a; }
 .ac-piece b { font-size: 11px; color: #7a2a22; }
+.ac-stats { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; font-size: 11px; font-weight: 700; line-height: 1.15; letter-spacing: 0; }
+.ac-stats em { font-style: normal; }
+.ac-stats .atk { color: #8a1c14; }
+.ac-stats .def { color: #163e66; }
+.ac-stats .hp { color: #14532a; }
+.ac-piece.foe .ac-stats .atk { color: #7a1810; }
+.ac-piece.foe .ac-stats .def { color: #123656; }
+.ac-piece.foe .ac-stats .hp { color: #124828; }
 .ac-piece.foe i { color: #5a4030; }
 .ac-piece.lunge { animation: acLunge .22s ease-out; z-index: 2; }
 .ac-piece.hit .face { animation: acHit .32s ease; }
@@ -753,8 +771,17 @@ button { font: inherit; color: inherit; }
 @keyframes acFall {
   to { opacity: 0; transform: scale(0.55) rotate(-8deg); filter: grayscale(1); }
 }
+@keyframes acCast {
+  0% { box-shadow: 0 0 0 3px #6a3a9a, 0 0 22px rgba(90, 40, 150, 0.75); background: rgba(110, 60, 170, 0.42); }
+  100% { box-shadow: none; }
+}
+@keyframes acWard {
+  0% { box-shadow: inset 0 0 0 2px #6a3a9a; background: rgba(106, 58, 154, 0.32); }
+  100% { box-shadow: none; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .ac-piece.lunge, .ac-piece.hit .face, .ac-cell.struck, .ac-piece.fall, .ac-dmg { animation: none; }
+  .ac-piece.lunge, .ac-piece.hit .face, .ac-cell.struck, .ac-piece.fall, .ac-dmg,
+  .ac-forms .ac-cell.casting, .ac-cell.ward, .ac-cast, .ac-ward { animation: none; }
 }
 .ac-shop-card { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 84px; }
 .ac-shop-card b { font-size: 12px; }
@@ -764,7 +791,15 @@ button { font: inherit; color: inherit; }
 .ac-result .modal-title { color: #1a120c; text-align: center; font-size: 36px; }
 .ac-result-mark { font-family: var(--brush); font-size: 92px; line-height: 0.85; color: #7a2218; margin-bottom: 6px; }
 .ac-result.lose .ac-result-mark { color: #3a3028; }
-.ac-result-copy p { margin: 0; font-size: 20px; letter-spacing: 0.12em; color: #2a1c14; }
+.ac-result-copy p { margin: 10px 0 0; font-size: 16px; letter-spacing: 0.08em; color: #2a1c14; }
+.ac-sum { margin: 4px auto 0; width: min(340px, 100%); color: #1a120c; }
+.ac-sum-head, .ac-sum-row { display: grid; grid-template-columns: 3.2em 1fr 1fr; align-items: baseline; gap: 8px; }
+.ac-sum-head { padding-bottom: 4px; border-bottom: 1px solid rgba(90, 60, 30, 0.35); }
+.ac-sum-head b { font-size: 18px; }
+.ac-sum-head .foe, .ac-sum-row .foe { color: #7a2218; }
+.ac-sum-row { padding: 3px 0; }
+.ac-sum-row span { font-size: 14px; color: #4a3828; }
+.ac-sum-row b { font-size: 20px; font-variant-numeric: tabular-nums; }
 
 /* 叠牌：分层的牌只能点没被盖住的，七格槽里三张同名即消。 */
 .stack-body { position: relative; overflow: hidden; display: flex; flex-direction: column; }

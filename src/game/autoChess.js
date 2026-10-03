@@ -10,6 +10,7 @@ export const SHOP_N = 5;
 export const ROUNDS = 8;
 export const PLAYER_HP = 24;
 export const REROLL_COST = 2;
+export const FORM_SLOTS = 2;
 const STAR_MAX = 3;
 
 export const ENEMY_POOL = [
@@ -22,9 +23,29 @@ export const isPlayerCell = (i) => i >= COLS * 2 && i < COLS * ROWS;
 export const pieceCost = (id) => card(id).cost ?? 1;
 export const sellValue = (p) => pieceCost(p.id) + p.star - 1;
 
+export const isFormation = (id) => CARDS[id]?.type === 'formation';
+
 export function generalPool(owned) {
   const ids = (owned ?? []).filter((id) => CARDS[id]?.type === 'general' && !CARDS[id].zhuo);
   return ids.length ? ids : ['LJ-007', 'LJ-008', 'LJ-009', 'LJ-006'];
+}
+
+export function formationPool(owned) {
+  return (owned ?? []).filter((id) => isFormation(id));
+}
+
+/** 火、金的阵加攻击，水、木、土的阵加防御，阶数就是加的点数。两座齐开再各 +1。 */
+export function formationAura(forms) {
+  const list = (forms ?? []).filter(Boolean);
+  let atk = 0;
+  let def = 0;
+  for (const f of list) {
+    const n = f.star;
+    if (card(f.id).el === 'fire' || card(f.id).el === 'metal') atk += n;
+    else def += n;
+  }
+  if (list.length >= 2) { atk += 1; def += 1; }
+  return { atk, def };
 }
 
 /** 场上同一羁绊的人数。2/3/4 人分别给 +1/+2/+3 攻击，防御吃一半。 */
@@ -44,12 +65,12 @@ export function bondBonus(pieces) {
   return { counts, bonusOf, active };
 }
 
-export function pieceStats(id, star, bonus = 0) {
+export function pieceStats(id, star, bonus = 0, aura = null) {
   const c = card(id);
   return {
     hp: (c.hp ?? 6) + (star - 1) * 4,
-    atk: (c.atk ?? 3) + (star - 1) * 2 + bonus,
-    def: (c.def ?? 1) + (star - 1) + Math.floor(bonus / 2),
+    atk: (c.atk ?? 3) + (star - 1) * 2 + bonus + (aura?.atk ?? 0),
+    def: (c.def ?? 1) + (star - 1) + Math.floor(bonus / 2) + (aura?.def ?? 0),
     el: c.el,
   };
 }
@@ -62,14 +83,17 @@ export function strikeDamage(atk, def, atkEl, defEl) {
 
 function rollShop(state, rng) {
   const shop = [];
+  const forms = state.formations ?? [];
   for (let i = 0; i < SHOP_N; i++) {
-    const id = state.pool[Math.floor(rng() * state.pool.length)];
+    const useForm = forms.length > 0 && rng() < 0.4;
+    const bag = useForm ? forms : state.pool;
+    const id = bag[Math.floor(rng() * bag.length)];
     shop.push({ uid: state.seq++, id, star: 1 });
   }
   return shop;
 }
 
-export function createMatch(pool, seed = 1) {
+export function createMatch(pool, seed = 1, formations = []) {
   const rng = mulberry32(seed >>> 0);
   const state = {
     round: 1,
@@ -77,9 +101,11 @@ export function createMatch(pool, seed = 1) {
     gold: 8,
     cap: boardCap(1),
     pool: pool.length ? [...pool] : generalPool([]),
+    formations: formations.filter((id) => isFormation(id)),
     shop: [],
     bench: Array(BENCH).fill(null),
     board: Array(COLS * ROWS).fill(null),
+    forms: Array(FORM_SLOTS).fill(null),
     over: null,
     seq: 1,
     rng,
@@ -88,12 +114,16 @@ export function createMatch(pool, seed = 1) {
   return state;
 }
 
+function listOf(state, zone) {
+  if (zone === 'board') return state.board;
+  if (zone === 'form') return state.forms;
+  return state.bench;
+}
 function peek(state, loc) {
-  return loc.zone === 'board' ? state.board[loc.i] : state.bench[loc.i];
+  return listOf(state, loc.zone)[loc.i];
 }
 function put(state, loc, piece) {
-  if (loc.zone === 'board') state.board[loc.i] = piece;
-  else state.bench[loc.i] = piece;
+  listOf(state, loc.zone)[loc.i] = piece;
 }
 
 function merge(state) {
@@ -102,6 +132,7 @@ function merge(state) {
     const locs = [];
     state.board.forEach((p, i) => { if (p) locs.push({ zone: 'board', i, p }); });
     state.bench.forEach((p, i) => { if (p) locs.push({ zone: 'bench', i, p }); });
+    state.forms.forEach((p, i) => { if (p) locs.push({ zone: 'form', i, p }); });
     const groups = new Map();
     for (const loc of locs) {
       if (loc.p.star >= STAR_MAX) continue;
@@ -113,10 +144,20 @@ function merge(state) {
     if (!hit) break;
     const take = hit.slice(0, 3);
     const born = { uid: state.seq++, id: take[0].p.id, star: take[0].p.star + 1 };
+    const bornForm = isFormation(born.id);
     for (const loc of take) put(state, loc, null);
-    const home = take.find((l) => l.zone === 'board' && isPlayerCell(l.i));
+    const home = bornForm
+      ? take.find((l) => l.zone === 'form')
+      : take.find((l) => l.zone === 'board' && isPlayerCell(l.i));
     if (home) put(state, home, born);
-    else {
+    else if (bornForm) {
+      const f = state.forms.findIndex((x) => !x);
+      if (f >= 0) state.forms[f] = born;
+      else {
+        const b = state.bench.findIndex((x) => !x);
+        if (b >= 0) state.bench[b] = born;
+      }
+    } else {
       const b = state.bench.findIndex((x) => !x);
       if (b >= 0) state.bench[b] = born;
       else {
@@ -141,15 +182,46 @@ export function buy(state, index) {
   return { ok: true, merged: merge(state) };
 }
 
+function locate(state, uid) {
+  if (!uid) return null;
+  let i = state.bench.findIndex((p) => p?.uid === uid);
+  if (i >= 0) return { zone: 'bench', i };
+  i = state.forms.findIndex((p) => p?.uid === uid);
+  if (i >= 0) return { zone: 'form', i };
+  i = state.board.findIndex((p) => p?.uid === uid);
+  if (i >= 0) return { zone: 'board', i };
+  return null;
+}
+
+/** 点到另一类牌时改选中，不把阵法硬搬到灵将身上。空格才是落子。 */
+export function clickSlot(state, selUid, loc) {
+  const here = peek(state, loc);
+  const from = locate(state, selUid);
+  const moving = from ? peek(state, from) : null;
+  if (here && here.uid !== selUid && (!moving || isFormation(moving.id) !== isFormation(here.id))) {
+    return { ok: true, sel: here.uid, moved: false };
+  }
+  if (from) {
+    const res = relocate(state, from, loc);
+    return { ...res, sel: res.ok ? (peek(state, loc)?.uid ?? null) : selUid, moved: !!res.ok };
+  }
+  return { ok: true, sel: here?.uid ?? null, moved: false };
+}
+
 export function relocate(state, from, to) {
   if (from.zone === to.zone && from.i === to.i) return { ok: true, merged: false };
   const piece = peek(state, from);
-  if (!piece) return { ok: false, reason: '没有灵将' };
+  if (!piece) return { ok: false, reason: '这里是空的' };
+  const formPiece = isFormation(piece.id);
+  if (formPiece && to.zone === 'board') return { ok: false, reason: '阵法放在阵法区' };
+  if (!formPiece && to.zone === 'form') return { ok: false, reason: '这里只放阵法' };
   if (to.zone === 'board' && !isPlayerCell(to.i)) return { ok: false, reason: '只能布在己方半场' };
   const dest = peek(state, to);
+  if (dest && isFormation(dest.id) !== formPiece) return { ok: false, reason: formPiece ? '阵法放在阵法区' : '这里只放阵法' };
   const entering = to.zone === 'board' && from.zone !== 'board' && !dest;
   if (entering && state.board.filter(Boolean).length >= state.cap) return { ok: false, reason: '上场人数已满' };
   if (!dest && to.zone === 'bench' && from.zone !== 'bench' && state.bench.every(Boolean)) return { ok: false, reason: '备战席已满' };
+  if (!dest && to.zone === 'form' && from.zone !== 'form' && state.forms.every(Boolean)) return { ok: false, reason: '阵法区已满' };
   put(state, from, dest);
   put(state, to, piece);
   return { ok: true, merged: merge(state) };
@@ -157,7 +229,7 @@ export function relocate(state, from, to) {
 
 export function sell(state, loc) {
   const piece = peek(state, loc);
-  if (!piece) return { ok: false, reason: '没有灵将' };
+  if (!piece) return { ok: false, reason: '这里是空的' };
   put(state, loc, null);
   state.gold += sellValue(piece);
   return { ok: true, gold: state.gold };
@@ -198,17 +270,19 @@ function occupy(units) {
  * 双方已经放好的灵将自己打。pieces: { uid, id, star, x, y, side: 'p'|'e' }
  * 返回 winner、残兵数，以及每拍的站位，给画面逐拍放。
  */
-export function fight(pieces) {
+export function fight(pieces, forms = []) {
   const allies = pieces.filter((p) => p.side === 'p');
   const foes = pieces.filter((p) => p.side === 'e');
   const allyBond = bondBonus(allies);
   const foeBond = bondBonus(foes);
+  const aura = formationAura(forms);
   const units = pieces.map((p) => {
     const bonus = (p.side === 'p' ? allyBond : foeBond).bonusOf(p.id);
-    const st = pieceStats(p.id, p.star, bonus);
+    const st = pieceStats(p.id, p.star, bonus, p.side === 'p' ? aura : null);
     return { ...p, ...st, max: st.hp };
   });
-  const frames = [{ units: units.map(snap), hits: [] }];
+  const cast = (aura.atk || aura.def) ? { atk: aura.atk, def: aura.def } : null;
+  const frames = [{ units: units.map(snap), hits: [], cast }];
   const log = [];
   for (let tick = 0; tick < 28; tick++) {
     const living = units.filter((u) => u.hp > 0);
@@ -243,11 +317,40 @@ export function fight(pieces) {
   if (pLeft.length && !eLeft.length) winner = 'player';
   else if (eLeft.length && !pLeft.length) winner = 'enemy';
   else if (pHp !== eHp) winner = pHp > eHp ? 'player' : 'enemy';
-  return { winner, pLeft: pLeft.length, eLeft: eLeft.length, frames, log };
+  return { winner, pLeft: pLeft.length, eLeft: eLeft.length, frames, log, units };
+}
+
+/** 一拍交锋的双方合计：上场人数、攻击、防御、气血，以及这一拍打出的伤害。 */
+export function fightTally(units, log = []) {
+  const of = (side) => (units ?? []).filter((u) => u.side === side);
+  const sum = (list, key) => list.reduce((n, u) => n + (u[key] || 0), 0);
+  const dealt = (side) => {
+    const ids = new Set(of(side).map((u) => u.uid));
+    return log.filter((h) => ids.has(h.from)).reduce((n, h) => n + h.dmg, 0);
+  };
+  const pack = (side) => {
+    const list = of(side);
+    return { n: list.length, atk: sum(list, 'atk'), def: sum(list, 'def'), hp: sum(list, 'max'), dmg: dealt(side) };
+  };
+  return { p: pack('p'), e: pack('e') };
+}
+
+export function emptyTally() {
+  const z = () => ({ n: 0, atk: 0, def: 0, hp: 0, dmg: 0 });
+  return { rounds: 0, wins: 0, losses: 0, draws: 0, p: z(), e: z() };
+}
+
+export function addTally(total, part, winner) {
+  total.rounds += 1;
+  if (winner === 'player') total.wins += 1;
+  else if (winner === 'enemy') total.losses += 1;
+  else total.draws += 1;
+  for (const side of ['p', 'e']) for (const key of ['n', 'atk', 'def', 'hp', 'dmg']) total[side][key] += part[side][key];
+  return total;
 }
 
 function snap(u) {
-  return { uid: u.uid, id: u.id, star: u.star, side: u.side, x: u.x, y: u.y, hp: u.hp, max: u.max };
+  return { uid: u.uid, id: u.id, star: u.star, side: u.side, x: u.x, y: u.y, hp: u.hp, max: u.max, atk: u.atk, def: u.def };
 }
 
 export function roundDamage(result) {
@@ -308,7 +411,9 @@ export function rewardOf(state) {
 export function mountAutoChess(body, api) {
   const { h, audio, save, faceEl, toast, btn, modal, back } = api;
   const pool = generalPool(save.data.owned);
-  let state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
+  const formations = formationPool(save.data.owned);
+  let state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0, formations);
+  let tally = emptyTally();
   let sel = null;
   let fighting = false;
   let paid = false;
@@ -318,11 +423,24 @@ export function mountAutoChess(body, api) {
   body.append(root);
 
   const face = (p, w) => faceEl(p.id, p.star - 1, { w });
+  const statRow = (st, hp) => h('span.ac-stats',
+    h('em.atk', { text: `攻${st.atk}` }),
+    h('em.def', { text: `防${st.def}` }),
+    hp == null ? null : h('em.hp', { text: `血${hp}` }));
+  const cardStats = (p) => isFormation(p.id) ? formationAura([p]) : pieceStats(p.id, p.star);
+  const formStat = (p) => {
+    const a = formationAura([p]);
+    return h('span.ac-stats',
+      a.atk ? h('em.atk', { text: `攻+${a.atk}` }) : null,
+      a.def ? h('em.def', { text: `防+${a.def}` }) : null);
+  };
 
   function findSel() {
     if (!sel) return null;
     const b = state.bench.findIndex((p) => p?.uid === sel);
     if (b >= 0) return { zone: 'bench', i: b };
+    const f = state.forms.findIndex((p) => p?.uid === sel);
+    if (f >= 0) return { zone: 'form', i: f };
     const i = state.board.findIndex((p) => p?.uid === sel);
     if (i >= 0) return { zone: 'board', i };
     return null;
@@ -337,15 +455,12 @@ export function mountAutoChess(body, api) {
 
   function onCell(loc) {
     if (fighting || state.over) return;
-    const here = peek(state, loc);
-    const from = findSel();
-    if (from) {
-      const res = relocate(state, from, loc);
-      if (res.ok) sel = peek(state, loc)?.uid ?? peek(state, from)?.uid ?? null;
-      act(res);
-      return;
-    }
-    if (here) { audio.sfx('pick'); sel = here.uid; draw(); }
+    const res = clickSlot(state, sel, loc);
+    if (!res.ok) { audio.sfx('error'); toast(res.reason); return; }
+    sel = res.sel;
+    if (res.merged) audio.sfx('upgrade');
+    else audio.sfx(res.moved ? 'click' : 'pick');
+    draw();
   }
 
   async function startFight() {
@@ -354,12 +469,15 @@ export function mountAutoChess(body, api) {
     fighting = true;
     sel = null;
     draw();
-    const result = fight([...playerPieces(state), ...spawnEnemy(state.round, state.rng)]);
+    const result = fight([...playerPieces(state), ...spawnEnemy(state.round, state.rng)], state.forms.filter(Boolean));
+    addTally(tally, fightTally(result.units, result.log), result.winner);
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     for (const frame of result.frames) {
       renderFight(frame);
+      if (frame.cast) playCast(frame.cast);
       if (frame.hits?.length) audio.sfx(frame.hits.some((h) => h.kill) ? 'hit' : 'attack', { heavy: frame.hits.some((h) => h.kill) });
-      if (!reduce) await new Promise((r) => setTimeout(r, frame.hits?.length ? 340 : 130));
+      const wait = frame.cast ? 720 : frame.hits?.length ? 340 : 130;
+      if (!reduce) await new Promise((r) => setTimeout(r, wait));
     }
     const { dmg } = afterFight(state, result);
     fighting = false;
@@ -370,14 +488,32 @@ export function mountAutoChess(body, api) {
     if (state.over) await showEnd();
   }
 
+  function playCast(cast) {
+    audio.sfx('bond');
+    root.querySelectorAll('.ac-forms .ac-cell').forEach((c) => {
+      if (!c.querySelector('.ac-piece')) return;
+      c.classList.add('casting');
+      c.append(h('span.ac-cast', { text: '阵' }));
+    });
+    const bits = [];
+    if (cast.atk) bits.push(`攻+${cast.atk}`);
+    if (cast.def) bits.push(`防+${cast.def}`);
+    root.querySelectorAll('.ac-board .ac-cell.mine').forEach((c) => {
+      if (!c.querySelector('.ac-piece')) return;
+      c.classList.add('ward');
+      c.append(h('span.ac-ward', { text: bits.join(' ') }));
+    });
+  }
+
   function renderFight(frame) {
     const cells = root.querySelectorAll('.ac-board .ac-cell');
     const hits = frame.hits ?? [];
     const killed = new Set(hits.filter((x) => x.kill).map((x) => x.to));
     cells.forEach((c) => {
-      c.classList.remove('struck', 'counter');
+      c.classList.remove('struck', 'counter', 'ward');
       c.querySelector('.ac-piece')?.remove();
       c.querySelector('.ac-dmg')?.remove();
+      c.querySelector('.ac-ward')?.remove();
       c.querySelector('em')?.remove();
     });
     for (const u of frame.units) {
@@ -388,9 +524,9 @@ export function mountAutoChess(body, api) {
       const blow = hits.find((x) => x.to === u.uid);
       const swing = hits.find((x) => x.from === u.uid);
       const piece = h('div.ac-piece.fight' + (u.side === 'e' ? '.foe' : '') + (dying ? '.fall' : '') + (blow ? '.hit' : '') + (swing ? '.lunge' : ''),
-        face(u, 54),
+        face(u, 48),
         h('i', { text: '★'.repeat(u.star) }),
-        dying ? null : h('b', { text: String(Math.max(0, u.hp)) }));
+        dying ? null : statRow(u, Math.max(0, u.hp)));
       if (swing) {
         piece.style.setProperty('--dx', `${(swing.tx - swing.fx) * 18}px`);
         piece.style.setProperty('--dy', `${(swing.ty - swing.fy) * 16}px`);
@@ -407,6 +543,7 @@ export function mountAutoChess(body, api) {
 
   function draw() {
     const bonds = bondBonus(state.board.filter(Boolean));
+    const aura = formationAura(state.forms);
     const count = state.board.filter(Boolean).length;
     sel = findSel() ? sel : null;
     const rows = [h('div.ac-bar',
@@ -414,11 +551,13 @@ export function mountAutoChess(body, api) {
       h('span', { text: `气血 ${state.hp}` }),
       h('span', { text: `灵石 ${state.gold}` }),
       h('span', { text: `上场 ${count}/${state.cap}` }),
-      h('span.dim', { text: '点灵将，再点格子。三张同名同阶合成上一阶。' })),
+      h('span.dim', { text: '灵将布在己方半场，阵法放在阵法区。三张同名同阶合成上一阶。' })),
     bonds.active.length
       ? h('div.ac-bonds', bonds.active.map((b) => h('span', { text: `${b.name} ${b.n}` })))
       : h('div.ac-bonds', h('span.dim', { text: '同羁绊凑满两人，攻击就会抬一截。' })),
     h('div.ac-board', cells()),
+    h('div.ac-form-label', { text: aura.atk || aura.def ? `阵法区 · 攻击 +${aura.atk}  防御 +${aura.def}` : '阵法区 · 最多两座。火、金加攻击，水、木、土加防御' }),
+    h('div.ac-forms', formCells()),
     h('div.ac-bench-label', { text: '备战席' }),
     h('div.ac-bench', benchCells()),
     h('div.ac-shop', shopCells())];
@@ -426,29 +565,39 @@ export function mountAutoChess(body, api) {
   }
 
   function cells() {
+    const placed = state.board.filter(Boolean);
+    const bondsNow = bondBonus(placed);
+    const auraNow = formationAura(state.forms);
     const nodes = [];
     for (let i = 0; i < COLS * ROWS; i++) {
       const p = state.board[i];
       const mine = isPlayerCell(i);
+      const st = p ? pieceStats(p.id, p.star, bondsNow.bonusOf(p.id), auraNow) : null;
       nodes.push(h('button.ac-cell' + (mine ? '.mine' : '.far') + (p && sel === p.uid ? '.on' : ''), {
         onclick: () => onCell({ zone: 'board', i }),
-      }, p ? h('div.ac-piece', face(p, 58), h('i', { text: '★'.repeat(p.star) })) : mine ? null : h('em', { text: '敌' })));
+      }, p ? h('div.ac-piece', face(p, 52), h('i', { text: '★'.repeat(p.star) }), statRow(st, st.hp)) : mine ? null : h('em', { text: '敌' })));
     }
     return nodes;
+  }
+
+  function formCells() {
+    return state.forms.map((p, i) => h('button.ac-cell.form' + (p && sel === p.uid ? '.on' : ''), {
+      onclick: () => onCell({ zone: 'form', i }),
+    }, p ? h('div.ac-piece', face(p, 56), h('i', { text: '★'.repeat(p.star) }), h('em', { text: card(p.id).short || card(p.id).name }), formStat(p)) : h('em', { text: '阵法' })));
   }
 
   function benchCells() {
     return state.bench.map((p, i) => h('button.ac-cell.mine' + (p && sel === p.uid ? '.on' : ''), {
       onclick: () => onCell({ zone: 'bench', i }),
-    }, p ? h('div.ac-piece', face(p, 64), h('i', { text: '★'.repeat(p.star) }), h('em', { text: card(p.id).short || card(p.id).name })) : null));
+    }, p ? h('div.ac-piece', face(p, 56), h('i', { text: '★'.repeat(p.star) }), h('em', { text: card(p.id).short || card(p.id).name }), isFormation(p.id) ? formStat(p) : statRow(cardStats(p))) : null));
   }
 
   function shopCells() {
     const from = findSel();
     return [
-      ...state.shop.map((p, i) => h('button.ac-shop-card' + (p ? '' : '.empty'), {
+      ...state.shop.map((p, i) => h('button.ac-shop-card' + (p ? '' : '.empty') + (p && isFormation(p.id) ? '.form' : ''), {
         onclick: () => { if (fighting || state.over || !p) return; act(buy(state, i)); },
-      }, p ? [face(p, 72), h('b', { text: card(p.id).short || card(p.id).name }), h('em', { text: `${pieceCost(p.id)} 灵石` })] : h('em', { text: '空' }))),
+      }, p ? [face(p, 64), h('b', { text: card(p.id).short || card(p.id).name }), isFormation(p.id) ? formStat(p) : statRow(cardStats(p)), h('em', { text: `${isFormation(p.id) ? '阵 · ' : ''}${pieceCost(p.id)} 灵石` })] : h('em', { text: '空' }))),
       h('div.ac-shop-ops',
         btn(`刷新 · ${REROLL_COST}`, () => { if (fighting || state.over) return; act(reroll(state)); }),
         from ? btn('卖出', () => { if (fighting || state.over) return; sel = null; act(sell(state, from)); }) : null,
@@ -474,7 +623,11 @@ export function mountAutoChess(body, api) {
       won ? '棋盘守住了' : '气血见底',
       h('div.ac-result-copy',
         h('div.ac-result-mark', { text: won ? '胜' : '败' }),
-        h('p', { text: `文脉碎片 +${n}` })),
+        h('div.ac-sum',
+          h('div.ac-sum-head', h('span', { text: '本局' }), h('b', { text: '我方' }), h('b.foe', { text: '敌方' })),
+          ...[['人数', 'n'], ['攻击', 'atk'], ['防御', 'def'], ['气血', 'hp'], ['伤害', 'dmg']].map(([label, key]) =>
+            h('div.ac-sum-row', h('span', { text: label }), h('b', { text: String(tally.p[key]) }), h('b.foe', { text: String(tally.e[key]) })))),
+        h('p', { text: `${tally.rounds} 回合 · 交锋 ${tally.wins} 胜 ${tally.losses} 负${tally.draws ? ` ${tally.draws} 平` : ''} · 文脉碎片 +${n}` })),
       [
         { label: '返回', value: false },
         { label: '再来一局', value: true, primary: true },
@@ -482,7 +635,8 @@ export function mountAutoChess(body, api) {
       { cls: won ? 'ac-result' : 'ac-result lose', closable: false },
     );
     if (again) {
-      state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
+      state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0, formations);
+      tally = emptyTally();
       sel = null;
       fighting = false;
       paid = false;

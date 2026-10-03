@@ -204,8 +204,8 @@ export async function boot(params, fontsReady) {
       ['自由对战', `${PRACTICE.length} 处场景 · 三档难度`, () => practice()],
       ['叠牌消乐', '三张相同即消', () => stackScreen()],
       ['文脉闯关', quizSub(), () => quizMap()],
-      ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => openCollection()],
       ['卡牌战棋', '布阵自走 · 三阶合成', () => chessScreen()],
+      ['卡牌图鉴', `已得 ${save.data.owned.length}/${PLAYER_CARD_IDS.length} · 升阶`, () => openCollection()],
     ];
     const more = [
       ['文物志', '文物', relicSub(), () => relicScreen()],
@@ -1087,7 +1087,7 @@ export async function boot(params, fontsReady) {
         '碎片也能在「守护者」里修行，六条路永久强化主将：气血上限、受伤减免、每回合回复、首回合灵力、起手牌、手牌上限。',
         '碎片来自故事关首通、文脉闯关、自由对战、叠牌消乐和重打关卡；闯关首通给碎片，重考不再给，另有每日一问。',
         '叠牌消乐：只能点没被盖住的牌，放进下方七格。同名凑满三张就消掉，清完全部牌即过关；七格占满则这局结束。',
-        '卡牌战棋：用已有的灵将布在己方半场，点开战双方自己打。三张同名同阶合成上一阶。同羁绊凑满两人会加攻击。撑过八回合即胜，气血见底即负。',
+        '卡牌战棋：灵将布在己方半场，阵法放在阵法区，最多两座。火、金的阵加攻击，水、木、土的阵加防御，两座齐开再各 +1。三张同名同阶合成上一阶。撑过八回合即胜，气血见底即负。',
       )),
       操作: () => h('div.help-pane', bullets(
         '出牌：把手牌往牌桌上拖；或者点一下手牌，再点落点。',
