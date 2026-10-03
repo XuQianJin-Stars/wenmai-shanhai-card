@@ -483,7 +483,7 @@ export async function boot(params, fontsReady) {
     audio.music('menu');
     const body = frame('卡牌战棋', { back: mainMenu });
     body.classList.add('ac-body');
-    mountAutoChess(body, { h, audio, save, faceEl, toast, btn });
+    mountAutoChess(body, { h, audio, save, faceEl, toast, btn, modal, back: mainMenu });
   }
 
   // ── practice ──

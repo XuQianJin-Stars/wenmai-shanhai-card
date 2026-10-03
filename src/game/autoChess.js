@@ -208,12 +208,13 @@ export function fight(pieces) {
     const st = pieceStats(p.id, p.star, bonus);
     return { ...p, ...st, max: st.hp };
   });
-  const frames = [units.map(snap)];
+  const frames = [{ units: units.map(snap), hits: [] }];
   const log = [];
   for (let tick = 0; tick < 28; tick++) {
     const living = units.filter((u) => u.hp > 0);
     if (!living.some((u) => u.side === 'p') || !living.some((u) => u.side === 'e')) break;
     const order = [...living].sort((a, b) => b.atk - a.atk || a.y - b.y || a.x - b.x);
+    const hits = [];
     for (const u of order) {
       if (u.hp <= 0) continue;
       const targets = units.filter((v) => v.hp > 0 && v.side !== u.side);
@@ -221,15 +222,18 @@ export function fight(pieces) {
       targets.sort((a, b) => chebyshev(u, a) - chebyshev(u, b) || a.y - b.y || a.x - b.x);
       const t = targets[0];
       if (chebyshev(u, t) <= 1) {
+        const counter = COUNTERS[u.el] === t.el;
         const dmg = strikeDamage(u.atk, t.def, u.el, t.el);
         t.hp -= dmg;
-        log.push({ tick, from: u.uid, to: t.uid, dmg });
+        const hit = { from: u.uid, to: t.uid, dmg, counter, kill: t.hp <= 0, fx: u.x, fy: u.y, tx: t.x, ty: t.y };
+        hits.push(hit);
+        log.push({ tick, ...hit });
       } else {
         const step = stepToward(u, t, occupy(units));
         if (step) { u.x = step.x; u.y = step.y; }
       }
     }
-    frames.push(units.map(snap));
+    frames.push({ units: units.map(snap), hits });
   }
   const pLeft = units.filter((u) => u.side === 'p' && u.hp > 0);
   const eLeft = units.filter((u) => u.side === 'e' && u.hp > 0);
@@ -299,15 +303,16 @@ export function rewardOf(state) {
 
 /**
  * 铺进已经建好的画面。
- * api: { h, audio, save, faceEl, toast, btn }
+ * api: { h, audio, save, faceEl, toast, btn, modal, back }
  */
 export function mountAutoChess(body, api) {
-  const { h, audio, save, faceEl, toast, btn } = api;
+  const { h, audio, save, faceEl, toast, btn, modal, back } = api;
   const pool = generalPool(save.data.owned);
   let state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
   let sel = null;
   let fighting = false;
   let paid = false;
+  let endShown = false;
 
   const root = h('div.ac-match');
   body.append(root);
@@ -353,7 +358,8 @@ export function mountAutoChess(body, api) {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     for (const frame of result.frames) {
       renderFight(frame);
-      if (!reduce) await new Promise((r) => setTimeout(r, 160));
+      if (frame.hits?.length) audio.sfx(frame.hits.some((h) => h.kill) ? 'hit' : 'attack', { heavy: frame.hits.some((h) => h.kill) });
+      if (!reduce) await new Promise((r) => setTimeout(r, frame.hits?.length ? 340 : 130));
     }
     const { dmg } = afterFight(state, result);
     fighting = false;
@@ -361,18 +367,41 @@ export function mountAutoChess(body, api) {
     audio.sfx(result.winner === 'player' ? 'victory' : 'defeat');
     toast(line);
     draw();
+    if (state.over) await showEnd();
   }
 
   function renderFight(frame) {
     const cells = root.querySelectorAll('.ac-board .ac-cell');
-    cells.forEach((c) => { c.querySelector('.ac-piece')?.remove(); c.querySelector('em')?.remove(); });
-    for (const u of frame) {
-      if (u.hp <= 0) continue;
+    const hits = frame.hits ?? [];
+    const killed = new Set(hits.filter((x) => x.kill).map((x) => x.to));
+    cells.forEach((c) => {
+      c.classList.remove('struck', 'counter');
+      c.querySelector('.ac-piece')?.remove();
+      c.querySelector('.ac-dmg')?.remove();
+      c.querySelector('em')?.remove();
+    });
+    for (const u of frame.units) {
+      const dying = u.hp <= 0;
+      if (dying && !killed.has(u.uid)) continue;
       const cell = cells[u.y * COLS + u.x];
-      cell?.append(h('div.ac-piece.fight' + (u.side === 'e' ? '.foe' : ''),
+      if (!cell) continue;
+      const blow = hits.find((x) => x.to === u.uid);
+      const swing = hits.find((x) => x.from === u.uid);
+      const piece = h('div.ac-piece.fight' + (u.side === 'e' ? '.foe' : '') + (dying ? '.fall' : '') + (blow ? '.hit' : '') + (swing ? '.lunge' : ''),
         face(u, 54),
         h('i', { text: '★'.repeat(u.star) }),
-        h('b', { text: String(Math.max(0, u.hp)) })));
+        dying ? null : h('b', { text: String(Math.max(0, u.hp)) }));
+      if (swing) {
+        piece.style.setProperty('--dx', `${(swing.tx - swing.fx) * 18}px`);
+        piece.style.setProperty('--dy', `${(swing.ty - swing.fy) * 16}px`);
+      }
+      cell.append(piece);
+      if (!blow) continue;
+      cell.classList.add('struck');
+      if (blow.counter) cell.classList.add('counter');
+      cell.append(h('span.ac-dmg' + (blow.counter ? '.counter' : '') + (blow.kill ? '.kill' : ''), {
+        text: blow.counter ? `克 ${blow.dmg}` : `-${blow.dmg}`,
+      }));
     }
   }
 
@@ -393,7 +422,6 @@ export function mountAutoChess(body, api) {
     h('div.ac-bench-label', { text: '备战席' }),
     h('div.ac-bench', benchCells()),
     h('div.ac-shop', shopCells())];
-    if (state.over) rows.push(endPane());
     root.replaceChildren(...rows);
   }
 
@@ -428,26 +456,39 @@ export function mountAutoChess(body, api) {
     ];
   }
 
-  function endPane() {
+  async function showEnd() {
+    if (endShown) return;
+    endShown = true;
+    const won = state.over === 'win';
+    const n = rewardOf(state);
     if (!paid) {
       paid = true;
-      const n = rewardOf(state);
       save.data.fragments += n;
       save.data.stats.games++;
-      if (state.over === 'win') save.data.stats.wins++; else save.data.stats.losses++;
+      if (won) save.data.stats.wins++; else save.data.stats.losses++;
       save.write();
       const frag = document.querySelector('.top .frag-n');
       if (frag) frag.textContent = String(save.data.fragments);
     }
-    const n = rewardOf(state);
-    return h('div.ac-end',
-      h('b', { text: state.over === 'win' ? '棋盘守住了' : '气血见底' }),
-      h('span', { text: `文脉碎片 +${n}` }),
-      btn('再来一局', () => {
-        state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
-        sel = null; fighting = false; paid = false;
-        draw();
-      }, 'primary'));
+    const again = await modal(
+      won ? '棋盘守住了' : '气血见底',
+      h('div.ac-result-copy',
+        h('div.ac-result-mark', { text: won ? '胜' : '败' }),
+        h('p', { text: `文脉碎片 +${n}` })),
+      [
+        { label: '返回', value: false },
+        { label: '再来一局', value: true, primary: true },
+      ],
+      { cls: won ? 'ac-result' : 'ac-result lose', closable: false },
+    );
+    if (again) {
+      state = createMatch(pool, (Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
+      sel = null;
+      fighting = false;
+      paid = false;
+      endShown = false;
+      draw();
+    } else back?.();
   }
 
   draw();

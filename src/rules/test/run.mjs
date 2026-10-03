@@ -922,6 +922,7 @@ test('战棋：相克加伤，两人羁绊抬攻击，强的一边打赢', () =>
   ]);
   eq(r.winner, 'player');
   ok(r.frames.length >= 2);
+  ok(r.frames.some((f) => f.hits?.some((h) => h.dmg > 0 && h.kill)), '交锋要记下伤害和击倒');
   const rng = mulberry32(9);
   const foe = spawnEnemy(1, rng);
   eq(foe.length, 2);
